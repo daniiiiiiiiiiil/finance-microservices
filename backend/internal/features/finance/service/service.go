@@ -1,6 +1,7 @@
 package service
 
 import (
+	"backend/internal/core/cache"
 	"backend/internal/core/domain"
 	"backend/internal/core/repository/postgres/pool"
 	"context"
@@ -18,10 +19,11 @@ type FinanceRepository interface {
 }
 
 type FinanceService struct {
-	repo FinanceRepository
-	pool pool.Pool
+	repo  FinanceRepository
+	pool  pool.Pool
+	redis *cache.RedisClient
 }
 
-func NewFinanceService(repo FinanceRepository, pool pool.Pool) *FinanceService {
-	return &FinanceService{repo: repo, pool: pool}
+func NewFinanceService(repo FinanceRepository, pool pool.Pool, redis *cache.RedisClient) *FinanceService {
+	return &FinanceService{repo: repo, pool: pool, redis: redis}
 }

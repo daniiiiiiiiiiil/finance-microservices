@@ -2,10 +2,13 @@ package service_auth
 
 import (
 	"backend/internal/core/auth/jwt"
+	"backend/internal/core/cache"
+	"backend/internal/features/auth/repository/redis"
 	http_auth "backend/internal/features/auth/transport/http/dto"
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -18,8 +21,12 @@ var (
 type AuthService struct {
 	userRepo   UserRepository
 	jwtManager *jwt.JWTManager
+	redisCache *cache.RedisClient
+	rateLimit  *redis.RateLimitCache
+	blacklist  *redis.BlacklistCache
 }
 
+//go:generate mockgen -destination=mocks/mock_auth_service.go -package=mocks -source=auth_service.go AuthService
 type UserRepository interface {
 	CreateUserWithAuth(ctx context.Context, fullName, email, passwordHash string, phoneNumber *string, isAdmin bool) (int, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
@@ -35,10 +42,13 @@ type User struct {
 	IsAdmin      bool
 }
 
-func NewAuthService(userRepo UserRepository, jwtManager *jwt.JWTManager) *AuthService {
+func NewAuthService(userRepo UserRepository, jwtManager *jwt.JWTManager, redisCache *cache.RedisClient) *AuthService {
 	return &AuthService{
 		userRepo:   userRepo,
 		jwtManager: jwtManager,
+		redisCache: redisCache,
+		rateLimit:  redis.NewRateLimitCache(redisCache),
+		blacklist:  redis.NewBlacklistCache(redisCache),
 	}
 }
 
@@ -111,4 +121,12 @@ func (s *AuthService) GenerateToken(ctx context.Context, userID int) (string, er
 
 func (s *AuthService) AdminExists(ctx context.Context) (bool, error) {
 	return s.userRepo.AdminExists(ctx)
+}
+
+func (s *AuthService) RateLimitCheck(ctx context.Context, key string, limit int64, ttl time.Duration) (bool, error) {
+	return s.rateLimit.Check(ctx, key, limit, ttl)
+}
+
+func (s *AuthService) AddToBlacklist(ctx context.Context, token string, ttl time.Duration) error {
+	return s.blacklist.Add(ctx, token, ttl)
 }

@@ -7,7 +7,9 @@ import (
 	"backend/internal/features/auth/service"
 	"backend/internal/features/auth/transport/http/dto"
 	"errors"
+	"fmt"
 	"net/http"
+	"time"
 )
 
 type AuthHandler struct {
@@ -74,6 +76,19 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	log := logger.FromContext(ctx)
 	rh := response_core.NewHTTPResponseHandler(log, w)
 
+	ip := r.RemoteAddr
+	key := fmt.Sprintf("rate:login:%s", ip)
+
+	allowed, err := h.service.RateLimitCheck(ctx, key, 5, 1*time.Minute)
+	if err != nil {
+		rh.ErrorResponse(err, "rate limit check failed")
+		return
+	}
+	if !allowed {
+		rh.ErrorResponse(errors.New("too many attempts"), "try again later")
+		return
+	}
+
 	var req dto.LoginRequest
 	if err := request.DecodeAndValidateRequest(r, &req); err != nil {
 		rh.ErrorResponse(err, "invalid request")
@@ -102,6 +117,15 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 // @Success 204 "Успешный выход"
 // @Router /auth/logout [post]
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	cookie, err := r.Cookie("token")
+	if err == nil && cookie != nil {
+		if err := h.service.AddToBlacklist(ctx, cookie.Value, 24*time.Hour); err != nil {
+			fmt.Printf("failed to add token to blacklist: %v\n", err)
+		}
+	}
+
 	http.SetCookie(w, &http.Cookie{
 		Name:     "token",
 		Value:    "",

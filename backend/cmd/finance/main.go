@@ -2,6 +2,7 @@ package main
 
 import (
 	"backend/internal/core/auth/jwt"
+	"backend/internal/core/cache"
 	"backend/internal/core/config"
 	"backend/internal/core/logger"
 	"backend/internal/core/repository/postgres/pool/pgx"
@@ -64,10 +65,17 @@ func main() {
 	}
 	defer pool.Close()
 
+	logger.Debug("initializing redis")
+	redisAddr := os.Getenv("REDIS_ADDR")
+	if redisAddr == "" {
+		redisAddr = "localhost:6379"
+	}
+	redisClient := cache.NewRedisClient(redisAddr)
+
 	jwtManager := jwt.NewJWTManager(cfg.JWTSecret, cfg.JWTDuration)
 	logger.Debug("initializing feature", zap.String("feature", "auth"))
 	authRepo := postgres_auth.NewAuthRepository(pool)
-	authService := service_auth.NewAuthService(authRepo, jwtManager)
+	authService := service_auth.NewAuthService(authRepo, jwtManager, redisClient)
 	createFirstAdmin(ctx, authService, logger)
 	authTransportHTTP := http_auth.NewAuthHandler(authService)
 
@@ -80,12 +88,12 @@ func main() {
 
 	logger.Debug("initializing feature", zap.String("feature", "finance"))
 	financeRepository := finance_repo.NewFinanceRepository(pool)
-	financeService := finance_service.NewFinanceService(financeRepository, pool)
+	financeService := finance_service.NewFinanceService(financeRepository, pool, redisClient)
 	financeHandler := finance_http.NewFinanceHandler(financeService, jwtManager)
 
 	logger.Debug("initializing feature", zap.String("feature", "admin"))
 	adminRepository := admin_repo.NewAdminRepository(pool)
-	adminService := admin_service.NewAdminService(adminRepository, pool)
+	adminService := admin_service.NewAdminService(adminRepository, pool, redisClient)
 	adminHandler := admin_http.NewAdminHandler(adminService, jwtManager)
 
 	logger.Debug("initializing features", zap.String("features", "web"))

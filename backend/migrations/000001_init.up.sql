@@ -36,7 +36,7 @@ CREATE TABLE finance.transactions
     REFERENCES finance.users(id)
     ON DELETE CASCADE
     ON UPDATE CASCADE
-)
+);
 
 CREATE INDEX idx_users_phone_number ON finance.users(phone_number);
 CREATE INDEX idx_users_full_name ON finance.users(full_name);

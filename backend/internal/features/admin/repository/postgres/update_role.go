@@ -9,7 +9,7 @@ import (
 	"fmt"
 )
 
-func (r *AdminRepository) UpdateUserRoleTx(ctx context.Context, id int, tx pool.Tx, isAdmin bool) (domain.User, error) {
+func (r *AdminRepository) UpdateUserRoleTx(ctx context.Context, tx pool.Tx, id int, isAdmin bool) (domain.User, error) {
 	ctx, cancel := context.WithTimeout(ctx, r.pool.OpTimeout())
 	defer cancel()
 
