@@ -9,6 +9,14 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+type RedisInterface interface {
+	Get(ctx context.Context, key string, dest interface{}) error
+	Set(ctx context.Context, key string, value interface{}, ttl time.Duration) error
+	Delete(ctx context.Context, key string) error
+	Incr(ctx context.Context, key string) (int64, error)
+	Expire(ctx context.Context, key string, ttl time.Duration) error
+}
+
 type RedisClient struct {
 	client *redis.Client
 }
@@ -21,6 +29,8 @@ func NewRedisClient(addr string) *RedisClient {
 		client: client,
 	}
 }
+
+var _ RedisInterface = (*RedisClient)(nil)
 
 func (r *RedisClient) Get(ctx context.Context, key string, dest interface{}) error {
 	val, err := r.client.Get(ctx, key).Result() //получаем строку из редиса

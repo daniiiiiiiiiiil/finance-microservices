@@ -65,7 +65,7 @@ func (t Finance) Validate() error {
 		return fmt.Errorf("invalid type: must be 'income' or 'expense'")
 	}
 	if t.Amount <= 0 {
-		return fmt.Errorf("invalid amount %d : %w", t.Amount, errors_core.ErrInvalidArgument)
+		return fmt.Errorf("invalid amount %f : %w", t.Amount, errors_core.ErrInvalidArgument)
 	}
 	if t.Category == "" || len(t.Category) < 1 {
 		return fmt.Errorf("invalid category len: %d : %w", len(t.Category), errors_core.ErrInvalidArgument)

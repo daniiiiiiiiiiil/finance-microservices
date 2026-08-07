@@ -1,4 +1,4 @@
-package service
+package service_admin
 
 import (
 	"backend/internal/core/domain"

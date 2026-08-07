@@ -23,12 +23,12 @@ func (h *TransactionHandler) GetCategories(w http.ResponseWriter, r *http.Reques
 	responseHandler := response_core.NewHTTPResponseHandler(log, w)
 	userID, ok := core_middleware.GetUserID(r)
 	if !ok {
-		responseHandler.ErrorResponse(errors.New("unauthorized"), "user not authenticated")
+		responseHandler.ErrorResponse(errors.New("getUserID"), "user not authenticated")
 		return
 	}
 	categories, err := h.service.GetCategories(ctx, userID)
 	if err != nil {
-		responseHandler.ErrorResponse(errors.New("unauthorized"), "user not authenticated")
+		responseHandler.ErrorResponse(errors.New("getCategories"), "user not authenticated")
 	}
 	responseHandler.JSONResponse(categories, http.StatusOK)
 }

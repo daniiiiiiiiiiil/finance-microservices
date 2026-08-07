@@ -9,11 +9,11 @@ import (
 )
 
 type AdminHandler struct {
-	service    *service.AdminService
+	service    *service_admin.AdminService
 	jwtManager *jwt.JWTManager
 }
 
-func NewAdminHandler(s *service.AdminService, jwtManager *jwt.JWTManager) *AdminHandler {
+func NewAdminHandler(s *service_admin.AdminService, jwtManager *jwt.JWTManager) *AdminHandler {
 	return &AdminHandler{
 		service:    s,
 		jwtManager: jwtManager,

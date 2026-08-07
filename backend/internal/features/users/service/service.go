@@ -1,4 +1,4 @@
-package service
+package service_user
 
 import (
 	"backend/internal/core/domain"
@@ -11,6 +11,7 @@ type UsersService struct {
 	pool           pool.Pool
 }
 
+//go:generate mockgen -destination=mocks/mock_users_service.go -package=mocks -source=service.go UsersService
 type UsersRepository interface {
 	GetUser(ctx context.Context, id int) (domain.User, error)
 	DeleteUserTx(ctx context.Context, tx pool.Tx, id int) error

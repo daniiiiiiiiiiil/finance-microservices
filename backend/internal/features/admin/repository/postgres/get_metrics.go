@@ -12,20 +12,20 @@ type Metrics struct {
 	TotalBalance      float64 `json:"total_balance"`
 }
 
-func (r *AdminRepository) GetMetrics(ctx context.Context) (service.Metrics, error) {
+func (r *AdminRepository) GetMetrics(ctx context.Context) (service_admin.Metrics, error) {
 	ctx, cancel := context.WithTimeout(ctx, r.pool.OpTimeout())
 	defer cancel()
 
-	var metrics service.Metrics
+	var metrics service_admin.Metrics
 
 	err := r.pool.QueryRow(ctx, `SELECT COUNT(*) FROM finance.users`).Scan(&metrics.TotalUsers)
 	if err != nil {
-		return service.Metrics{}, fmt.Errorf("count users: %w", err)
+		return service_admin.Metrics{}, fmt.Errorf("count users: %w", err)
 	}
 
 	err = r.pool.QueryRow(ctx, `SELECT COUNT(*) FROM finance.transactions`).Scan(&metrics.TotalTransactions)
 	if err != nil {
-		return service.Metrics{}, fmt.Errorf("count transactions: %w", err)
+		return service_admin.Metrics{}, fmt.Errorf("count transactions: %w", err)
 	}
 
 	err = r.pool.QueryRow(ctx, `
@@ -35,7 +35,7 @@ func (r *AdminRepository) GetMetrics(ctx context.Context) (service.Metrics, erro
 		FROM finance.transactions
 	`).Scan(&metrics.TotalBalance)
 	if err != nil {
-		return service.Metrics{}, fmt.Errorf("total balance: %w", err)
+		return service_admin.Metrics{}, fmt.Errorf("total balance: %w", err)
 	}
 
 	return metrics, nil

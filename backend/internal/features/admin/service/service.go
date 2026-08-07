@@ -1,4 +1,4 @@
-package service
+package service_admin
 
 import (
 	"backend/internal/core/cache"
@@ -7,6 +7,7 @@ import (
 	"context"
 )
 
+//go:generate mockgen -destination=mocks/mock_admin_service.go -package=mocks -source=service.go AdminService
 type AdminRepository interface {
 	GetUsers(ctx context.Context, limit, offset int) ([]domain.User, int, error)
 	GetUser(ctx context.Context, id int) (domain.User, error)
@@ -24,10 +25,10 @@ type Metrics struct {
 type AdminService struct {
 	repo  AdminRepository
 	pool  pool.Pool
-	redis *cache.RedisClient
+	redis cache.RedisInterface
 }
 
-func NewAdminService(repo AdminRepository, p pool.Pool, redis *cache.RedisClient) *AdminService {
+func NewAdminService(repo AdminRepository, p pool.Pool, redis cache.RedisInterface) *AdminService {
 	return &AdminService{
 		repo:  repo,
 		pool:  p,

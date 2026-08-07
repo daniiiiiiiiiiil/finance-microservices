@@ -50,9 +50,6 @@ func (u *User) Validate() error {
 	if u.PasswordHash == "" {
 		return fmt.Errorf("password hash is required: %w", errors_core.ErrInvalidArgument)
 	}
-	if len(u.PasswordHash) < 8 {
-		return fmt.Errorf("password hash too short: %w", errors_core.ErrInvalidArgument)
-	}
 
 	if u.PhoneNumber != nil {
 		phoneNumberLength := len([]rune(*u.PhoneNumber))

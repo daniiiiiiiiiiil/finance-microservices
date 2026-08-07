@@ -38,10 +38,6 @@ func (h *TransactionHandler) GetTransactions(w http.ResponseWriter, r *http.Requ
 	}
 
 	transactionType := r.URL.Query().Get("type")
-	if transactionType != "" && transactionType != "income" && transactionType != "expense" {
-		rh.ErrorResponse(errors.New("invalid type"), "type must be 'income' or 'expense'")
-		return
-	}
 
 	category := r.URL.Query().Get("category")
 

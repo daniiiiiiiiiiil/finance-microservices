@@ -83,7 +83,7 @@ func main() {
 
 	logger.Debug("initializing feature", zap.String("feature", "users"))
 	usersRepository := postgres.NewUserRepository(pool)
-	usersService := service.NewUsersService(usersRepository, pool)
+	usersService := service_user.NewUsersService(usersRepository, pool)
 	usersTransportHTTP := user_transport_http.NewUsersHTTPHandler(usersService, jwtManager)
 
 	logger.Debug("initializing feature", zap.String("feature", "finance"))

@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+//go:generate mockgen -destination=mocks/mock_finance_service.go -package=mocks -source=service.go FinanceService
 type FinanceRepository interface {
 	CreateTransactionTx(ctx context.Context, tx pool.Tx, transaction domain.Finance) (domain.Finance, error)
 	GetTransaction(ctx context.Context, id int) (domain.Finance, error)
@@ -21,9 +22,9 @@ type FinanceRepository interface {
 type FinanceService struct {
 	repo  FinanceRepository
 	pool  pool.Pool
-	redis *cache.RedisClient
+	redis cache.RedisInterface
 }
 
-func NewFinanceService(repo FinanceRepository, pool pool.Pool, redis *cache.RedisClient) *FinanceService {
+func NewFinanceService(repo FinanceRepository, pool pool.Pool, redis cache.RedisInterface) *FinanceService {
 	return &FinanceService{repo: repo, pool: pool, redis: redis}
 }
