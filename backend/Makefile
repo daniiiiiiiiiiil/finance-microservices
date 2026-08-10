@@ -171,3 +171,65 @@ cleanup:
 	else \
 	  echo "Очистка отменена"; \
 	fi
+
+
+auth-up:
+	docker compose up -d --build auth
+
+users-up:
+	docker compose up -d --build users
+
+admin-up:
+	docker compose up -d --build admin
+
+finance-up:
+	docker compose up -d --build finance
+
+gateway-up:
+	docker compose up -d --build gateway
+
+services-up:
+	docker compose up -d --build auth users admin finance gateway
+
+services-down:
+	docker compose down auth users admin finance gateway
+
+services-restart:
+	docker compose restart auth users admin finance gateway
+
+auth-logs:
+	docker compose logs -f auth
+
+users-logs:
+	docker compose logs -f users
+
+admin-logs:
+	docker compose logs -f admin
+
+finance-logs:
+	docker compose logs -f finance
+
+gateway-logs:
+	docker compose logs -f gateway
+
+services-logs:
+	docker compose logs -f auth users admin finance gateway
+
+services-ps:
+	docker compose ps auth users admin finance gateway
+
+run-auth:
+	@set ADDRESS=:5051 && go run cmd/auth/main.go
+
+run-users:
+	@set ADDRESS=:5052 && go run cmd/users/main.go
+
+run-admin:
+	@set ADDRESS=:5053 && go run cmd/admin/main.go
+
+run-finance:
+	@set ADDRESS=:5050 && go run cmd/finance/main.go
+
+run-gateway:
+	@set ADDRESS=:8080 && go run cmd/gateway/main.go
+

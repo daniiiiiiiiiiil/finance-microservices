@@ -1,4 +1,3 @@
-// internal/features/finance/transport/http/routes.go
 package http
 
 import (

@@ -1,4 +1,97 @@
 services:
+  auth:
+    build:
+      context: .
+      dockerfile: ./cmd/auth/Dockerfile
+    container_name: auth
+    networks:
+      - finance-net
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_HOST=finance-postgres
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_TIMEOUT=${POSTGRES_TIMEOUT}
+      - LEVEL=${LOGGER_LEVEL}
+      - LOGGER_FOLDER=${LOGGER_FOLDER}
+      - ADDRESS=:5051
+      - SHUTDOWN_TIMEOUT=${SHUTDOWN_TIMEOUT}
+      - TIME_ZONE=${TIME_ZONE}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_DURATION=${JWT_DURATION}
+      - KAFKA_BROKERS=${KAFKA_BROKERS}
+    volumes:
+      - ./logs:/out/logs
+    ports:
+      - "5051:5051"
+    restart: always
+    depends_on:
+      - finance-postgres
+      - finance-redis
+
+  users:
+    build:
+      context: .
+      dockerfile: ./cmd/users/Dockerfile
+    container_name: users
+    networks:
+      - finance-net
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_HOST=finance-postgres
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_TIMEOUT=${POSTGRES_TIMEOUT}
+      - LEVEL=${LOGGER_LEVEL}
+      - LOGGER_FOLDER=${LOGGER_FOLDER}
+      - ADDRESS=:5052
+      - SHUTDOWN_TIMEOUT=${SHUTDOWN_TIMEOUT}
+      - TIME_ZONE=${TIME_ZONE}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_DURATION=${JWT_DURATION}
+      - KAFKA_BROKERS=${KAFKA_BROKERS}
+    volumes:
+      - ./logs:/out/logs
+    ports:
+      - "5052:5052"
+    restart: always
+    depends_on:
+      - finance-postgres
+
+  admin:
+    build:
+      context: .
+      dockerfile: ./cmd/admin/Dockerfile
+    container_name: admin
+    networks:
+      - finance-net
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_HOST=finance-postgres
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_TIMEOUT=${POSTGRES_TIMEOUT}
+      - LEVEL=${LOGGER_LEVEL}
+      - LOGGER_FOLDER=${LOGGER_FOLDER}
+      - ADDRESS=:5053
+      - SHUTDOWN_TIMEOUT=${SHUTDOWN_TIMEOUT}
+      - TIME_ZONE=${TIME_ZONE}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_DURATION=${JWT_DURATION}
+      - REDIS_ADDR=${REDIS_ADDR}
+    volumes:
+      - ./logs:/out/logs
+    ports:
+      - "5053:5053"
+    restart: always
+    depends_on:
+      - finance-postgres
+      - finance-redis
+
+
   finance:
     build:
       context: .
@@ -31,6 +124,27 @@ services:
       - finance-postgres
       - finance-redis
       - kafka
+
+  gateway:
+    build:
+      context: .
+      dockerfile: ./cmd/gateway/Dockerfile
+    container_name: gateway
+    networks:
+      - finance-net
+    environment:
+      - ADDRESS=:8080
+      - SHUTDOWN_TIMEOUT=${SHUTDOWN_TIMEOUT}
+      - LEVEL=${LOGGER_LEVEL}
+      - LOGGER_FOLDER=${LOGGER_FOLDER}
+    ports:
+      - "8080:8080"
+    restart: always
+    depends_on:
+      - auth
+      - users
+      - admin
+      - finance
 
   finance-postgres:
     image: postgres:15-alpine

@@ -20,9 +20,9 @@ type Dashboard struct {
 }
 
 type DailyStat struct {
-	Date    string  `json:"date"`
-	Income  float64 `json:"income"`
-	Expense float64 `json:"expense"`
+	Date    time.Time `json:"date"`
+	Income  float64   `json:"income"`
+	Expense float64   `json:"expense"`
 }
 
 type RecentTransaction struct {

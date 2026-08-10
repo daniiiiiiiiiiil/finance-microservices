@@ -4,14 +4,14 @@ import (
 	"backend/internal/core/auth/jwt"
 	"backend/internal/core/cache"
 	"backend/internal/core/config"
-	"backend/internal/core/kafka"
 	"backend/internal/core/logger"
 	"backend/internal/core/repository/postgres/pool/pgx"
 	core_http_middleware "backend/internal/core/transport/http/middleware"
 	"backend/internal/core/transport/http/server"
-	finance_repo "backend/internal/features/finance/repository/postgres"
-	finance_service "backend/internal/features/finance/service"
-	finance_http "backend/internal/features/finance/transport/http"
+	postgres_auth "backend/internal/features/auth/repository/postgres"
+	service_auth "backend/internal/features/auth/service"
+	http_auth "backend/internal/features/auth/transport/http"
+	"backend/internal/features/auth/transport/http/dto"
 	"context"
 	"os"
 	"os/signal"
@@ -56,19 +56,16 @@ func main() {
 	redisClient := cache.NewRedisClient(redisAddr)
 	defer redisClient.Close()
 
-	logger.Debug("initializing kafka producer")
-	kafkaConfig := kafka.NewConfig()
-	kafkaProducer := kafka.NewProducer(kafkaConfig, *logger)
-	defer kafkaProducer.Close()
-
 	jwtManager := jwt.NewJWTManager(cfg.JWTSecret, cfg.JWTDuration)
 
-	logger.Debug("initializing finance service")
-	financeRepository := finance_repo.NewFinanceRepository(pool)
-	financeService := finance_service.NewFinanceService(financeRepository, pool, redisClient, kafkaProducer)
-	financeHandler := finance_http.NewFinanceHandler(financeService, jwtManager)
+	logger.Debug("initializing auth service")
+	authRepo := postgres_auth.NewAuthRepository(pool)
+	authService := service_auth.NewAuthService(authRepo, jwtManager, redisClient)
+	createFirstAdmin(ctx, authService, logger)
+	authHandler := http_auth.NewAuthHandler(authService)
 
 	logger.Debug("initializing http server")
+
 	httpServer := server.NewHTTPServer(
 		server.NewConfigMust(),
 		logger,
@@ -79,9 +76,35 @@ func main() {
 		core_http_middleware.Panic(),
 	)
 
-	httpServer.RegisterRoutes(financeHandler.Routes()...)
+	httpServer.RegisterRoutes(authHandler.Routes()...)
+	httpServer.RegisterSwagger()
 
 	if err := httpServer.Run(ctx); err != nil {
 		logger.Error("Failed to start server", zap.Error(err))
+	}
+}
+
+func createFirstAdmin(ctx context.Context, authService *service_auth.AuthService, log *logger.Logger) {
+	exists, err := authService.AdminExists(ctx)
+	if err != nil {
+		log.Error("failed to check admin existence", zap.Error(err))
+		return
+	}
+
+	if !exists {
+		req := dto.RegisterRequest{
+			FullName:    "Admin",
+			Email:       "admin@finance.com",
+			Password:    "admin123",
+			PhoneNumber: "",
+			IsAdmin:     true,
+		}
+
+		_, _, err := authService.Register(ctx, req)
+		if err != nil {
+			log.Error("failed to create first admin", zap.Error(err))
+		} else {
+			log.Info("first admin created successfully")
+		}
 	}
 }

@@ -9,9 +9,9 @@ import (
 	"backend/internal/core/repository/postgres/pool/pgx"
 	core_http_middleware "backend/internal/core/transport/http/middleware"
 	"backend/internal/core/transport/http/server"
-	finance_repo "backend/internal/features/finance/repository/postgres"
-	finance_service "backend/internal/features/finance/service"
-	finance_http "backend/internal/features/finance/transport/http"
+	admin_repo "backend/internal/features/admin/repository/postgres"
+	admin_service "backend/internal/features/admin/service"
+	admin_http "backend/internal/features/admin/transport/http"
 	"context"
 	"os"
 	"os/signal"
@@ -63,10 +63,10 @@ func main() {
 
 	jwtManager := jwt.NewJWTManager(cfg.JWTSecret, cfg.JWTDuration)
 
-	logger.Debug("initializing finance service")
-	financeRepository := finance_repo.NewFinanceRepository(pool)
-	financeService := finance_service.NewFinanceService(financeRepository, pool, redisClient, kafkaProducer)
-	financeHandler := finance_http.NewFinanceHandler(financeService, jwtManager)
+	logger.Debug("initializing admin service")
+	adminRepository := admin_repo.NewAdminRepository(pool)
+	adminService := admin_service.NewAdminService(adminRepository, pool, redisClient, kafkaProducer)
+	adminHandler := admin_http.NewAdminHandler(adminService, jwtManager)
 
 	logger.Debug("initializing http server")
 	httpServer := server.NewHTTPServer(
@@ -79,7 +79,7 @@ func main() {
 		core_http_middleware.Panic(),
 	)
 
-	httpServer.RegisterRoutes(financeHandler.Routes()...)
+	httpServer.RegisterRoutes(adminHandler.Routes()...)
 
 	if err := httpServer.Run(ctx); err != nil {
 		logger.Error("Failed to start server", zap.Error(err))
