@@ -4,6 +4,7 @@ import (
 	"backend/internal/core/auth/jwt"
 	"backend/internal/core/cache"
 	"backend/internal/core/config"
+	"backend/internal/core/kafka"
 	"backend/internal/core/logger"
 	"backend/internal/core/repository/postgres/pool/pgx"
 	core_http_middleware "backend/internal/core/transport/http/middleware"
@@ -71,6 +72,11 @@ func main() {
 		redisAddr = "localhost:6379"
 	}
 	redisClient := cache.NewRedisClient(redisAddr)
+	defer redisClient.Close()
+
+	kafkaConfig := kafka.NewConfig()
+	kafkaProducer := kafka.NewProducer(kafkaConfig, *logger)
+	defer kafkaProducer.Close()
 
 	jwtManager := jwt.NewJWTManager(cfg.JWTSecret, cfg.JWTDuration)
 	logger.Debug("initializing feature", zap.String("feature", "auth"))
@@ -88,12 +94,12 @@ func main() {
 
 	logger.Debug("initializing feature", zap.String("feature", "finance"))
 	financeRepository := finance_repo.NewFinanceRepository(pool)
-	financeService := finance_service.NewFinanceService(financeRepository, pool, redisClient)
+	financeService := finance_service.NewFinanceService(financeRepository, pool, redisClient, kafkaProducer)
 	financeHandler := finance_http.NewFinanceHandler(financeService, jwtManager)
 
 	logger.Debug("initializing feature", zap.String("feature", "admin"))
 	adminRepository := admin_repo.NewAdminRepository(pool)
-	adminService := admin_service.NewAdminService(adminRepository, pool, redisClient)
+	adminService := admin_service.NewAdminService(adminRepository, pool, redisClient, kafkaProducer)
 	adminHandler := admin_http.NewAdminHandler(adminService, jwtManager)
 
 	logger.Debug("initializing features", zap.String("features", "web"))

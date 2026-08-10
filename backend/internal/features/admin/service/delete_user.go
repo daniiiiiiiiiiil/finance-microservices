@@ -19,5 +19,7 @@ func (s *AdminService) DeleteUser(ctx context.Context, id int) error {
 	if err := tx.Commit(ctx); err != nil {
 		return fmt.Errorf("Commit: %w", err)
 	}
+	go s.invalidateCache(context.Background(), id)
+
 	return nil
 }

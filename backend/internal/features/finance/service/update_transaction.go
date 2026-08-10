@@ -2,6 +2,7 @@ package service
 
 import (
 	"backend/internal/core/domain"
+	"backend/internal/core/kafka"
 	"context"
 	"fmt"
 )
@@ -22,6 +23,10 @@ func (s *FinanceService) UpdateTransaction(ctx context.Context, transaction doma
 	if err != nil {
 		return domain.Finance{}, fmt.Errorf("update transaction: %w", err)
 	}
+
+	go s.invalidateCache(context.Background(), transaction.UserID)
+
+	go s.sendTransactionEvent(context.Background(), kafka.EventTypeTransactionUpdated, updated)
 
 	return updated, nil
 }

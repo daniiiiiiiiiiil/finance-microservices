@@ -65,3 +65,7 @@ func (r *RedisClient) Incr(ctx context.Context, key string) (int64, error) { // 
 func (r *RedisClient) Expire(ctx context.Context, key string, ttl time.Duration) error { //устанавливаем время через сколько ключ будет удален но ключ уже должен существовать иначе ничего не будет
 	return r.client.Expire(ctx, key, ttl).Err()
 }
+
+func (r *RedisClient) Close() error {
+	return r.client.Close()
+}

@@ -3,9 +3,9 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN CGO_ENABLED=0 go build -o /app/cmd/finance/exe /app/cmd/finance
+RUN CGO_ENABLED=0 go build -o /app/exe ./cmd/finance
 
 FROM alpine:3.23
 WORKDIR /app
-COPY --from=builder /app/cmd/finance/exe /app
+COPY --from=builder /app/exe /app/exe
 CMD ["/app/exe"]

@@ -27,9 +27,11 @@ func NewJWTManager(secretKey string, tokenDuration time.Duration) *JWTManager {
 	}
 }
 
-func (m *JWTManager) Generate(userID int) (string, error) {
+func (m *JWTManager) Generate(userID int, email string, isAdmin bool) (string, error) {
 	claims := Claims{
-		UserID: userID,
+		UserID:  userID,
+		Email:   email,
+		IsAdmin: isAdmin,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(m.tokenDuration)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

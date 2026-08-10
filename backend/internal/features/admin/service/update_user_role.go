@@ -17,5 +17,7 @@ func (s *AdminService) UpdateUserRole(ctx context.Context, id int, isAdmin bool)
 	if err != nil {
 		return domain.User{}, fmt.Errorf("update user role: %w", err)
 	}
+
+	go s.invalidateCache(context.Background(), id)
 	return user, nil
 }

@@ -3,8 +3,10 @@ package service_admin
 import (
 	"backend/internal/core/cache"
 	"backend/internal/core/domain"
+	"backend/internal/core/kafka"
 	"backend/internal/core/repository/postgres/pool"
 	"context"
+	"fmt"
 )
 
 //go:generate mockgen -destination=mocks/mock_admin_service.go -package=mocks -source=service.go AdminService
@@ -23,15 +25,29 @@ type Metrics struct {
 }
 
 type AdminService struct {
-	repo  AdminRepository
-	pool  pool.Pool
-	redis cache.RedisInterface
+	repo     AdminRepository
+	pool     pool.Pool
+	redis    cache.RedisInterface
+	producer *kafka.Producer
 }
 
-func NewAdminService(repo AdminRepository, p pool.Pool, redis cache.RedisInterface) *AdminService {
+func NewAdminService(repo AdminRepository, p pool.Pool, redis cache.RedisInterface, producer *kafka.Producer) *AdminService {
 	return &AdminService{
-		repo:  repo,
-		pool:  p,
-		redis: redis,
+		repo:     repo,
+		pool:     p,
+		redis:    redis,
+		producer: producer,
+	}
+}
+
+func (s *AdminService) invalidateCache(ctx context.Context, userID int) {
+	userKey := fmt.Sprintf("user:%d", userID)
+	if err := s.redis.Delete(ctx, userKey); err != nil {
+		fmt.Printf("failed to invalidate user cache: %v\n", err)
+	}
+
+	metricsKey := "admin:metrics"
+	if err := s.redis.Delete(ctx, metricsKey); err != nil {
+		fmt.Printf("failed to invalidate metrics cache: %v\n", err)
 	}
 }

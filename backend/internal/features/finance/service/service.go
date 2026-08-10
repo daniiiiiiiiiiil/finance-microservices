@@ -3,6 +3,7 @@ package service
 import (
 	"backend/internal/core/cache"
 	"backend/internal/core/domain"
+	"backend/internal/core/kafka"
 	"backend/internal/core/repository/postgres/pool"
 	"context"
 	"time"
@@ -20,11 +21,12 @@ type FinanceRepository interface {
 }
 
 type FinanceService struct {
-	repo  FinanceRepository
-	pool  pool.Pool
-	redis cache.RedisInterface
+	repo     FinanceRepository
+	pool     pool.Pool
+	redis    cache.RedisInterface
+	producer *kafka.Producer
 }
 
-func NewFinanceService(repo FinanceRepository, pool pool.Pool, redis cache.RedisInterface) *FinanceService {
-	return &FinanceService{repo: repo, pool: pool, redis: redis}
+func NewFinanceService(repo FinanceRepository, pool pool.Pool, redis cache.RedisInterface, producer *kafka.Producer) *FinanceService {
+	return &FinanceService{repo: repo, pool: pool, redis: redis, producer: producer}
 }

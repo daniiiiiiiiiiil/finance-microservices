@@ -18,7 +18,7 @@ func (s *AuthService) Login(ctx context.Context, req http_auth.LoginRequest) (st
 		return "", nil, ErrInvalidCredentials
 	}
 
-	token, err := s.jwtManager.Generate(user.ID)
+	token, err := s.jwtManager.Generate(user.ID, user.Email, user.IsAdmin)
 	if err != nil {
 		return "", nil, fmt.Errorf("generate token: %w", err)
 	}

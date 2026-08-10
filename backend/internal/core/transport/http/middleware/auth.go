@@ -9,7 +9,10 @@ import (
 
 type contextKey string
 
-const UserIDKey contextKey = "user_id"
+const (
+	UserIDKey contextKey = "user_id"
+	ClaimsKey contextKey = "claims"
+)
 
 func Auth(jwtManager *jwt.JWTManager) Middleware {
 	return func(next http.Handler) http.Handler {
@@ -43,6 +46,7 @@ func Auth(jwtManager *jwt.JWTManager) Middleware {
 			}
 
 			ctx := context.WithValue(r.Context(), UserIDKey, claims.UserID)
+			ctx = context.WithValue(r.Context(), UserIDKey, claims.UserID)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
@@ -51,4 +55,17 @@ func Auth(jwtManager *jwt.JWTManager) Middleware {
 func GetUserID(r *http.Request) (int, bool) {
 	userID, ok := r.Context().Value(UserIDKey).(int)
 	return userID, ok
+}
+
+func GetClaims(r *http.Request) (*jwt.Claims, bool) {
+	claims, ok := r.Context().Value(ClaimsKey).(*jwt.Claims)
+	return claims, ok
+}
+
+func IsAdmin(r *http.Request) bool {
+	claims, ok := GetClaims(r)
+	if !ok {
+		return false
+	}
+	return claims.IsAdmin
 }

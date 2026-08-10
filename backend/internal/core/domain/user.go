@@ -16,13 +16,13 @@ type User struct {
 	IsAdmin      bool
 }
 
-func NewUser(id int, version int, fullName string, email string, passwordHah string, phoneNumber *string, isAdmin bool) User {
+func NewUser(id int, version int, fullName string, email string, passwordHash string, phoneNumber *string, isAdmin bool) User {
 	return User{
 		ID:           id,
 		Version:      version,
 		FullName:     fullName,
 		Email:        email,
-		PasswordHash: passwordHah,
+		PasswordHash: passwordHash,
 		PhoneNumber:  phoneNumber,
 		IsAdmin:      isAdmin,
 	}

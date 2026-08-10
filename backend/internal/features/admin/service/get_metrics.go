@@ -23,6 +23,8 @@ func (s *AdminService) GetMetrics(ctx context.Context) (Metrics, error) {
 			if err := s.redis.Set(ctx, key, metrics, 10*time.Minute); err != nil {
 				return Metrics{}, fmt.Errorf("set metrics to redis: %w", err)
 			}
+			go s.sendMetricsEvent(context.Background(), metrics)
+
 			return metrics, nil
 		}
 		return Metrics{}, fmt.Errorf("get metrics from redis/postgres: %w", err)

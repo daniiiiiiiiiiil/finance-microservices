@@ -4,6 +4,8 @@ services:
       context: .
       dockerfile: ./cmd/finance/Dockerfile
     container_name: finance
+    networks:
+      - finance-net
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -18,7 +20,8 @@ services:
       - TIME_ZONE=${TIME_ZONE}
       - JWT_SECRET=${JWT_SECRET}
       - JWT_DURATION=${JWT_DURATION}
-      - REDIS_ADDR=finance-redis:6379
+      - REDIS_ADDR=${REDIS_ADDR}
+      - KAFKA_BROKERS=${KAFKA_BROKERS}
     volumes:
       - ./logs:/out/logs
     ports:
@@ -27,11 +30,13 @@ services:
     depends_on:
       - finance-postgres
       - finance-redis
-
+      - kafka
 
   finance-postgres:
     image: postgres:15-alpine
     container_name: finance-env-postgres
+    networks:
+      - finance-net
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -44,15 +49,20 @@ services:
     image: migrate/migrate
     volumes:
       - ./migrations:/migrations
+    networks:
+      - finance-net
     depends_on:
       - finance-postgres
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
+
   port-forwarder:
     image: alpine/socat:1.8.0.3
     container_name: finance-postgres-port-forwarder
+    networks:
+      - finance-net
     command: tcp-listen:5432,fork,reuseaddr tcp-connect:finance-postgres:5432
     ports:
       - "127.0.0.1:5433:5432"
@@ -68,11 +78,14 @@ services:
         ENTRYPOINT ["swag"]
     volumes:
       - .:/code
-
+    networks:
+      - finance-net
 
   finance-redis:
     image: redis:7-alpine
     container_name: finance-redis
+    networks:
+      - finance-net
     ports:
       - "6379:6379"
     volumes:
@@ -84,3 +97,47 @@ services:
       timeout: 5s
       retries: 5
 
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: finance-zookeeper
+    networks:
+      - finance-net
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: finance-kafka
+    networks:
+      - finance-net
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: finance-kafka-ui
+    networks:
+      - finance-net
+    depends_on:
+      - kafka
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+
+networks:
+  finance-net:
+    driver: bridge

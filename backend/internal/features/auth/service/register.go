@@ -29,7 +29,7 @@ func (s *AuthService) Register(ctx context.Context, req http_auth.RegisterReques
 		return "", nil, fmt.Errorf("create user: %w", err)
 	}
 
-	token, err := s.jwtManager.Generate(userID)
+	token, err := s.jwtManager.Generate(userID, req.Email, req.IsAdmin)
 	if err != nil {
 		return "", nil, fmt.Errorf("generate token: %w", err)
 	}

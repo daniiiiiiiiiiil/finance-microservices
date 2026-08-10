@@ -48,8 +48,8 @@ func NewAuthService(userRepo UserRepository, jwtManager *jwt.JWTManager, redisCa
 	}
 }
 
-func (s *AuthService) GenerateToken(ctx context.Context, userID int) (string, error) {
-	return s.jwtManager.Generate(userID)
+func (s *AuthService) GenerateToken(userID int, email string, isAdmin bool) (string, error) {
+	return s.jwtManager.Generate(userID, email, isAdmin)
 }
 
 func (s *AuthService) AdminExists(ctx context.Context) (bool, error) {

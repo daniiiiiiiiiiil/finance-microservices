@@ -54,6 +54,32 @@ redis-cleanup:
 	fi
 
 
+
+kafka-up:
+	docker compose up -d zookeeper kafka kafka-ui
+
+kafka-down:
+	docker compose down zookeeper kafka kafka-ui
+
+kafka-restart:
+	docker compose restart zookeeper kafka kafka-ui
+
+kafka-logs:
+	docker compose logs -f zookeeper kafka kafka-ui
+
+kafka-ui:
+	@echo "Kafka UI доступен по адресу: http://localhost:8080"
+	@xdg-open http://localhost:8080 || open http://localhost:8080 || echo "Откройте браузер и перейдите по ссылке"
+
+kafka-shell:
+	docker compose exec -it kafka bash
+
+kafka-create-topic:
+	@docker compose exec kafka kafka-topics --create --topic $(TOPIC) --bootstrap-server kafka:9092 --partitions 1 --replication-factor 1
+
+kafka-list-topics:
+	@docker compose exec kafka kafka-topics --list --bootstrap-server kafka:9092
+
 migrate-create:
 	@docker compose run --rm finance-postgres-migrate \
 	create \
