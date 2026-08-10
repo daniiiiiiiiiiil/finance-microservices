@@ -2,7 +2,8 @@ package http
 
 import (
 	"backend/internal/core/logger"
-	"backend/internal/core/transport/http/response"
+	"backend/internal/core/pagination"
+	response_core "backend/internal/core/transport/http/response"
 	"errors"
 	"net/http"
 	"strconv"
@@ -33,9 +34,7 @@ func (h *AdminHandler) GetUsers(w http.ResponseWriter, r *http.Request) {
 	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
-	if limit == 0 {
-		limit = 20
-	}
+	limit, offset = pagination.LimitOffset(limit, offset)
 
 	users, total, err := h.service.GetUsers(ctx, limit, offset)
 	if err != nil {
@@ -43,16 +42,14 @@ func (h *AdminHandler) GetUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	pag := pagination.NewPagination(total, limit, offset)
+
 	response := struct {
-		Data  []AdminUserResponse `json:"data"`
-		Total int                 `json:"total"`
-		Limit int                 `json:"limit"`
-		Page  int                 `json:"page"`
+		Data       []AdminUserResponse   `json:"data"`
+		Pagination pagination.Pagination `json:"pagination"`
 	}{
-		Data:  adminUserResponsesFromDomains(users),
-		Total: total,
-		Limit: limit,
-		Page:  offset/limit + 1,
+		Data:       adminUserResponsesFromDomains(users),
+		Pagination: pag,
 	}
 
 	rh.JSONResponse(response, http.StatusOK)

@@ -26,12 +26,12 @@ func (h *AdminHandler) isAdmin(r *http.Request) bool {
 		return false
 	}
 
-	user, err := h.service.GetUser(r.Context(), userID)
+	_, err := h.service.GetUser(r.Context(), userID)
 	if err != nil {
 		return false
 	}
 
-	return user.IsAdmin
+	return core_middleware.IsAdmin(r)
 }
 func (h *AdminHandler) Routes() []server.Route {
 	authMiddleware := []core_middleware.Middleware{
