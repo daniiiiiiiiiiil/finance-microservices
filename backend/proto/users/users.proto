@@ -3,13 +3,27 @@ syntax = "proto3";
 package users;
 option go_package ="./users";
 
+import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 
 service UserService{
-  rpc GetUser (GetUserRequest) returns (UserResponse);
-  rpc PatchUser (PatchUserRequest) returns (UserResponse);
-  rpc DeleteUser (DeleteUserRequest) returns (google.protobuf.Empty);
+  rpc GetUser (GetUserRequest) returns (UserResponse){
+    option (google.api.http) = {
+      get: "/api/v1/user/{id}"
+    };
+  }
+  rpc PatchUser (PatchUserRequest) returns (UserResponse){
+    option (google.api.http) = {
+      patch: "/api/v1/user/{id}"
+      body: "*"
+    };
+  }
+  rpc DeleteUser (DeleteUserRequest) returns (google.protobuf.Empty){
+    option (google.api.http) = {
+      delete: "/api/v1/user/{id}"
+    };
+  }
 }
 
 message GetUserRequest{

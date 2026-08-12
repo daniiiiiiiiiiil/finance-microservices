@@ -1,0 +1,33 @@
+package gRPC
+
+import (
+	"backend/internal/core/domain"
+)
+
+func convertUserToProto(user domain.User) *AdminUserResponse {
+	var phoneNumber *string
+	if user.PhoneNumber != nil && *user.PhoneNumber != "" {
+		phoneNumber = user.PhoneNumber
+	}
+	return &AdminUserResponse{
+		Id:          int32(user.ID),
+		Version:     int32(user.Version),
+		FullName:    user.FullName,
+		Email:       user.Email,
+		PhoneNumber: phoneNumber,
+		IsAdmin:     user.IsAdmin,
+	}
+}
+
+func convertUsersToProto(users []domain.User, total, limit, offset int) *GetUsersResponse {
+	responses := make([]*AdminUserResponse, len(users))
+	for i, user := range users {
+		responses[i] = convertUserToProto(user)
+	}
+	return &GetUsersResponse{
+		Data:  responses,
+		Total: int32(total),
+		Limit: int32(limit),
+		Page:  int32(offset/limit + 1),
+	}
+}

@@ -68,13 +68,13 @@ func main() {
 
 	reflection.Register(grpcServer)
 
-	lis, err := net.Listen("tcp", ":5052")
+	lis, err := net.Listen("tcp", ":50052")
 	if err != nil {
 		logger.Fatal("failed to listen", zap.Error(err))
 	}
 
 	logger.Warn("starting gRPC server",
-		zap.String("address", ":5052"),
+		zap.String("address", ":50052"),
 		zap.String("service", "users"),
 	)
 
@@ -85,7 +85,7 @@ func main() {
 	}()
 
 	<-ctx.Done()
-	logger.Warn("shutting down gRPC server")
+	logger.Warn("shutting down gRPC server", zap.String("address", ":50052"))
 	grpcServer.GracefulStop()
-	logger.Warn("gRPC server stopped")
+	logger.Warn("gRPC server stopped", zap.String("address", ":50052"))
 }

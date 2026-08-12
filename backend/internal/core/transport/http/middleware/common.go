@@ -16,13 +16,9 @@ const requestIDHeader = "X-Request-Id"
 func CORS() Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			allowedOrigin := map[string]struct{}{
-				"http://localhost:5050": {},
-				"null":                  {},
-			}
 			origin := r.Header.Get("Origin")
 
-			if _, ok := allowedOrigin[origin]; ok {
+			if origin != "" {
 				w.Header().Set("Access-Control-Allow-Origin", origin)
 				w.Header().Set("Access-Control-Allow-Credentials", "true")
 				w.Header().Set("Access-Control-Allow-Methods", "POST, GET, PATCH, PUT, DELETE, OPTIONS")

@@ -6,19 +6,21 @@ import (
 	"backend/internal/core/config"
 	"backend/internal/core/logger"
 	"backend/internal/core/repository/postgres/pool/pgx"
-	core_http_middleware "backend/internal/core/transport/http/middleware"
-	"backend/internal/core/transport/http/server"
+	"backend/internal/core/transport/grpc/interceptors"
 	postgres_auth "backend/internal/features/auth/repository/postgres"
 	service_auth "backend/internal/features/auth/service"
-	http_auth "backend/internal/features/auth/transport/http"
+	authgrpc "backend/internal/features/auth/transport/grpc"
 	"backend/internal/features/auth/transport/http/dto"
 	"context"
+	"net"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 
 	_ "backend/docs"
 )
@@ -62,26 +64,59 @@ func main() {
 	authRepo := postgres_auth.NewAuthRepository(pool)
 	authService := service_auth.NewAuthService(authRepo, jwtManager, redisClient)
 	createFirstAdmin(ctx, authService, logger)
-	authHandler := http_auth.NewAuthHandler(authService)
 
-	logger.Debug("initializing http server")
-
-	httpServer := server.NewHTTPServer(
-		server.NewConfigMust(),
-		logger,
-		core_http_middleware.CORS(),
-		core_http_middleware.RequestID(),
-		core_http_middleware.Logger(logger),
-		core_http_middleware.Trace(),
-		core_http_middleware.Panic(),
+	logger.Debug("initializing auth service gRPC")
+	grpcServer := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			interceptors.RequestIDInterceptor(),
+			interceptors.LoggerInterceptor(logger),
+			interceptors.TraceInterceptor(logger.Logger)),
 	)
 
-	httpServer.RegisterRoutes(authHandler.Routes()...)
-	httpServer.RegisterSwagger()
+	authServer := authgrpc.NewAuthServer(authService, logger)
+	authgrpc.RegisterAuthServiceServer(grpcServer, authServer)
 
-	if err := httpServer.Run(ctx); err != nil {
-		logger.Error("Failed to start server", zap.Error(err))
+	reflection.Register(grpcServer)
+
+	lis, err := net.Listen("tcp", ":50051")
+	if err != nil {
+		logger.Fatal("failed to listen", zap.Error(err))
 	}
+
+	logger.Warn("starting gRPC server", zap.String("address", ":50051"), zap.String("service", "auth"))
+
+	go func() {
+		if err := grpcServer.Serve(lis); err != nil {
+			logger.Error("failed to serve gRPC", zap.Error(err))
+		}
+	}()
+
+	<-ctx.Done()
+	logger.Warn("shutting down gRPC server", zap.String("address", ":50051"))
+	grpcServer.GracefulStop()
+	logger.Warn("gRPC server stopped", zap.String("address", ":50051"))
+
+	//rest api
+	//authHandler := http_auth.NewAuthHandler(authService)
+	//
+	//logger.Debug("initializing http server")
+	//
+	//httpServer := server.NewHTTPServer(
+	//	server.NewConfigMust(),
+	//	logger,
+	//	core_http_middleware.CORS(),
+	//	core_http_middleware.RequestID(),
+	//	core_http_middleware.Logger(logger),
+	//	core_http_middleware.Trace(),
+	//	core_http_middleware.Panic(),
+	//)
+	//
+	//httpServer.RegisterRoutes(authHandler.Routes()...)
+	//httpServer.RegisterSwagger()
+	//
+	//if err := httpServer.Run(ctx); err != nil {
+	//	logger.Error("Failed to start server", zap.Error(err))
+	//}
 }
 
 func createFirstAdmin(ctx context.Context, authService *service_auth.AuthService, log *logger.Logger) {

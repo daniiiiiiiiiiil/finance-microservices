@@ -1,36 +1,36 @@
 package main
 
 import (
+	_ "backend/docs"
 	"backend/internal/core/auth/jwt"
 	"backend/internal/core/config"
 	"backend/internal/core/logger"
 	core_http_middleware "backend/internal/core/transport/http/middleware"
-	"backend/internal/core/transport/http/server"
-	"context"
-	"fmt"
 	"net/http"
-	"net/http/httputil"
-	"net/url"
 	"os"
 	"os/signal"
-	"strconv"
-	"strings"
 	"syscall"
 	"time"
 
-	"go.uber.org/zap"
+	adminpb "backend/internal/features/admin/transport/grpc"
+	authpb "backend/internal/features/auth/transport/grpc"
+	financepb "backend/internal/features/finance/transport/grpc"
+	userpb "backend/internal/features/users/transport/grpc"
 
-	_ "backend/docs"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	httpSwagger "github.com/swaggo/http-swagger"
+	"go.uber.org/zap"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 )
 
 func main() {
 	cfg := config.NewConfigMust()
 	time.Local = cfg.TimeZone
 
-	ctx, cancel := signal.NotifyContext(
-		context.Background(),
-		syscall.SIGINT,
-		syscall.SIGTERM)
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
 	logger, err := logger.NewLogger(logger.NewConfigMust())
@@ -39,15 +39,95 @@ func main() {
 	}
 	defer logger.Close()
 
-	logger.Debug("application time zone", zap.Any("time_zone", time.Local))
+	logger.Debug("time zone", zap.Any("timezone", time.Local))
 
 	jwtManager := jwt.NewJWTManager(cfg.JWTSecret, cfg.JWTDuration)
 	logger.Debug("JWT Manager initialized for Gateway")
 
-	logger.Debug("initializing http server")
-	httpServer := server.NewHTTPServer(
-		server.NewConfigMust(),
-		logger,
+	authConn, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		logger.Fatal("fail to dial", zap.Error(err))
+	}
+	defer authConn.Close()
+
+	userConn, err := grpc.Dial("localhost:50052",
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		logger.Fatal("fail to dial", zap.Error(err))
+	}
+	defer userConn.Close()
+
+	financeConn, err := grpc.Dial("localhost:50053",
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		logger.Fatal("fail to dial", zap.Error(err))
+	}
+	defer financeConn.Close()
+
+	adminConn, err := grpc.Dial("localhost:50054",
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		logger.Fatal("fail to dial", zap.Error(err))
+	}
+	defer adminConn.Close()
+
+	mux := runtime.NewServeMux(
+		runtime.WithMetadata(func(ctx context.Context, r *http.Request) metadata.MD {
+			md := metadata.MD{}
+			if auth := r.Header.Get("Authorization"); auth != "" {
+				md.Set("authorization", auth)
+			}
+			return md
+		}))
+
+	if err := authpb.RegisterAuthServiceHandler(ctx, mux, authConn); err != nil {
+		logger.Fatal("fail to register auth service", zap.Error(err))
+	}
+
+	if err := financepb.RegisterFinanceServiceHandler(ctx, mux, financeConn); err != nil {
+		logger.Fatal("fail to register finance service", zap.Error(err))
+	}
+
+	if err := userpb.RegisterUserServiceHandler(ctx, mux, userConn); err != nil {
+		logger.Fatal("fail to register user service", zap.Error(err))
+	}
+
+	if err := adminpb.RegisterAdminServiceHandler(ctx, mux, adminConn); err != nil {
+		logger.Fatal("fail to register admin service", zap.Error(err))
+	}
+
+	httpMux := http.NewServeMux()
+
+	httpMux.Handle("/swagger/", httpSwagger.Handler(
+		httpSwagger.URL("/swagger/swagger.json"),
+		httpSwagger.UIConfig(map[string]string{
+			"requestInterceptor": `(req) => {
+                // Поддержка авторизации через Bearer токен
+                const token = localStorage.getItem('swagger_token');
+                if (token) {
+                    req.headers['Authorization'] = 'Bearer ' + token;
+                }
+                req.credentials = 'include';
+                return req;
+            }`,
+		}),
+	))
+
+	httpMux.HandleFunc("/swagger/swagger.json", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		http.ServeFile(w, r, "./docs/swagger.json")
+	})
+
+	httpMux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ok"))
+	})
+
+	httpMux.Handle("/api/", mux)
+
+	handler := core_http_middleware.ChainMiddlewares(
+		httpMux,
+		core_http_middleware.Auth(jwtManager),
 		core_http_middleware.CORS(),
 		core_http_middleware.RequestID(),
 		core_http_middleware.Logger(logger),
@@ -55,112 +135,24 @@ func main() {
 		core_http_middleware.Panic(),
 	)
 
-	registerProxy(httpServer, "/api/v1/auth", "http://localhost:5051", jwtManager, false)   // Auth — без проверки (логин/регистрация)
-	registerProxy(httpServer, "/api/v1/users", "http://localhost:5052", jwtManager, true)   // Users — с проверкой
-	registerProxy(httpServer, "/api/v1/finance", "http://localhost:5050", jwtManager, true) // Finance — с проверкой
-	registerProxy(httpServer, "/api/v1/admin", "http://localhost:5053", jwtManager, true)   // Admin — с проверкой
-
-	httpServer.RegisterSwagger()
-
-	httpServer.RegisterRoutes(server.Route{
-		Method: http.MethodGet,
-		Path:   "/healthz",
-		Handler: func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("ok"))
-		},
-	})
-
-	if err := httpServer.Run(ctx); err != nil {
-		logger.Error("Failed to start server", zap.Error(err))
-	}
-}
-
-func registerProxy(
-	httpServer *server.HTTPServer,
-	path string,
-	target string,
-	jwtManager *jwt.JWTManager,
-	requireAuth bool,
-) {
-	remote, err := url.Parse(target)
-	if err != nil {
-		panic(err)
+	server := &http.Server{
+		Addr:    ":8081",
+		Handler: handler,
 	}
 
-	proxy := &httputil.ReverseProxy{
-		Director: func(req *http.Request) {
-			originalPath := req.URL.Path
-
-			req.URL.Path = strings.TrimPrefix(req.URL.Path, "/api/v1")
-			if req.URL.Path == "" {
-				req.URL.Path = "/"
-			}
-
-			req.URL.Scheme = remote.Scheme
-			req.URL.Host = remote.Host
-
-			fmt.Printf("proxying: original=%s -> target=%s%s\n",
-				originalPath, remote.String(), req.URL.Path)
-		},
-	}
-
-	handler := func(w http.ResponseWriter, r *http.Request) {
-		if !requireAuth {
-			proxy.ServeHTTP(w, r)
-			return
+	go func() {
+		logger.Warn("http server start", zap.String("addr", server.Addr))
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Fatal("fail to start http server", zap.Error(err))
 		}
+	}()
 
-		tokenString := extractToken(r)
-		if tokenString == "" {
-			http.Error(w, "missing authorization", http.StatusUnauthorized)
-			return
-		}
-
-		claims, err := jwtManager.Validate(tokenString)
-		if err != nil {
-			fmt.Printf("Gateway: invalid token: %v\n", err)
-			http.Error(w, "invalid token", http.StatusUnauthorized)
-			return
-		}
-
-		fmt.Printf("Gateway: token valid for user %d\n", claims.UserID)
-
-		r.Header.Set("X-User-Id", strconv.Itoa(claims.UserID))
-		r.Header.Set("X-Is-Admin", strconv.FormatBool(claims.IsAdmin))
-
-		proxy.ServeHTTP(w, r)
+	<-ctx.Done()
+	logger.Warn("shutting down http server", zap.String("addr", server.Addr))
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer shutdownCancel()
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		logger.Fatal("fail to shutdown http server", zap.Error(err))
 	}
-
-	methods := []string{
-		http.MethodGet, http.MethodPost, http.MethodPut,
-		http.MethodPatch, http.MethodDelete, http.MethodOptions,
-	}
-
-	for _, method := range methods {
-		httpServer.RegisterRoutes(server.Route{
-			Method: method,
-			Path:   path + "/",
-			Handler: func(w http.ResponseWriter, r *http.Request) {
-				handler(w, r)
-			},
-		})
-	}
-}
-
-func extractToken(r *http.Request) string {
-	authHeader := r.Header.Get("Authorization")
-	if authHeader != "" {
-		parts := strings.Split(authHeader, " ")
-		if len(parts) == 2 && parts[0] == "Bearer" {
-			return parts[1]
-		}
-	}
-
-	cookie, err := r.Cookie("token")
-	if err == nil {
-		return cookie.Value
-	}
-
-	return ""
+	logger.Info("http server stopped")
 }

@@ -3,18 +3,49 @@ syntax = "proto3";
 package finance;
 option go_package = "./finance";
 
+import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
 
 
 service FinanceService {
-  rpc GetDashboard (GetDashboardRequest) returns (DashboardResponse);
-  rpc GetCategories (GetCategoriesRequest) returns (GetCategoriesResponse);
-  rpc CreateTransaction (CreateTransactionRequest) returns (TransactionResponse);
-  rpc GetTransactions (GetTransactionsRequest) returns (GetTransactionsResponse);
-  rpc GetTransaction (GetTransactionRequest) returns (TransactionResponse);
-  rpc UpdateTransaction (UpdateTransactionRequest) returns (TransactionResponse);
-  rpc DeleteTransaction (DeleteTransactionRequest) returns (google.protobuf.Empty);
+  rpc GetDashboard (GetDashboardRequest) returns (DashboardResponse){
+    option (google.api.http) = {
+      get: "/api/v1/finance/dashboard"
+    };
+  }
+  rpc GetCategories (GetCategoriesRequest) returns (GetCategoriesResponse){
+    option (google.api.http) = {
+      get: "/api/v1/finance/categories"
+    };
+  }
+  rpc CreateTransaction (CreateTransactionRequest) returns (TransactionResponse){
+    option (google.api.http) = {
+      post: "/api/v1/finance/transaction"
+      body: "*"
+    };
+  }
+  rpc GetTransactions (GetTransactionsRequest) returns (GetTransactionsResponse){
+    option (google.api.http) = {
+      get: "/api/v1/finance/transactions"
+    };
+  }
+  rpc GetTransaction (GetTransactionRequest) returns (TransactionResponse){
+    option (google.api.http) = {
+      get: "/api/v1/finance/transaction/{id}"
+    };
+  }
+  rpc UpdateTransaction (UpdateTransactionRequest) returns (TransactionResponse){
+    option (google.api.http) = {
+      put: "/api/v1/finance/transaction/{id}"
+      body: "*"
+    };
+  }
+  rpc DeleteTransaction (DeleteTransactionRequest) returns (google.protobuf.Empty){
+    option (google.api.http) = {
+      delete: "/api/v1/finance/transaction/{id}"
+    };
+  }
 }
 
 message GetDashboardRequest {

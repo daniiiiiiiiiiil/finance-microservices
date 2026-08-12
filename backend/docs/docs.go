@@ -14,6 +14,7 @@ const docTemplate = `{
     },
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
+	
     "paths": {
         "/admin/metrics": {
             "get": {

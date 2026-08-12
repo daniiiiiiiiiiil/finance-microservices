@@ -7,18 +7,19 @@ import (
 	"backend/internal/core/kafka"
 	"backend/internal/core/logger"
 	"backend/internal/core/repository/postgres/pool/pgx"
-	core_http_middleware "backend/internal/core/transport/http/middleware"
-	"backend/internal/core/transport/http/server"
+	"backend/internal/core/transport/grpc/interceptors"
 	admin_repo "backend/internal/features/admin/repository/postgres"
 	admin_service "backend/internal/features/admin/service"
-	admin_http "backend/internal/features/admin/transport/http"
+	admingrpc "backend/internal/features/admin/transport/grpc"
 	"context"
+	"net"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 
 	_ "backend/docs"
 )
@@ -66,22 +67,50 @@ func main() {
 	logger.Debug("initializing admin service")
 	adminRepository := admin_repo.NewAdminRepository(pool)
 	adminService := admin_service.NewAdminService(adminRepository, pool, redisClient, kafkaProducer)
-	adminHandler := admin_http.NewAdminHandler(adminService, jwtManager)
+	grpcServer := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			interceptors.RequestIDInterceptor(),
+			interceptors.LoggerInterceptor(logger),
+			interceptors.AuthInterceptor(jwtManager),
+			interceptors.TraceInterceptor(logger.Logger),
+		))
+	adminServer := admingrpc.NewAdminServer(adminService, logger)
+	admingrpc.RegisterAdminServer(grpcServer, adminServer)
 
-	logger.Debug("initializing http server")
-	httpServer := server.NewHTTPServer(
-		server.NewConfigMust(),
-		logger,
-		core_http_middleware.CORS(),
-		core_http_middleware.RequestID(),
-		core_http_middleware.Logger(logger),
-		core_http_middleware.Trace(),
-		core_http_middleware.Panic(),
-	)
-
-	httpServer.RegisterRoutes(adminHandler.Routes()...)
-
-	if err := httpServer.Run(ctx); err != nil {
-		logger.Error("Failed to start server", zap.Error(err))
+	lis, err := net.Listen("tcp", ":50054")
+	if err != nil {
+		logger.Fatal("failed to listen", zap.Error(err))
 	}
+
+	logger.Warn("starting gRPC server", zap.String("address", ":50054"), zap.String("service", "admin"))
+
+	go func() {
+		if err := grpcServer.Serve(lis); err != nil {
+			logger.Error("failed to serve gRPC", zap.Error(err))
+		}
+	}()
+	<-ctx.Done()
+	logger.Warn("shutting down gRPC server", zap.String("address", ":50054"))
+	grpcServer.GracefulStop()
+	logger.Info("gRPC server stopped", zap.String("address", ":50054"))
+
+	//rest api
+	//adminHandler := admin_http.NewAdminHandler(adminService, jwtManager)
+	//
+	//logger.Debug("initializing http server")
+	//httpServer := server.NewHTTPServer(
+	//	server.NewConfigMust(),
+	//	logger,
+	//	core_http_middleware.CORS(),
+	//	core_http_middleware.RequestID(),
+	//	core_http_middleware.Logger(logger),
+	//	core_http_middleware.Trace(),
+	//	core_http_middleware.Panic(),
+	//)
+	//
+	//httpServer.RegisterRoutes(adminHandler.Routes()...)
+	//
+	//if err := httpServer.Run(ctx); err != nil {
+	//	logger.Error("Failed to start server", zap.Error(err))
+	//}
 }

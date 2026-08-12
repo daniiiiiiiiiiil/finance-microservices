@@ -17,6 +17,14 @@ const (
 func Auth(jwtManager *jwt.JWTManager) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path == "/healthz" ||
+				strings.HasPrefix(r.URL.Path, "/swagger/") ||
+				strings.HasPrefix(r.URL.Path, "/api/v1/auth/register") ||
+				strings.HasPrefix(r.URL.Path, "/api/v1/auth/login") {
+				next.ServeHTTP(w, r)
+				return
+			}
+
 			var tokenString string
 
 			authHeader := r.Header.Get("Authorization")
@@ -49,6 +57,7 @@ func Auth(jwtManager *jwt.JWTManager) Middleware {
 			ctx = context.WithValue(ctx, ClaimsKey, claims)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
+
 	}
 }
 

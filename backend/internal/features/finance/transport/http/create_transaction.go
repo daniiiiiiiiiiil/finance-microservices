@@ -28,7 +28,6 @@ func (h *TransactionHandler) CreateTransaction(w http.ResponseWriter, r *http.Re
 	log := logger.FromContext(ctx)
 	rh := response_core.NewHTTPResponseHandler(log, w)
 
-	// Получаем user_id из контекста
 	userID, ok := core_middleware.GetUserID(r)
 	if !ok {
 		rh.ErrorResponse(errors.New("unauthorized"), "user not authenticated")
