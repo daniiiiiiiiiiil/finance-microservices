@@ -22,7 +22,7 @@ func (s *AuthServer) Logout(ctx context.Context, req *empty.Empty) (*empty.Empty
 
 	md, _ := metadata.FromIncomingContext(ctx)
 	auth := md.Get("authorization")
-	if len(auth) == 0 {
+	if len(auth) > 0 {
 		token := strings.TrimPrefix(auth[0], "Bearer ")
 		if err := s.service.AddToBlacklist(ctx, token, 24*time.Hour); err != nil {
 			return nil, status.Error(codes.Unauthenticated, "unauthenticated")

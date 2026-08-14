@@ -2,6 +2,7 @@ package gRPC
 
 import (
 	"backend/internal/core/transport/grpc/interceptors"
+	"backend/internal/features/admin/transport/gRPC/proto"
 	"context"
 
 	"go.uber.org/zap"
@@ -10,7 +11,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-func (s *AdminServer) DeleteUser(ctx context.Context, req *DeleteUserRequest) (*emptypb.Empty, error) {
+func (s *AdminServer) DeleteUser(ctx context.Context, req *proto.DeleteUserRequest) (*emptypb.Empty, error) {
 	adminID, ok := interceptors.GetUserID(ctx)
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "user not authenticated")

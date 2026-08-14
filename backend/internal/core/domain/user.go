@@ -111,3 +111,15 @@ func (u *User) ApplyPatch(patch UserPatch) error {
 	*u = tmp
 	return nil
 }
+
+func (u *User) ApplyPatchRole(patch bool) error {
+	tmp := *u
+	if patch {
+		tmp.IsAdmin = patch
+	}
+	if err := tmp.Validate(); err != nil {
+		return fmt.Errorf("invalid user after patch: %w", err)
+	}
+	*u = tmp
+	return nil
+}

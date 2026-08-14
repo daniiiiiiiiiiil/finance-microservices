@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.2
 // - protoc             v7.35.1
-// source: finance/finance.proto
+// source: proto/finance/finance.proto
 
-package gRPC
+package proto
 
 import (
 	context "context"
@@ -21,13 +21,15 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	FinanceService_GetDashboard_FullMethodName      = "/finance.FinanceService/GetDashboard"
-	FinanceService_GetCategories_FullMethodName     = "/finance.FinanceService/GetCategories"
-	FinanceService_CreateTransaction_FullMethodName = "/finance.FinanceService/CreateTransaction"
-	FinanceService_GetTransactions_FullMethodName   = "/finance.FinanceService/GetTransactions"
-	FinanceService_GetTransaction_FullMethodName    = "/finance.FinanceService/GetTransaction"
-	FinanceService_UpdateTransaction_FullMethodName = "/finance.FinanceService/UpdateTransaction"
-	FinanceService_DeleteTransaction_FullMethodName = "/finance.FinanceService/DeleteTransaction"
+	FinanceService_GetDashboard_FullMethodName          = "/finance.FinanceService/GetDashboard"
+	FinanceService_GetCategories_FullMethodName         = "/finance.FinanceService/GetCategories"
+	FinanceService_CreateTransaction_FullMethodName     = "/finance.FinanceService/CreateTransaction"
+	FinanceService_GetTransactions_FullMethodName       = "/finance.FinanceService/GetTransactions"
+	FinanceService_GetTransaction_FullMethodName        = "/finance.FinanceService/GetTransaction"
+	FinanceService_UpdateTransaction_FullMethodName     = "/finance.FinanceService/UpdateTransaction"
+	FinanceService_DeleteTransaction_FullMethodName     = "/finance.FinanceService/DeleteTransaction"
+	FinanceService_DeleteUserTransaction_FullMethodName = "/finance.FinanceService/DeleteUserTransaction"
+	FinanceService_GetMetrics_FullMethodName            = "/finance.FinanceService/GetMetrics"
 )
 
 // FinanceServiceClient is the client API for FinanceService service.
@@ -41,6 +43,8 @@ type FinanceServiceClient interface {
 	GetTransaction(ctx context.Context, in *GetTransactionRequest, opts ...grpc.CallOption) (*TransactionResponse, error)
 	UpdateTransaction(ctx context.Context, in *UpdateTransactionRequest, opts ...grpc.CallOption) (*TransactionResponse, error)
 	DeleteTransaction(ctx context.Context, in *DeleteTransactionRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	DeleteUserTransaction(ctx context.Context, in *DeleteUserTransactionsRequest, opts ...grpc.CallOption) (*DeleteUserTransactionsResponse, error)
+	GetMetrics(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*MetricsResponse, error)
 }
 
 type financeServiceClient struct {
@@ -121,6 +125,26 @@ func (c *financeServiceClient) DeleteTransaction(ctx context.Context, in *Delete
 	return out, nil
 }
 
+func (c *financeServiceClient) DeleteUserTransaction(ctx context.Context, in *DeleteUserTransactionsRequest, opts ...grpc.CallOption) (*DeleteUserTransactionsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteUserTransactionsResponse)
+	err := c.cc.Invoke(ctx, FinanceService_DeleteUserTransaction_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *financeServiceClient) GetMetrics(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*MetricsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MetricsResponse)
+	err := c.cc.Invoke(ctx, FinanceService_GetMetrics_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FinanceServiceServer is the server API for FinanceService service.
 // All implementations must embed UnimplementedFinanceServiceServer
 // for forward compatibility.
@@ -132,6 +156,8 @@ type FinanceServiceServer interface {
 	GetTransaction(context.Context, *GetTransactionRequest) (*TransactionResponse, error)
 	UpdateTransaction(context.Context, *UpdateTransactionRequest) (*TransactionResponse, error)
 	DeleteTransaction(context.Context, *DeleteTransactionRequest) (*emptypb.Empty, error)
+	DeleteUserTransaction(context.Context, *DeleteUserTransactionsRequest) (*DeleteUserTransactionsResponse, error)
+	GetMetrics(context.Context, *emptypb.Empty) (*MetricsResponse, error)
 	mustEmbedUnimplementedFinanceServiceServer()
 }
 
@@ -162,6 +188,12 @@ func (UnimplementedFinanceServiceServer) UpdateTransaction(context.Context, *Upd
 }
 func (UnimplementedFinanceServiceServer) DeleteTransaction(context.Context, *DeleteTransactionRequest) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteTransaction not implemented")
+}
+func (UnimplementedFinanceServiceServer) DeleteUserTransaction(context.Context, *DeleteUserTransactionsRequest) (*DeleteUserTransactionsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteUserTransaction not implemented")
+}
+func (UnimplementedFinanceServiceServer) GetMetrics(context.Context, *emptypb.Empty) (*MetricsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetMetrics not implemented")
 }
 func (UnimplementedFinanceServiceServer) mustEmbedUnimplementedFinanceServiceServer() {}
 func (UnimplementedFinanceServiceServer) testEmbeddedByValue()                        {}
@@ -310,6 +342,42 @@ func _FinanceService_DeleteTransaction_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FinanceService_DeleteUserTransaction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteUserTransactionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FinanceServiceServer).DeleteUserTransaction(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FinanceService_DeleteUserTransaction_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FinanceServiceServer).DeleteUserTransaction(ctx, req.(*DeleteUserTransactionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FinanceService_GetMetrics_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FinanceServiceServer).GetMetrics(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FinanceService_GetMetrics_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FinanceServiceServer).GetMetrics(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // FinanceService_ServiceDesc is the grpc.ServiceDesc for FinanceService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -345,7 +413,15 @@ var FinanceService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "DeleteTransaction",
 			Handler:    _FinanceService_DeleteTransaction_Handler,
 		},
+		{
+			MethodName: "DeleteUserTransaction",
+			Handler:    _FinanceService_DeleteUserTransaction_Handler,
+		},
+		{
+			MethodName: "GetMetrics",
+			Handler:    _FinanceService_GetMetrics_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "finance/finance.proto",
+	Metadata: "proto/finance/finance.proto",
 }

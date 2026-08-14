@@ -6,6 +6,7 @@ import (
 	"backend/internal/core/config"
 	"backend/internal/core/logger"
 	core_http_middleware "backend/internal/core/transport/http/middleware"
+	userpb "backend/internal/features/users/transport/grpc/proto"
 	"net/http"
 	"os"
 	"os/signal"
@@ -15,7 +16,6 @@ import (
 	adminpb "backend/internal/features/admin/transport/grpc"
 	authpb "backend/internal/features/auth/transport/grpc"
 	financepb "backend/internal/features/finance/transport/grpc"
-	userpb "backend/internal/features/users/transport/grpc"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -127,8 +127,8 @@ func main() {
 
 	handler := core_http_middleware.ChainMiddlewares(
 		httpMux,
-		core_http_middleware.Auth(jwtManager),
 		core_http_middleware.CORS(),
+		core_http_middleware.Auth(jwtManager),
 		core_http_middleware.RequestID(),
 		core_http_middleware.Logger(logger),
 		core_http_middleware.Trace(),

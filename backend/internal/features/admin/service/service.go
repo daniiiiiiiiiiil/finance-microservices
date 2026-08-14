@@ -2,6 +2,8 @@ package service_admin
 
 import (
 	"backend/internal/core/cache"
+	financeСlient "backend/internal/core/clients/finance"
+	"backend/internal/core/clients/users"
 	"backend/internal/core/domain"
 	"backend/internal/core/kafka"
 	"backend/internal/core/repository/postgres/pool"
@@ -25,18 +27,28 @@ type Metrics struct {
 }
 
 type AdminService struct {
-	repo     AdminRepository
-	pool     pool.Pool
-	redis    cache.RedisInterface
-	producer *kafka.Producer
+	repo          AdminRepository
+	pool          pool.Pool
+	redis         cache.RedisInterface
+	producer      *kafka.Producer
+	userClient    *users.UsersClient
+	financeClient financeСlient.FinanceClientInterface //интерфейс чтобы не было цикличности
 }
 
-func NewAdminService(repo AdminRepository, p pool.Pool, redis cache.RedisInterface, producer *kafka.Producer) *AdminService {
+func NewAdminService(
+	repo AdminRepository,
+	p pool.Pool,
+	redis cache.RedisInterface,
+	producer *kafka.Producer,
+	userClient *users.UsersClient,
+	financeClient financeСlient.FinanceClientInterface) *AdminService {
 	return &AdminService{
-		repo:     repo,
-		pool:     p,
-		redis:    redis,
-		producer: producer,
+		repo:          repo,
+		pool:          p,
+		redis:         redis,
+		producer:      producer,
+		userClient:    userClient,
+		financeClient: financeClient,
 	}
 }
 

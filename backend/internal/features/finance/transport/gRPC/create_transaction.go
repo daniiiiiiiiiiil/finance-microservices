@@ -3,6 +3,7 @@ package gRPC
 import (
 	"backend/internal/core/domain"
 	"backend/internal/core/transport/grpc/interceptors"
+	"backend/internal/features/finance/transport/gRPC/proto"
 	"time"
 
 	"go.uber.org/zap"
@@ -11,7 +12,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *FinanceServer) CreateTransaction(ctx context.Context, req *CreateTransactionRequest) (*TransactionResponse, error) {
+func (s *FinanceServer) CreateTransaction(ctx context.Context, req *proto.CreateTransactionRequest) (*proto.TransactionResponse, error) {
 	userID, ok := interceptors.GetUserID(ctx)
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "user not authenticated")

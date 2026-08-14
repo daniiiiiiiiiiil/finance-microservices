@@ -3,6 +3,8 @@ package service_auth
 import (
 	"backend/internal/core/auth/jwt"
 	"backend/internal/core/cache"
+	usersclient "backend/internal/core/clients/users"
+	postgres_auth "backend/internal/features/auth/repository/postgres"
 	"backend/internal/features/auth/repository/redis"
 	"context"
 	"errors"
@@ -12,14 +14,16 @@ import (
 var (
 	ErrUserAlreadyExists  = errors.New("user already exists")
 	ErrInvalidCredentials = errors.New("invalid credentials")
+	ErrRegistrationFailed = errors.New("registration failed")
 )
 
 type AuthService struct {
-	userRepo   UserRepository
-	jwtManager *jwt.JWTManager
-	redisCache *cache.RedisClient
-	rateLimit  *redis.RateLimitCache
-	blacklist  *redis.BlacklistCache
+	credRepo    *postgres_auth.AuthRepository
+	jwtManager  *jwt.JWTManager
+	redisCache  *cache.RedisClient
+	rateLimit   *redis.RateLimitCache
+	blacklist   *redis.BlacklistCache
+	usersClient *usersclient.UsersClient
 }
 
 //go:generate mockgen -destination=mocks/mock_auth_service.go -package=mocks -source=auth_service.go AuthService
@@ -38,22 +42,27 @@ type User struct {
 	IsAdmin      bool
 }
 
-func NewAuthService(userRepo UserRepository, jwtManager *jwt.JWTManager, redisCache *cache.RedisClient) *AuthService {
+func NewAuthService(
+	credRepo *postgres_auth.AuthRepository,
+	jwtManager *jwt.JWTManager,
+	redisCache *cache.RedisClient,
+	usersClient *usersclient.UsersClient,
+) *AuthService {
 	return &AuthService{
-		userRepo:   userRepo,
-		jwtManager: jwtManager,
-		redisCache: redisCache,
-		rateLimit:  redis.NewRateLimitCache(redisCache),
-		blacklist:  redis.NewBlacklistCache(redisCache),
+		credRepo:    credRepo,
+		jwtManager:  jwtManager,
+		redisCache:  redisCache,
+		rateLimit:   redis.NewRateLimitCache(redisCache),
+		blacklist:   redis.NewBlacklistCache(redisCache),
+		usersClient: usersClient,
 	}
 }
-
 func (s *AuthService) GenerateToken(userID int, email string, isAdmin bool) (string, error) {
 	return s.jwtManager.Generate(userID, email, isAdmin)
 }
 
 func (s *AuthService) AdminExists(ctx context.Context) (bool, error) {
-	return s.userRepo.AdminExists(ctx)
+	return s.credRepo.AdminExists(ctx)
 }
 
 func (s *AuthService) RateLimitCheck(ctx context.Context, key string, limit int64, ttl time.Duration) (bool, error) {

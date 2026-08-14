@@ -3,6 +3,8 @@ package main
 import (
 	"backend/internal/core/auth/jwt"
 	"backend/internal/core/cache"
+	financeСlient "backend/internal/core/clients/finance"
+	usersclient "backend/internal/core/clients/users"
 	"backend/internal/core/config"
 	"backend/internal/core/kafka"
 	"backend/internal/core/logger"
@@ -64,9 +66,22 @@ func main() {
 
 	jwtManager := jwt.NewJWTManager(cfg.JWTSecret, cfg.JWTDuration)
 
+	logger.Debug("Initializing user client")
+	usersClient, err := usersclient.NewUsersClient("users:50052")
+	if err != nil {
+		logger.Fatal("failed to initialize user client", zap.Error(err))
+	}
+	defer usersClient.Close()
+
+	financeClient, err := financeСlient.NewFinanceClient("finance:50053")
+	if err != nil {
+		logger.Fatal("failed to connect to finance service", zap.Error(err))
+	}
+	defer financeClient.Close()
+
 	logger.Debug("initializing admin service")
 	adminRepository := admin_repo.NewAdminRepository(pool)
-	adminService := admin_service.NewAdminService(adminRepository, pool, redisClient, kafkaProducer)
+	adminService := admin_service.NewAdminService(adminRepository, pool, redisClient, kafkaProducer, usersClient, financeClient)
 	grpcServer := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
 			interceptors.RequestIDInterceptor(),

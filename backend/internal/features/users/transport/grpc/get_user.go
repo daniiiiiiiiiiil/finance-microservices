@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"backend/internal/core/transport/grpc/interceptors"
+	"backend/internal/features/users/transport/grpc/proto"
 
 	"go.uber.org/zap"
 	"golang.org/x/net/context"
@@ -9,7 +10,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *UserServer) GetUser(ctx context.Context, req *GetUserRequest) (*UserResponse, error) {
+func (s *UserServer) GetUser(ctx context.Context, req *proto.GetUserRequest) (*proto.UserResponse, error) {
 	userID, ok := interceptors.GetUserID(ctx)
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "user not authenticated")

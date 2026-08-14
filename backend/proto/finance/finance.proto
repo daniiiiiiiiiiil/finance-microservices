@@ -46,6 +46,16 @@ service FinanceService {
       delete: "/api/v1/finance/transaction/{id}"
     };
   }
+  rpc DeleteUserTransaction(DeleteUserTransactionsRequest) returns (DeleteUserTransactionsResponse){
+    option (google.api.http) = {
+      delete: "/api/v1/finance/transactions/user/{user_id}"
+    };
+  }
+  rpc GetMetrics(google.protobuf.Empty) returns(MetricsResponse){
+    option (google.api.http) = {
+      get: "/api/v1/metrics"
+    };
+  }
 }
 
 message GetDashboardRequest {
@@ -135,4 +145,18 @@ message CategoryStat {
 
 message GetCategoriesResponse {
   repeated string categories = 1;
+}
+
+message DeleteUserTransactionsRequest {
+  int32 user_id = 1;
+}
+
+message DeleteUserTransactionsResponse{
+  bool success = 1;
+  int32 deleted_count = 2;
+}
+
+message MetricsResponse {
+  int32 total_transactions = 1;
+  double total_balance = 2;
 }

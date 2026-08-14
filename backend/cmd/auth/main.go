@@ -3,6 +3,7 @@ package main
 import (
 	"backend/internal/core/auth/jwt"
 	"backend/internal/core/cache"
+	usersclient "backend/internal/core/clients/users"
 	"backend/internal/core/config"
 	"backend/internal/core/logger"
 	"backend/internal/core/repository/postgres/pool/pgx"
@@ -60,10 +61,24 @@ func main() {
 
 	jwtManager := jwt.NewJWTManager(cfg.JWTSecret, cfg.JWTDuration)
 
+	logger.Debug("initializing users client")
+	usersClient, err := usersclient.NewUsersClient("users:50052")
+	if err != nil {
+		logger.Fatal("failed to connect to users service", zap.Error(err))
+	}
+	defer usersClient.Close()
+
 	logger.Debug("initializing auth service")
 	authRepo := postgres_auth.NewAuthRepository(pool)
-	authService := service_auth.NewAuthService(authRepo, jwtManager, redisClient)
-	createFirstAdmin(ctx, authService, logger)
+	authService := service_auth.NewAuthService(authRepo, jwtManager, redisClient, usersClient)
+	exists, err := authService.AdminExists(ctx)
+	if err != nil {
+		logger.Warn("failed to check admin exists", zap.Error(err))
+	} else if !exists {
+		createFirstAdmin(ctx, authService, logger)
+	} else {
+		logger.Info("admin already exists, skipping creation")
+	}
 
 	logger.Debug("initializing auth service gRPC")
 	grpcServer := grpc.NewServer(
@@ -74,7 +89,7 @@ func main() {
 	)
 
 	authServer := authgrpc.NewAuthServer(authService, logger)
-	authgrpc.RegisterAuthServiceServer(grpcServer, authServer)
+	authgrpc.RegisterAuthServer(grpcServer, authServer)
 
 	reflection.Register(grpcServer)
 
@@ -120,26 +135,22 @@ func main() {
 }
 
 func createFirstAdmin(ctx context.Context, authService *service_auth.AuthService, log *logger.Logger) {
-	exists, err := authService.AdminExists(ctx)
+	req := dto.RegisterRequest{
+		FullName:    "Admin",
+		Email:       "admin@finance.com",
+		Password:    "admin123",
+		PhoneNumber: "",
+		IsAdmin:     true,
+	}
+
+	token, user, err := authService.Register(ctx, req)
 	if err != nil {
-		log.Error("failed to check admin existence", zap.Error(err))
+		log.Warn("failed to create first admin (may already exist)", zap.Error(err))
 		return
 	}
 
-	if !exists {
-		req := dto.RegisterRequest{
-			FullName:    "Admin",
-			Email:       "admin@finance.com",
-			Password:    "admin123",
-			PhoneNumber: "",
-			IsAdmin:     true,
-		}
-
-		_, _, err := authService.Register(ctx, req)
-		if err != nil {
-			log.Error("failed to create first admin", zap.Error(err))
-		} else {
-			log.Info("first admin created successfully")
-		}
-	}
+	log.Info("first admin created successfully",
+		zap.String("email", user.Email),
+		zap.String("token", token[:20]+"..."),
+	)
 }

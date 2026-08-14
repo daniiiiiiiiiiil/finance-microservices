@@ -14,20 +14,32 @@ func (s *AdminService) GetMetrics(ctx context.Context) (Metrics, error) {
 	var metrics Metrics
 
 	err := s.redis.Get(ctx, key, &metrics)
-	if err != nil {
-		if errors.Is(err, redis.Nil) {
-			metrics, err = s.repo.GetMetrics(ctx)
-			if err != nil {
-				return Metrics{}, fmt.Errorf("get metrics from postgres: %w", err)
-			}
-			if err := s.redis.Set(ctx, key, metrics, 10*time.Minute); err != nil {
-				return Metrics{}, fmt.Errorf("set metrics to redis: %w", err)
-			}
-			go s.sendMetricsEvent(context.Background(), metrics)
-
-			return metrics, nil
-		}
-		return Metrics{}, fmt.Errorf("get metrics from redis/postgres: %w", err)
+	if err == nil {
+		return metrics, nil
 	}
-	return metrics, nil
+
+	if errors.Is(err, redis.Nil) {
+		usersMetrics, err := s.userClient.GetMetrics(ctx)
+		if err != nil {
+			return Metrics{}, fmt.Errorf("get users metrics: %w", err)
+		}
+		metrics.TotalUsers = usersMetrics.TotalUsers
+
+		financeMetrics, err := s.financeClient.GetMetrics(ctx)
+		if err != nil {
+			return Metrics{}, fmt.Errorf("get finance metrics: %w", err)
+		}
+		metrics.TotalTransactions = financeMetrics.TotalTransactions
+		metrics.TotalBalance = financeMetrics.TotalBalance
+
+		if err := s.redis.Set(ctx, key, metrics, 10*time.Minute); err != nil {
+			return Metrics{}, fmt.Errorf("set metrics to redis: %w", err)
+		}
+
+		go s.sendMetricsEvent(context.Background(), metrics)
+
+		return metrics, nil
+	}
+
+	return Metrics{}, fmt.Errorf("get metrics from redis: %w", err)
 }

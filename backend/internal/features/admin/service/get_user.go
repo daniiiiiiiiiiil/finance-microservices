@@ -2,12 +2,11 @@ package service_admin
 
 import (
 	"backend/internal/core/domain"
+	userpb "backend/internal/features/users/transport/grpc/proto"
 	"context"
-	"errors"
 	"fmt"
+	"log"
 	"time"
-
-	"github.com/redis/go-redis/v9"
 )
 
 func (s *AdminService) GetUser(ctx context.Context, id int) (domain.User, error) {
@@ -15,18 +14,29 @@ func (s *AdminService) GetUser(ctx context.Context, id int) (domain.User, error)
 	var user domain.User
 
 	err := s.redis.Get(ctx, key, &user)
-	if err != nil {
-		if errors.Is(err, redis.Nil) {
-			user, err = s.repo.GetUser(ctx, id)
-			if err != nil {
-				return domain.User{}, fmt.Errorf("get user from postgres: %w", err)
-			}
-			if err := s.redis.Set(ctx, key, user, 10*time.Minute); err != nil {
-				return domain.User{}, fmt.Errorf("set user to redis: %w", err)
-			}
-			return user, nil
-		}
-		return domain.User{}, fmt.Errorf("get user from redis/postgres: %w", err)
+	if err == nil {
+		return user, nil
 	}
+
+	resp, err := s.userClient.GetUser(ctx, &userpb.GetUserRequest{
+		Id: int32(id),
+	})
+	if err != nil {
+		return domain.User{}, fmt.Errorf("get user from users service: %w", err)
+	}
+
+	user = domain.User{
+		ID:          int(resp.Id),
+		Version:     int(resp.Version),
+		FullName:    resp.FullName,
+		Email:       resp.Email,
+		PhoneNumber: resp.PhoneNumber,
+		IsAdmin:     resp.IsAdmin,
+	}
+
+	if err := s.redis.Set(ctx, key, user, 10*time.Minute); err != nil {
+		log.Printf("redis set error: %v", err)
+	}
+
 	return user, nil
 }

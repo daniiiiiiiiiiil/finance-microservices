@@ -2,6 +2,7 @@ package gRPC
 
 import (
 	"backend/internal/core/transport/grpc/interceptors"
+	"backend/internal/features/admin/transport/gRPC/proto"
 
 	"go.uber.org/zap"
 	"golang.org/x/net/context"
@@ -10,7 +11,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-func (s *AdminServer) GetMetrics(ctx context.Context, req *emptypb.Empty) (*MetricsResponse, error) {
+func (s *AdminServer) GetMetrics(ctx context.Context, req *emptypb.Empty) (*proto.MetricsResponse, error) {
 	adminID, ok := interceptors.GetUserID(ctx)
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "user not authenticated")
@@ -26,7 +27,7 @@ func (s *AdminServer) GetMetrics(ctx context.Context, req *emptypb.Empty) (*Metr
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return &MetricsResponse{
+	return &proto.MetricsResponse{
 		TotalUsers:        int32(metrics.TotalUsers),
 		TotalTransactions: int32(metrics.TotalTransactions),
 		TotalBalance:      metrics.TotalBalance,

@@ -6,12 +6,13 @@ import (
 )
 
 const (
-	EventTypeTransactionCreated = "transaction.created"
-	EventTypeTransactionUpdated = "transaction.updated"
-	EventTypeTransactionDeleted = "transaction.deleted"
-	EventTypeUserCreated        = "user.created"
-	EventTypeUserDeleted        = "user.deleted"
-	EventTypeAdminMetrics       = "admin.metrics"
+	EventTypeTransactionCreated      = "transaction.created"
+	EventTypeTransactionUpdated      = "transaction.updated"
+	EventTypeTransactionDeleted      = "transaction.deleted"
+	EventTypeUserCreated             = "user.created"
+	EventTypeUserDeleted             = "user.deleted"
+	EventTypeAdminMetrics            = "admin.metrics"
+	EventTypeUserTransactionsDeleted = "user.transactions.deleted"
 )
 
 type Event struct {
@@ -42,4 +43,10 @@ type MetricsEvent struct {
 	TotalTransactions int       `json:"total_transactions"`
 	TotalBalance      float64   `json:"total_balance"`
 	Timestamp         time.Time `json:"timestamp"`
+}
+
+type UserTransactionsDeletedEvent struct {
+	UserID       int       `json:"user_id"`
+	DeletedCount int       `json:"deleted_count"`
+	Timestamp    time.Time `json:"timestamp"`
 }

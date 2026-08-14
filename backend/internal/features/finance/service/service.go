@@ -5,6 +5,8 @@ import (
 	"backend/internal/core/domain"
 	"backend/internal/core/kafka"
 	"backend/internal/core/repository/postgres/pool"
+	"backend/internal/features/admin/service"
+
 	"context"
 	"time"
 )
@@ -18,6 +20,8 @@ type FinanceRepository interface {
 	DeleteTransaction(ctx context.Context, id int) error
 	GetCategories(ctx context.Context, userID int) ([]string, error)
 	GetDashboard(ctx context.Context, userID int) (domain.Dashboard, error)
+	DeleteUserTransactions(ctx context.Context, userID int) (int, error)
+	GetMetrics(ctx context.Context) (service_admin.Metrics, error)
 }
 
 type FinanceService struct {

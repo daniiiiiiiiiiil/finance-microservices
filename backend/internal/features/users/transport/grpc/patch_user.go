@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"backend/internal/core/transport/grpc/interceptors"
+	"backend/internal/features/users/transport/grpc/proto"
 
 	"go.uber.org/zap"
 	"golang.org/x/net/context"
@@ -9,7 +10,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *UserServer) PatchUser(ctx context.Context, req *PatchUserRequest) (*UserResponse, error) {
+func (s *UserServer) PatchUser(ctx context.Context, req *proto.PatchUserRequest) (*proto.UserResponse, error) {
 	if req.Id <= 0 {
 		return nil, status.Error(codes.InvalidArgument, "invalid user id")
 	}

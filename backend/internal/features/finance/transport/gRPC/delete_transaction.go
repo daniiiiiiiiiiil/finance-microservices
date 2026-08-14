@@ -2,6 +2,7 @@ package gRPC
 
 import (
 	"backend/internal/core/transport/grpc/interceptors"
+	"backend/internal/features/finance/transport/gRPC/proto"
 
 	"go.uber.org/zap"
 	"golang.org/x/net/context"
@@ -10,7 +11,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-func (s *FinanceServer) DeleteTransaction(ctx context.Context, req *DeleteTransactionRequest) (*emptypb.Empty, error) {
+func (s *FinanceServer) DeleteTransaction(ctx context.Context, req *proto.DeleteTransactionRequest) (*emptypb.Empty, error) {
 	userID, ok := interceptors.GetUserID(ctx)
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "user not authenticated")
@@ -18,7 +19,11 @@ func (s *FinanceServer) DeleteTransaction(ctx context.Context, req *DeleteTransa
 	s.logger.Debug("gRPC DeleteTransaction", zap.Int("user_id", userID))
 
 	if req.Id <= 0 {
-		return nil, status.Error(codes.InvalidArgument, "id is required")
+		return nil, status.Error(codes.InvalidArgument, "user_id is required")
+	}
+
+	if int(req.Id) != userID && !interceptors.IsAdmin(ctx) {
+		return nil, status.Error(codes.PermissionDenied, "access denied")
 	}
 
 	existing, err := s.service.GetTransaction(ctx, int(req.Id))

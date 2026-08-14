@@ -2,6 +2,7 @@ package gRPC
 
 import (
 	"backend/internal/core/transport/grpc/interceptors"
+	"backend/internal/features/admin/transport/gRPC/proto"
 	"context"
 
 	"go.uber.org/zap"
@@ -9,7 +10,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *AdminServer) UpdateUserRole(ctx context.Context, req *UpdateRoleRequest) (*AdminUserResponse, error) {
+func (s *AdminServer) UpdateUserRole(ctx context.Context, req *proto.UpdateRoleRequest) (*proto.AdminUserResponse, error) {
 	adminID, ok := interceptors.GetUserID(ctx)
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "user not authenticated")

@@ -2,14 +2,15 @@ package gRPC
 
 import (
 	"backend/internal/core/domain"
+	"backend/internal/features/auth/transport/gRPC/proto"
 )
 
-func convertUserToProto(user domain.User) *UserResponse {
+func convertUserToProto(user domain.User) *proto.UserResponse {
 	var phoneNumber *string
 	if user.PhoneNumber != nil && *user.PhoneNumber != "" {
 		phoneNumber = user.PhoneNumber
 	}
-	return &UserResponse{
+	return &proto.UserResponse{
 		Id:          int32(user.ID),
 		FullName:    user.FullName,
 		Email:       user.Email,
@@ -18,7 +19,7 @@ func convertUserToProto(user domain.User) *UserResponse {
 	}
 }
 
-func convertRegisterRequestToDomain(req *RegisterRequest) domain.User {
+func convertRegisterRequestToDomain(req *proto.RegisterRequest) domain.User {
 	return domain.NewUserUninitialized(
 		req.FullName,
 		req.Email,
@@ -28,6 +29,6 @@ func convertRegisterRequestToDomain(req *RegisterRequest) domain.User {
 	)
 }
 
-func convertLoginRequestToDomain(req *LoginRequest) (string, string) {
+func convertLoginRequestToDomain(req *proto.LoginRequest) (string, string) {
 	return req.Email, req.Password
 }

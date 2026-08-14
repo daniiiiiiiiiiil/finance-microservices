@@ -3,6 +3,7 @@ package gRPC
 import (
 	"backend/internal/core/domain"
 	service "backend/internal/features/auth/service"
+	"backend/internal/features/auth/transport/gRPC/proto"
 	"backend/internal/features/auth/transport/http/dto"
 
 	"go.uber.org/zap"
@@ -11,7 +12,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *AuthServer) Register(ctx context.Context, req *RegisterRequest) (*AuthResponse, error) {
+func (s *AuthServer) Register(ctx context.Context, req *proto.RegisterRequest) (*proto.AuthResponse, error) {
 	if req.Email == "" || len(req.Email) <= 0 {
 		return nil, status.Error(codes.InvalidArgument, "Email is required")
 	}
@@ -45,7 +46,7 @@ func (s *AuthServer) Register(ctx context.Context, req *RegisterRequest) (*AuthR
 		PhoneNumber: user.PhoneNumber,
 		IsAdmin:     user.IsAdmin,
 	}
-	return &AuthResponse{
+	return &proto.AuthResponse{
 		Token: token,
 		User:  convertUserToProto(userDomain),
 	}, nil

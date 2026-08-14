@@ -4,7 +4,7 @@
 // 	protoc        v7.35.1
 // source: admin/admin.proto
 
-package gRPC
+package proto
 
 import (
 	reflect "reflect"

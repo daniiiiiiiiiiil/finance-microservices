@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"backend/internal/core/transport/grpc/interceptors"
+	"backend/internal/features/users/transport/grpc/proto"
 
 	"go.uber.org/zap"
 	"golang.org/x/net/context"
@@ -10,7 +11,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-func (s *UserServer) DeleteUser(ctx context.Context, req *DeleteUserRequest) (*emptypb.Empty, error) {
+func (s *UserServer) DeleteUser(ctx context.Context, req *proto.DeleteUserRequest) (*emptypb.Empty, error) {
 	if req.Id <= 0 {
 		return nil, status.Error(codes.InvalidArgument, "invalid user id")
 	}

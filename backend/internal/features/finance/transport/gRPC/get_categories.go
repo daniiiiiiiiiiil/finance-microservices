@@ -2,6 +2,7 @@ package gRPC
 
 import (
 	"backend/internal/core/transport/grpc/interceptors"
+	"backend/internal/features/finance/transport/gRPC/proto"
 
 	"go.uber.org/zap"
 	"golang.org/x/net/context"
@@ -9,7 +10,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *FinanceServer) GetCategories(ctx context.Context, req *GetCategoriesRequest) (*GetCategoriesResponse, error) {
+func (s *FinanceServer) GetCategories(ctx context.Context, req *proto.GetCategoriesRequest) (*proto.GetCategoriesResponse, error) {
 	userID, ok := interceptors.GetUserID(ctx)
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "user not authenticated")
@@ -21,7 +22,7 @@ func (s *FinanceServer) GetCategories(ctx context.Context, req *GetCategoriesReq
 		s.logger.Error("get categories", zap.Error(err))
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	return &GetCategoriesResponse{
+	return &proto.GetCategoriesResponse{
 		Categories: categories,
 	}, nil
 }

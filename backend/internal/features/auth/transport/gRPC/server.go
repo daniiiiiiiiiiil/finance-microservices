@@ -3,12 +3,13 @@ package gRPC
 import (
 	"backend/internal/core/logger"
 	service "backend/internal/features/auth/service"
+	"backend/internal/features/auth/transport/gRPC/proto"
 
 	"google.golang.org/grpc"
 )
 
 type AuthServer struct {
-	UnimplementedAuthServiceServer
+	proto.UnimplementedAuthServiceServer
 	service *service.AuthService
 	logger  *logger.Logger
 }
@@ -21,5 +22,5 @@ func NewAuthServer(service *service.AuthService, logger *logger.Logger) *AuthSer
 }
 
 func RegisterAuthServer(server *grpc.Server, auth *AuthServer) {
-	RegisterAuthServiceServer(server, auth)
+	proto.RegisterAuthServiceServer(server, auth)
 }

@@ -6,7 +6,7 @@ Package users is a reverse proxy.
 
 It translates gRPC into RESTful JSON APIs.
 */
-package grpc
+package proto
 
 import (
 	"context"
