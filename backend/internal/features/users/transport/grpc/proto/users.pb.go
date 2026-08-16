@@ -114,8 +114,8 @@ func (x *DeleteUserRequest) GetId() int32 {
 
 type PatchUserRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int32          `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Data          *PatchUserData `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
+	Id            int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Data          *PatchUserData         `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
