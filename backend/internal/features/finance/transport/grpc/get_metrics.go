@@ -1,7 +1,7 @@
-package gRPC
+package grpc
 
 import (
-	"backend/internal/features/finance/transport/gRPC/proto"
+	"backend/internal/features/finance/transport/grpc/proto"
 	"context"
 
 	"go.uber.org/zap"

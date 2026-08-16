@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"log"
 	"time"
+
+	"google.golang.org/grpc/metadata"
 )
 
 func (s *AdminService) GetUser(ctx context.Context, id int) (domain.User, error) {
@@ -16,6 +18,14 @@ func (s *AdminService) GetUser(ctx context.Context, id int) (domain.User, error)
 	err := s.redis.Get(ctx, key, &user)
 	if err == nil {
 		return user, nil
+	}
+
+	md, ok := metadata.FromIncomingContext(ctx)
+	if ok {
+		auth := md.Get("authorization")
+		if len(auth) > 0 {
+			ctx = metadata.AppendToOutgoingContext(ctx, "authorization", auth[0])
+		}
 	}
 
 	resp, err := s.userClient.GetUser(ctx, &userpb.GetUserRequest{

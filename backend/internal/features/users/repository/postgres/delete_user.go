@@ -11,7 +11,7 @@ func (r *UserRepository) DeleteUserTx(ctx context.Context, tx pool.Tx, id int) e
 	ctx, cancel := context.WithTimeout(ctx, r.pool.OpTimeout())
 	defer cancel()
 
-	cmdTag, err := tx.Exec(ctx, `DELETE FROM finance.users WHERE id = $1`, id)
+	cmdTag, err := tx.Exec(ctx, `DELETE FROM users.users WHERE id = $1`, id)
 	if err != nil {
 		return fmt.Errorf("delete user: %w", err)
 	}

@@ -13,7 +13,7 @@ func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (doma
 
 	query := `
 		SELECT id, version, full_name, email, password_hash, phone_number, is_admin
-		FROM finance.users
+		FROM users.users
 		WHERE email = $1`
 
 	var user domain.User

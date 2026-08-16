@@ -8,9 +8,7 @@ import (
 	"backend/internal/core/config"
 	"backend/internal/core/kafka"
 	"backend/internal/core/logger"
-	"backend/internal/core/repository/postgres/pool/pgx"
 	"backend/internal/core/transport/grpc/interceptors"
-	admin_repo "backend/internal/features/admin/repository/postgres"
 	admin_service "backend/internal/features/admin/service"
 	admingrpc "backend/internal/features/admin/transport/grpc"
 	"context"
@@ -44,12 +42,12 @@ func main() {
 
 	logger.Debug("application time zone", zap.Any("time_zone", time.Local))
 
-	logger.Debug("initializing postgres connection pool")
-	pool, err := pgx.NewPool(ctx, pgx.NewConfigMust())
-	if err != nil {
-		logger.Fatal("failed to connect to postgres", zap.Error(err))
-	}
-	defer pool.Close()
+	//logger.Debug("initializing postgres connection pool")
+	//pool, err := pgx.NewPool(ctx, pgx.NewConfigMust())
+	//if err != nil {
+	//	logger.Fatal("failed to connect to postgres", zap.Error(err))
+	//}
+	//defer pool.Close()
 
 	logger.Debug("initializing redis")
 	redisAddr := os.Getenv("REDIS_ADDR")
@@ -80,8 +78,14 @@ func main() {
 	defer financeClient.Close()
 
 	logger.Debug("initializing admin service")
-	adminRepository := admin_repo.NewAdminRepository(pool)
-	adminService := admin_service.NewAdminService(adminRepository, pool, redisClient, kafkaProducer, usersClient, financeClient)
+	//adminRepository := admin_repo.NewAdminRepository(pool)
+	adminService := admin_service.NewAdminService(
+		//adminRepository,
+		//pool,
+		redisClient,
+		kafkaProducer,
+		usersClient,
+		financeClient)
 	grpcServer := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
 			interceptors.RequestIDInterceptor(),

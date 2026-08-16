@@ -32,7 +32,6 @@ service UserService{
   rpc ListUsers(ListUsersRequest) returns(ListUsersResponse){
     option(google.api.http) = {
       get: "/api/v1/users"
-      body: "*"
     };
   }
   rpc UpdateRole(UpdateRoleRequest) returns(UserResponse){
@@ -44,6 +43,16 @@ service UserService{
   rpc GetMetrics(google.protobuf.Empty) returns (MetricsResponse){
     option(google.api.http) = {
       get: "/api/v1/metrics"
+    };
+  }
+  rpc GetUserByEmail(GetUserByEmailRequest) returns (UserResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/user/by-email/{email}"
+    };
+  }
+  rpc AdminExists(google.protobuf.Empty) returns (AdminExistsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/users/admin-exists"
     };
   }
 }
@@ -102,4 +111,12 @@ message UpdateRoleRequest{
 
 message MetricsResponse{
   int32 total_users = 1;
+}
+
+message GetUserByEmailRequest {
+  string email = 1;
+}
+
+message AdminExistsResponse {
+  bool exists = 1;
 }

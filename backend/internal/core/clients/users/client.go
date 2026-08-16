@@ -121,21 +121,25 @@ func (c *UsersClient) UpdateRole(ctx context.Context, req *proto.UpdateRoleReque
 }
 
 func (c *UsersClient) GetUserByEmail(ctx context.Context, email string) (*UserProfile, error) {
-	resp, err := c.ListUsers(ctx, &proto.ListUsersRequest{
-		Limit:  20,
-		Offset: 0,
-	})
+	req := &proto.GetUserByEmailRequest{
+		Email: email,
+	}
+	resp, err := c.client.GetUserByEmail(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get users: %w", err)
+		return nil, fmt.Errorf("failed to get user by email: %w", err)
 	}
-
-	for _, user := range resp.Users {
-		if user.Email == email {
-			return &user, nil
-		}
+	var phoneNumber *string
+	if resp.PhoneNumber != nil && *resp.PhoneNumber != "" {
+		phoneNumber = resp.PhoneNumber
 	}
-
-	return nil, fmt.Errorf("user with email %s not found", email)
+	return &UserProfile{
+		ID:          int(resp.Id),
+		FullName:    resp.FullName,
+		Email:       resp.Email,
+		PhoneNumber: phoneNumber,
+		IsAdmin:     resp.IsAdmin,
+		IsActive:    resp.IsActive,
+	}, nil
 }
 
 func (c *UsersClient) GetMetrics(ctx context.Context) (*UserMetrics, error) {
@@ -154,4 +158,12 @@ func (c *UsersClient) GetUser(ctx context.Context, req *proto.GetUserRequest) (*
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 	return resp, nil
+}
+
+func (c *UsersClient) AdminExists(ctx context.Context) (bool, error) {
+	resp, err := c.client.AdminExists(ctx, &emptypb.Empty{})
+	if err != nil {
+		return false, fmt.Errorf("failed to check admin exists: %w", err)
+	}
+	return resp.Exists, nil
 }

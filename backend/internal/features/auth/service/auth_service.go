@@ -62,7 +62,11 @@ func (s *AuthService) GenerateToken(userID int, email string, isAdmin bool) (str
 }
 
 func (s *AuthService) AdminExists(ctx context.Context) (bool, error) {
-	return s.credRepo.AdminExists(ctx)
+	exists, err := s.usersClient.AdminExists(ctx)
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
 }
 
 func (s *AuthService) RateLimitCheck(ctx context.Context, key string, limit int64, ttl time.Duration) (bool, error) {

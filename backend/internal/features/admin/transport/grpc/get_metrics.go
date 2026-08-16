@@ -1,8 +1,8 @@
-package gRPC
+package grpc
 
 import (
 	"backend/internal/core/transport/grpc/interceptors"
-	"backend/internal/features/admin/transport/gRPC/proto"
+	"backend/internal/features/admin/transport/grpc/proto"
 
 	"go.uber.org/zap"
 	"golang.org/x/net/context"

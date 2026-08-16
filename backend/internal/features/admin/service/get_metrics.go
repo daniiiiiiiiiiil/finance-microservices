@@ -7,9 +7,11 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
+	"google.golang.org/grpc/metadata"
 )
 
 func (s *AdminService) GetMetrics(ctx context.Context) (Metrics, error) {
+
 	key := "admin:metrics"
 	var metrics Metrics
 
@@ -19,6 +21,13 @@ func (s *AdminService) GetMetrics(ctx context.Context) (Metrics, error) {
 	}
 
 	if errors.Is(err, redis.Nil) {
+		md, ok := metadata.FromIncomingContext(ctx)
+		if ok {
+			auth := md.Get("authorization")
+			if len(auth) > 0 {
+				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", auth[0])
+			}
+		}
 		usersMetrics, err := s.userClient.GetMetrics(ctx)
 		if err != nil {
 			return Metrics{}, fmt.Errorf("get users metrics: %w", err)

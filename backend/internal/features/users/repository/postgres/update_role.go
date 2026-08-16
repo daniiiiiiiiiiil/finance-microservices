@@ -15,7 +15,7 @@ func (r *UserRepository) UpdateRoleUsers(ctx context.Context, id int, isAdmin bo
 	defer cancel()
 
 	query := `
-		UPDATE finance.users SET
+		UPDATE users.users SET
 		is_admin = $1,
 		version = version + 1
 		WHERE id = $2

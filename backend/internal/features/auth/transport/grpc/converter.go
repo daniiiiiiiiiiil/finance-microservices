@@ -1,8 +1,8 @@
-package gRPC
+package grpc
 
 import (
 	"backend/internal/core/domain"
-	"backend/internal/features/auth/transport/gRPC/proto"
+	"backend/internal/features/auth/transport/grpc/proto"
 )
 
 func convertUserToProto(user domain.User) *proto.UserResponse {

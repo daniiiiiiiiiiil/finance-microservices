@@ -7,11 +7,11 @@ services:
     networks:
       - finance-net
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_HOST=finance-postgres
-      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_USER=${AUTH_POSTGRES_USER}
+      - POSTGRES_PASSWORD=${AUTH_POSTGRES_PASSWORD}
+      - POSTGRES_DB=${AUTH_POSTGRES_DB}
+      - POSTGRES_HOST=${AUTH_POSTGRES_HOST}
+      - POSTGRES_PORT=${AUTH_POSTGRES_PORT}
       - POSTGRES_TIMEOUT=${POSTGRES_TIMEOUT}
       - LEVEL=${LOGGER_LEVEL}
       - LOGGER_FOLDER=${LOGGER_FOLDER}
@@ -27,7 +27,7 @@ services:
       - "5051:5051"
     restart: always
     depends_on:
-      - finance-postgres
+      - auth-postgres
       - finance-redis
 
   users:
@@ -38,11 +38,11 @@ services:
     networks:
       - finance-net
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_HOST=finance-postgres
-      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_USER=${USERS_POSTGRES_USER}
+      - POSTGRES_PASSWORD=${USERS_POSTGRES_PASSWORD}
+      - POSTGRES_DB=${USERS_POSTGRES_DB}
+      - POSTGRES_HOST=${USERS_POSTGRES_HOST}
+      - POSTGRES_PORT=${USERS_POSTGRES_PORT}
       - POSTGRES_TIMEOUT=${POSTGRES_TIMEOUT}
       - LEVEL=${LOGGER_LEVEL}
       - LOGGER_FOLDER=${LOGGER_FOLDER}
@@ -58,7 +58,7 @@ services:
       - "5052:5052"
     restart: always
     depends_on:
-      - finance-postgres
+      - users-postgres
 
   admin:
     build:
@@ -68,12 +68,6 @@ services:
     networks:
       - finance-net
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_HOST=finance-postgres
-      - POSTGRES_PORT=${POSTGRES_PORT}
-      - POSTGRES_TIMEOUT=${POSTGRES_TIMEOUT}
       - LEVEL=${LOGGER_LEVEL}
       - LOGGER_FOLDER=${LOGGER_FOLDER}
       - ADDRESS=:5053
@@ -88,7 +82,6 @@ services:
       - "5053:5053"
     restart: always
     depends_on:
-      - finance-postgres
       - finance-redis
 
 
@@ -100,11 +93,11 @@ services:
     networks:
       - finance-net
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_HOST=finance-postgres
-      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_USER=${FINANCE_POSTGRES_USER}
+      - POSTGRES_PASSWORD=${FINANCE_POSTGRES_PASSWORD}
+      - POSTGRES_DB=${FINANCE_POSTGRES_DB}
+      - POSTGRES_HOST=${FINANCE_POSTGRES_HOST}
+      - POSTGRES_PORT=${FINANCE_POSTGRES_PORT}
       - POSTGRES_TIMEOUT=${POSTGRES_TIMEOUT}
       - LEVEL=${LOGGER_LEVEL}
       - LOGGER_FOLDER=${LOGGER_FOLDER}
@@ -155,11 +148,11 @@ services:
     networks:
       - finance-net
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${FINANCE_POSTGRES_USER}
+      - POSTGRES_PASSWORD=${FINANCE_POSTGRES_PASSWORD}
+      - POSTGRES_DB=${FINANCE_POSTGRES_DB}
     volumes:
-      - ./out/pgdata:/var/lib/postgresql/data:rw
+      - ./out/pgdata/finance:/var/lib/postgresql/data:rw
     restart: always
 
   finance-postgres-migrate:
@@ -171,9 +164,9 @@ services:
     depends_on:
       - finance-postgres
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${FINANCE_POSTGRES_USER}
+      - POSTGRES_PASSWORD=${FINANCE_POSTGRES_PASSWORD}
+      - POSTGRES_DB=${FINANCE_POSTGRES_DB}
 
   port-forwarder:
     image: alpine/socat:1.8.0.3
@@ -182,7 +175,79 @@ services:
       - finance-net
     command: tcp-listen:5432,fork,reuseaddr tcp-connect:finance-postgres:5432
     ports:
+      - "127.0.0.1:5435:5432"
+
+  auth-postgres:
+    image: postgres:15-alpine
+    container_name: auth-env-postgres
+    networks:
+      - finance-net
+    environment:
+      - POSTGRES_USER=${AUTH_POSTGRES_USER}
+      - POSTGRES_PASSWORD=${AUTH_POSTGRES_PASSWORD}
+      - POSTGRES_DB=${AUTH_POSTGRES_DB}
+    volumes:
+      - ./out/pgdata/auth:/var/lib/postgresql/auth/data:rw
+    restart: always
+
+  auth-postgres-migrate:
+    image: migrate/migrate
+    volumes:
+      - ./migrations:/migrations
+    networks:
+      - finance-net
+    depends_on:
+      - auth-postgres
+    environment:
+      - POSTGRES_USER=${AUTH_POSTGRES_USER}
+      - POSTGRES_PASSWORD=${AUTH_POSTGRES_PASSWORD}
+      - POSTGRES_DB=${AUTH_POSTGRES_DB}
+    command: -path /migrations -database "postgres://${AUTH_POSTGRES_USER}:${AUTH_POSTGRES_PASSWORD}@auth-postgres:5432/${AUTH_POSTGRES_DB}?sslmode=disable" up
+
+  auth-port-forwarder:
+    image: alpine/socat:1.8.0.3
+    container_name: auth-port-forwarder
+    networks:
+      - finance-net
+    command: tcp-listen:5432,fork,reuseaddr tcp-connect:auth-postgres:5432
+    ports:
       - "127.0.0.1:5433:5432"
+
+  users-postgres:
+    image: postgres:15-alpine
+    container_name: users-env-postgres
+    networks:
+      - finance-net
+    environment:
+      - POSTGRES_USER=${USERS_POSTGRES_USER}
+      - POSTGRES_PASSWORD=${USERS_POSTGRES_PASSWORD}
+      - POSTGRES_DB=${USERS_POSTGRES_DB}
+    volumes:
+      - ./out/pgdata/users:/var/lib/postgresql/users/data:rw
+    restart: always
+
+  users-postgres-migrate:
+    image: migrate/migrate
+    volumes:
+      - ./migrations:/migrations
+    networks:
+      - finance-net
+    depends_on:
+      - users-postgres
+    environment:
+      - POSTGRES_USER=${USERS_POSTGRES_USER}
+      - POSTGRES_PASSWORD=${USERS_POSTGRES_PASSWORD}
+      - POSTGRES_DB=${USERS_POSTGRES_DB}
+    command: -path /migrations -database "postgres://${USERS_POSTGRES_USER}:${USERS_POSTGRES_PASSWORD}@users-postgres:5432/${USERS_POSTGRES_DB}?sslmode=disable" up
+
+  users-port-forwarder:
+    image: alpine/socat:1.8.0.3
+    container_name: users-port-forwarder
+    networks:
+      - finance-net
+    command: tcp-listen:5432,fork,reuseaddr tcp-connect:users-postgres:5432
+    ports:
+      - "127.0.0.1:5434:5432"
 
   swagger:
     build:

@@ -1,9 +1,9 @@
-package gRPC
+package grpc
 
 import (
 	"backend/internal/core/logger"
 	service_admin "backend/internal/features/admin/service"
-	"backend/internal/features/admin/transport/gRPC/proto"
+	"backend/internal/features/admin/transport/grpc/proto"
 
 	"google.golang.org/grpc"
 )

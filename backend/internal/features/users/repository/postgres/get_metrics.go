@@ -10,7 +10,7 @@ func (r *UserRepository) GetTotalUsers(ctx context.Context) (int, error) {
 	defer cancel()
 
 	var total int
-	err := r.pool.QueryRow(ctx, `SELECT COUNT(*) FROM finance.users`).Scan(&total)
+	err := r.pool.QueryRow(ctx, `SELECT COUNT(*) FROM users.users`).Scan(&total)
 	if err != nil {
 		return 0, fmt.Errorf("count users: %w", err)
 	}

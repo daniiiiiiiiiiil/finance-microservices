@@ -1,9 +1,9 @@
-package gRPC
+package grpc
 
 import (
 	"backend/internal/core/domain"
-	"backend/internal/features/auth/transport/gRPC/proto"
-	"backend/internal/features/auth/transport/http/dto"
+	"backend/internal/features/auth/transport/grpc/proto"
+	http_auth "backend/internal/features/auth/transport/http/dto"
 
 	"go.uber.org/zap"
 	"golang.org/x/net/context"
@@ -21,7 +21,7 @@ func (s *AuthServer) Login(ctx context.Context, req *proto.LoginRequest) (*proto
 
 	s.logger.Debug("Auth Login", zap.String("email", req.Email))
 
-	loginReq := dto.LoginRequest{
+	loginReq := http_auth.LoginRequest{
 		Email:    req.Email,
 		Password: req.Password,
 	}

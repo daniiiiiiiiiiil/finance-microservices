@@ -1,9 +1,9 @@
-package gRPC
+package grpc
 
 import (
 	"backend/internal/core/domain"
 	"backend/internal/core/transport/grpc/interceptors"
-	"backend/internal/features/finance/transport/gRPC/proto"
+	"backend/internal/features/finance/transport/grpc/proto"
 	"time"
 
 	"go.uber.org/zap"
@@ -43,6 +43,7 @@ func (s *FinanceServer) UpdateTransaction(ctx context.Context, req *proto.Update
 		}
 	}
 	transaction := domain.Finance{
+		ID:              int(req.Id),
 		TypeTransaction: req.TypeTransaction,
 		Amount:          req.Amount,
 		Category:        req.Category,

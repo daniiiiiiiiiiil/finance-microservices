@@ -5,7 +5,7 @@ import (
 	"backend/internal/core/transport/http/request"
 	response_core "backend/internal/core/transport/http/response"
 	service_auth "backend/internal/features/auth/service"
-	"backend/internal/features/auth/transport/http/dto"
+	http_auth "backend/internal/features/auth/transport/http/dto"
 	"errors"
 	"net/http"
 )
@@ -16,8 +16,8 @@ import (
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param request body dto.RegisterRequest true "Данные для регистрации"
-// @Success 201 {object} dto.UserResponse
+// @Param request body http_auth.RegisterRequest true "Данные для регистрации"
+// @Success 201 {object} http_auth.UserResponse
 // @Failure 400 {object} response_core.ErrorResponse
 // @Failure 409 {object} response_core.ErrorResponse
 // @Failure 500 {object} response_core.ErrorResponse
@@ -27,7 +27,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	log := logger.FromContext(ctx)
 	rh := response_core.NewHTTPResponseHandler(log, w)
 
-	var req dto.RegisterRequest
+	var req http_auth.RegisterRequest
 	if err := request.DecodeAndValidateRequest(r, &req); err != nil {
 		rh.ErrorResponse(err, "invalid request")
 		return

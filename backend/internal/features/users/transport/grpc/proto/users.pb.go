@@ -114,8 +114,8 @@ func (x *DeleteUserRequest) GetId() int32 {
 
 type PatchUserRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Data          *PatchUserData         `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
+	Id            int32          `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Data          *PatchUserData `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -592,6 +592,94 @@ func (x *MetricsResponse) GetTotalUsers() int32 {
 	return 0
 }
 
+type GetUserByEmailRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Email         string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetUserByEmailRequest) Reset() {
+	*x = GetUserByEmailRequest{}
+	mi := &file_proto_users_users_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetUserByEmailRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUserByEmailRequest) ProtoMessage() {}
+
+func (x *GetUserByEmailRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_users_users_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUserByEmailRequest.ProtoReflect.Descriptor instead.
+func (*GetUserByEmailRequest) Descriptor() ([]byte, []int) {
+	return file_proto_users_users_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *GetUserByEmailRequest) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+type AdminExistsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Exists        bool                   `protobuf:"varint,1,opt,name=exists,proto3" json:"exists,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AdminExistsResponse) Reset() {
+	*x = AdminExistsResponse{}
+	mi := &file_proto_users_users_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AdminExistsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AdminExistsResponse) ProtoMessage() {}
+
+func (x *AdminExistsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_users_users_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AdminExistsResponse.ProtoReflect.Descriptor instead.
+func (*AdminExistsResponse) Descriptor() ([]byte, []int) {
+	return file_proto_users_users_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *AdminExistsResponse) GetExists() bool {
+	if x != nil {
+		return x.Exists
+	}
+	return false
+}
+
 var File_proto_users_users_proto protoreflect.FileDescriptor
 
 const file_proto_users_users_proto_rawDesc = "" +
@@ -638,18 +726,24 @@ const file_proto_users_users_proto_rawDesc = "" +
 	"\bis_admin\x18\x02 \x01(\bR\aisAdmin\"2\n" +
 	"\x0fMetricsResponse\x12\x1f\n" +
 	"\vtotal_users\x18\x01 \x01(\x05R\n" +
-	"totalUsers2\x88\x05\n" +
+	"totalUsers\"-\n" +
+	"\x15GetUserByEmailRequest\x12\x14\n" +
+	"\x05email\x18\x01 \x01(\tR\x05email\"-\n" +
+	"\x13AdminExistsResponse\x12\x16\n" +
+	"\x06exists\x18\x01 \x01(\bR\x06exists2\xd8\x06\n" +
 	"\vUserService\x12P\n" +
 	"\aGetUser\x12\x15.users.GetUserRequest\x1a\x13.users.UserResponse\"\x19\x82\xd3\xe4\x93\x02\x13\x12\x11/api/v1/user/{id}\x12W\n" +
 	"\tPatchUser\x12\x17.users.PatchUserRequest\x1a\x13.users.UserResponse\"\x1c\x82\xd3\xe4\x93\x02\x16:\x01*2\x11/api/v1/user/{id}\x12Y\n" +
 	"\n" +
 	"DeleteUser\x12\x18.users.DeleteUserRequest\x1a\x16.google.protobuf.Empty\"\x19\x82\xd3\xe4\x93\x02\x13*\x11/api/v1/user/{id}\x12b\n" +
-	"\rCreateProfile\x12\x1b.users.CreateProfileRequest\x1a\x13.users.UserResponse\"\x1f\x82\xd3\xe4\x93\x02\x19:\x01*\"\x14/api/v1/user/profile\x12X\n" +
-	"\tListUsers\x12\x17.users.ListUsersRequest\x1a\x18.users.ListUsersResponse\"\x18\x82\xd3\xe4\x93\x02\x12:\x01*\x12\r/api/v1/users\x12^\n" +
+	"\rCreateProfile\x12\x1b.users.CreateProfileRequest\x1a\x13.users.UserResponse\"\x1f\x82\xd3\xe4\x93\x02\x19:\x01*\"\x14/api/v1/user/profile\x12U\n" +
+	"\tListUsers\x12\x17.users.ListUsersRequest\x1a\x18.users.ListUsersResponse\"\x15\x82\xd3\xe4\x93\x02\x0f\x12\r/api/v1/users\x12^\n" +
 	"\n" +
 	"UpdateRole\x12\x18.users.UpdateRoleRequest\x1a\x13.users.UserResponse\"!\x82\xd3\xe4\x93\x02\x1b:\x01*2\x16/api/v1/user/{id}/role\x12U\n" +
 	"\n" +
-	"GetMetrics\x12\x16.google.protobuf.Empty\x1a\x16.users.MetricsResponse\"\x17\x82\xd3\xe4\x93\x02\x11\x12\x0f/api/v1/metricsB\tZ\a./usersb\x06proto3"
+	"GetMetrics\x12\x16.google.protobuf.Empty\x1a\x16.users.MetricsResponse\"\x17\x82\xd3\xe4\x93\x02\x11\x12\x0f/api/v1/metrics\x12j\n" +
+	"\x0eGetUserByEmail\x12\x1c.users.GetUserByEmailRequest\x1a\x13.users.UserResponse\"%\x82\xd3\xe4\x93\x02\x1f\x12\x1d/api/v1/user/by-email/{email}\x12e\n" +
+	"\vAdminExists\x12\x16.google.protobuf.Empty\x1a\x1a.users.AdminExistsResponse\"\"\x82\xd3\xe4\x93\x02\x1c\x12\x1a/api/v1/users/admin-existsB\tZ\a./usersb\x06proto3"
 
 var (
 	file_proto_users_users_proto_rawDescOnce sync.Once
@@ -663,19 +757,21 @@ func file_proto_users_users_proto_rawDescGZIP() []byte {
 	return file_proto_users_users_proto_rawDescData
 }
 
-var file_proto_users_users_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_proto_users_users_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_proto_users_users_proto_goTypes = []any{
-	(*GetUserRequest)(nil),       // 0: users.GetUserRequest
-	(*DeleteUserRequest)(nil),    // 1: users.DeleteUserRequest
-	(*PatchUserRequest)(nil),     // 2: users.PatchUserRequest
-	(*UserResponse)(nil),         // 3: users.UserResponse
-	(*PatchUserData)(nil),        // 4: users.PatchUserData
-	(*CreateProfileRequest)(nil), // 5: users.CreateProfileRequest
-	(*ListUsersRequest)(nil),     // 6: users.ListUsersRequest
-	(*ListUsersResponse)(nil),    // 7: users.ListUsersResponse
-	(*UpdateRoleRequest)(nil),    // 8: users.UpdateRoleRequest
-	(*MetricsResponse)(nil),      // 9: users.MetricsResponse
-	(*emptypb.Empty)(nil),        // 10: google.protobuf.Empty
+	(*GetUserRequest)(nil),        // 0: users.GetUserRequest
+	(*DeleteUserRequest)(nil),     // 1: users.DeleteUserRequest
+	(*PatchUserRequest)(nil),      // 2: users.PatchUserRequest
+	(*UserResponse)(nil),          // 3: users.UserResponse
+	(*PatchUserData)(nil),         // 4: users.PatchUserData
+	(*CreateProfileRequest)(nil),  // 5: users.CreateProfileRequest
+	(*ListUsersRequest)(nil),      // 6: users.ListUsersRequest
+	(*ListUsersResponse)(nil),     // 7: users.ListUsersResponse
+	(*UpdateRoleRequest)(nil),     // 8: users.UpdateRoleRequest
+	(*MetricsResponse)(nil),       // 9: users.MetricsResponse
+	(*GetUserByEmailRequest)(nil), // 10: users.GetUserByEmailRequest
+	(*AdminExistsResponse)(nil),   // 11: users.AdminExistsResponse
+	(*emptypb.Empty)(nil),         // 12: google.protobuf.Empty
 }
 var file_proto_users_users_proto_depIdxs = []int32{
 	4,  // 0: users.PatchUserRequest.data:type_name -> users.PatchUserData
@@ -686,16 +782,20 @@ var file_proto_users_users_proto_depIdxs = []int32{
 	5,  // 5: users.UserService.CreateProfile:input_type -> users.CreateProfileRequest
 	6,  // 6: users.UserService.ListUsers:input_type -> users.ListUsersRequest
 	8,  // 7: users.UserService.UpdateRole:input_type -> users.UpdateRoleRequest
-	10, // 8: users.UserService.GetMetrics:input_type -> google.protobuf.Empty
-	3,  // 9: users.UserService.GetUser:output_type -> users.UserResponse
-	3,  // 10: users.UserService.PatchUser:output_type -> users.UserResponse
-	10, // 11: users.UserService.DeleteUser:output_type -> google.protobuf.Empty
-	3,  // 12: users.UserService.CreateProfile:output_type -> users.UserResponse
-	7,  // 13: users.UserService.ListUsers:output_type -> users.ListUsersResponse
-	3,  // 14: users.UserService.UpdateRole:output_type -> users.UserResponse
-	9,  // 15: users.UserService.GetMetrics:output_type -> users.MetricsResponse
-	9,  // [9:16] is the sub-list for method output_type
-	2,  // [2:9] is the sub-list for method input_type
+	12, // 8: users.UserService.GetMetrics:input_type -> google.protobuf.Empty
+	10, // 9: users.UserService.GetUserByEmail:input_type -> users.GetUserByEmailRequest
+	12, // 10: users.UserService.AdminExists:input_type -> google.protobuf.Empty
+	3,  // 11: users.UserService.GetUser:output_type -> users.UserResponse
+	3,  // 12: users.UserService.PatchUser:output_type -> users.UserResponse
+	12, // 13: users.UserService.DeleteUser:output_type -> google.protobuf.Empty
+	3,  // 14: users.UserService.CreateProfile:output_type -> users.UserResponse
+	7,  // 15: users.UserService.ListUsers:output_type -> users.ListUsersResponse
+	3,  // 16: users.UserService.UpdateRole:output_type -> users.UserResponse
+	9,  // 17: users.UserService.GetMetrics:output_type -> users.MetricsResponse
+	3,  // 18: users.UserService.GetUserByEmail:output_type -> users.UserResponse
+	11, // 19: users.UserService.AdminExists:output_type -> users.AdminExistsResponse
+	11, // [11:20] is the sub-list for method output_type
+	2,  // [2:11] is the sub-list for method input_type
 	2,  // [2:2] is the sub-list for extension type_name
 	2,  // [2:2] is the sub-list for extension extendee
 	0,  // [0:2] is the sub-list for field type_name
@@ -715,7 +815,7 @@ func file_proto_users_users_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_users_users_proto_rawDesc), len(file_proto_users_users_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

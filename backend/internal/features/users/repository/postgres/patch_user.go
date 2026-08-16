@@ -14,7 +14,7 @@ func (r *UserRepository) PatchUser(ctx context.Context, id int, patch domain.Use
 	defer cancel()
 
 	query := `
-		UPDATE finance.users SET
+		UPDATE users.users SET
 		full_name = $1,phone_number = $2,version=version+1
 		WHERE id = $3 AND version = $4
 		RETURNING id,full_name,phone_number,email,password_hash,version,is_admin`

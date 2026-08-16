@@ -11,6 +11,7 @@ import (
 	finance_repo "backend/internal/features/finance/repository/postgres"
 	finance_service "backend/internal/features/finance/service"
 	finance_grpc "backend/internal/features/finance/transport/grpc"
+	"backend/internal/features/finance/transport/grpc/proto"
 	"context"
 	"net"
 	"os"
@@ -78,7 +79,7 @@ func main() {
 	)
 
 	financeServer := finance_grpc.NewFinanceServer(financeService, logger)
-	finance_grpc.RegisterFinanceServiceServer(grpcServer, financeServer)
+	proto.RegisterFinanceServiceServer(grpcServer, financeServer)
 
 	lis, err := net.Listen("tcp", ":50053")
 	if err != nil {

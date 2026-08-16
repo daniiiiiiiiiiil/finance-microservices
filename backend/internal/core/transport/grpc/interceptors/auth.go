@@ -23,6 +23,16 @@ func AuthInterceptor(jwtManager *jwt.JWTManager) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		var tokenString string
 
+		if strings.Contains(info.FullMethod, "GetUserByEmail") {
+			return handler(ctx, req)
+		}
+		if strings.Contains(info.FullMethod, "CreateProfile") {
+			return handler(ctx, req)
+		}
+		if strings.Contains(info.FullMethod, "AdminExists") {
+			return handler(ctx, req)
+		}
+
 		md, ok := metadata.FromIncomingContext(ctx)
 		if !ok {
 			return nil, status.Error(codes.Unauthenticated, "missing authorization header or cookie")

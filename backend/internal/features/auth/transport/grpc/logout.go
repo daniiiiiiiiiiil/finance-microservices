@@ -1,4 +1,4 @@
-package gRPC
+package grpc
 
 import (
 	"backend/internal/core/transport/grpc/interceptors"

@@ -21,13 +21,15 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	UserService_GetUser_FullMethodName       = "/users.UserService/GetUser"
-	UserService_PatchUser_FullMethodName     = "/users.UserService/PatchUser"
-	UserService_DeleteUser_FullMethodName    = "/users.UserService/DeleteUser"
-	UserService_CreateProfile_FullMethodName = "/users.UserService/CreateProfile"
-	UserService_ListUsers_FullMethodName     = "/users.UserService/ListUsers"
-	UserService_UpdateRole_FullMethodName    = "/users.UserService/UpdateRole"
-	UserService_GetMetrics_FullMethodName    = "/users.UserService/GetMetrics"
+	UserService_GetUser_FullMethodName        = "/users.UserService/GetUser"
+	UserService_PatchUser_FullMethodName      = "/users.UserService/PatchUser"
+	UserService_DeleteUser_FullMethodName     = "/users.UserService/DeleteUser"
+	UserService_CreateProfile_FullMethodName  = "/users.UserService/CreateProfile"
+	UserService_ListUsers_FullMethodName      = "/users.UserService/ListUsers"
+	UserService_UpdateRole_FullMethodName     = "/users.UserService/UpdateRole"
+	UserService_GetMetrics_FullMethodName     = "/users.UserService/GetMetrics"
+	UserService_GetUserByEmail_FullMethodName = "/users.UserService/GetUserByEmail"
+	UserService_AdminExists_FullMethodName    = "/users.UserService/AdminExists"
 )
 
 // UserServiceClient is the client API for UserService service.
@@ -41,6 +43,8 @@ type UserServiceClient interface {
 	ListUsers(ctx context.Context, in *ListUsersRequest, opts ...grpc.CallOption) (*ListUsersResponse, error)
 	UpdateRole(ctx context.Context, in *UpdateRoleRequest, opts ...grpc.CallOption) (*UserResponse, error)
 	GetMetrics(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*MetricsResponse, error)
+	GetUserByEmail(ctx context.Context, in *GetUserByEmailRequest, opts ...grpc.CallOption) (*UserResponse, error)
+	AdminExists(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*AdminExistsResponse, error)
 }
 
 type userServiceClient struct {
@@ -121,6 +125,26 @@ func (c *userServiceClient) GetMetrics(ctx context.Context, in *emptypb.Empty, o
 	return out, nil
 }
 
+func (c *userServiceClient) GetUserByEmail(ctx context.Context, in *GetUserByEmailRequest, opts ...grpc.CallOption) (*UserResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UserResponse)
+	err := c.cc.Invoke(ctx, UserService_GetUserByEmail_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) AdminExists(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*AdminExistsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AdminExistsResponse)
+	err := c.cc.Invoke(ctx, UserService_AdminExists_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility.
@@ -132,6 +156,8 @@ type UserServiceServer interface {
 	ListUsers(context.Context, *ListUsersRequest) (*ListUsersResponse, error)
 	UpdateRole(context.Context, *UpdateRoleRequest) (*UserResponse, error)
 	GetMetrics(context.Context, *emptypb.Empty) (*MetricsResponse, error)
+	GetUserByEmail(context.Context, *GetUserByEmailRequest) (*UserResponse, error)
+	AdminExists(context.Context, *emptypb.Empty) (*AdminExistsResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -162,6 +188,12 @@ func (UnimplementedUserServiceServer) UpdateRole(context.Context, *UpdateRoleReq
 }
 func (UnimplementedUserServiceServer) GetMetrics(context.Context, *emptypb.Empty) (*MetricsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetMetrics not implemented")
+}
+func (UnimplementedUserServiceServer) GetUserByEmail(context.Context, *GetUserByEmailRequest) (*UserResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetUserByEmail not implemented")
+}
+func (UnimplementedUserServiceServer) AdminExists(context.Context, *emptypb.Empty) (*AdminExistsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AdminExists not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 func (UnimplementedUserServiceServer) testEmbeddedByValue()                     {}
@@ -310,6 +342,42 @@ func _UserService_GetMetrics_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_GetUserByEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserByEmailRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetUserByEmail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetUserByEmail_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetUserByEmail(ctx, req.(*GetUserByEmailRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_AdminExists_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).AdminExists(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_AdminExists_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).AdminExists(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -344,6 +412,14 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetMetrics",
 			Handler:    _UserService_GetMetrics_Handler,
+		},
+		{
+			MethodName: "GetUserByEmail",
+			Handler:    _UserService_GetUserByEmail_Handler,
+		},
+		{
+			MethodName: "AdminExists",
+			Handler:    _UserService_AdminExists_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

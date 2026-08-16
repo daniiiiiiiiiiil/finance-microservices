@@ -1,8 +1,8 @@
-package gRPC
+package grpc
 
 import (
 	"backend/internal/core/domain"
-	"backend/internal/features/finance/transport/gRPC/proto"
+	"backend/internal/features/finance/transport/grpc/proto"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 )

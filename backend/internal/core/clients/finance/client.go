@@ -1,7 +1,7 @@
 package finance
 
 import (
-	"backend/internal/features/finance/transport/gRPC/proto"
+	"backend/internal/features/finance/transport/grpc/proto"
 	"context"
 	"fmt"
 

@@ -6,10 +6,20 @@ import (
 	userpb "backend/internal/features/users/transport/grpc/proto"
 	"context"
 	"fmt"
+
+	"google.golang.org/grpc/metadata"
 )
 
 func (s *AdminService) GetUsers(ctx context.Context, limit, offset int) ([]domain.User, error) {
 	limit, offset = pagination.LimitOffset(limit, offset)
+
+	md, ok := metadata.FromIncomingContext(ctx)
+	if ok {
+		auth := md.Get("authorization")
+		if len(auth) > 0 {
+			ctx = metadata.AppendToOutgoingContext(ctx, "authorization", auth[0])
+		}
+	}
 
 	grpcReq := &userpb.ListUsersRequest{
 		Limit:  int32(limit),

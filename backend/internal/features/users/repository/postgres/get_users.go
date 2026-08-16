@@ -12,14 +12,14 @@ func (r *UserRepository) ListUsers(ctx context.Context, limit, offset int) ([]do
 	defer cancel()
 
 	var total int
-	err := r.pool.QueryRow(ctx, `SELECT COUNT(*) FROM finance.users`).Scan(&total)
+	err := r.pool.QueryRow(ctx, `SELECT COUNT(*) FROM users.users`).Scan(&total)
 	if err != nil {
 		return nil, 0, fmt.Errorf("count users: %w", err)
 	}
 
 	query := `
 		SELECT id, version, full_name, email, password_hash, phone_number, is_admin
-		FROM finance.users
+		FROM users.users
 		ORDER BY id
 		LIMIT $1 OFFSET $2`
 

@@ -18,8 +18,8 @@ import (
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param request body dto.LoginRequest true "Данные для входа"
-// @Success 200 {object} dto.UserResponse
+// @Param request body http_auth.LoginRequest true "Данные для входа"
+// @Success 200 {object} http_auth.UserResponse
 // @Failure 400 {object} response_core.ErrorResponse
 // @Failure 401 {object} response_core.ErrorResponse
 // @Failure 500 {object} response_core.ErrorResponse
@@ -42,7 +42,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req dto.LoginRequest
+	var req http_auth.LoginRequest
 	if err := request.DecodeAndValidateRequest(r, &req); err != nil {
 		rh.ErrorResponse(err, "invalid request")
 		return

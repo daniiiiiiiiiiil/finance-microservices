@@ -104,11 +104,35 @@ func (u *User) ApplyPatch(patch UserPatch) error {
 		tmp.PhoneNumber = patch.PhoneNumber.Value
 	}
 
-	if err := tmp.Validate(); err != nil {
+	if err := tmp.ValidatePatch(); err != nil {
 		return fmt.Errorf("invalid user after patch: %w", err)
 	}
 
 	*u = tmp
+	return nil
+}
+
+func (u *User) ValidatePatch() error {
+	fullNameLength := len([]rune(u.FullName))
+	if fullNameLength < 3 || fullNameLength > 100 {
+		return fmt.Errorf("User full name must be between 3 and 100 characters:%d:%w", fullNameLength, errors_core.ErrInvalidArgument)
+	}
+
+	if u.Email == "" {
+		return fmt.Errorf("email is required: %w", errors_core.ErrInvalidArgument)
+	}
+
+	if u.PhoneNumber != nil {
+		phoneNumberLength := len([]rune(*u.PhoneNumber))
+		if phoneNumberLength < 10 || phoneNumberLength > 15 {
+			return fmt.Errorf("invalid phone number:%d:%w", phoneNumberLength, errors_core.ErrInvalidArgument)
+		}
+		re := regexp.MustCompile(`^\+[0-9]+$`)
+		if !re.MatchString(*u.PhoneNumber) {
+			return fmt.Errorf("invalid phone number format:%w", errors_core.ErrInvalidArgument)
+		}
+	}
+
 	return nil
 }
 

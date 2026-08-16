@@ -12,7 +12,7 @@ func (r *UserRepository) CreateUser(ctx context.Context, user domain.User) (int,
 	defer cancel()
 
 	query := `
-		INSERT INTO finance.users (full_name, email, password_hash, phone_number, is_admin)
+		INSERT INTO users.users (full_name, email, password_hash, phone_number, is_admin)
 		VALUES ($1, $2, $3, $4, $5)
 		RETURNING id`
 

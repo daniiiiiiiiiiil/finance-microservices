@@ -12,7 +12,7 @@ func (r *AuthRepository) AdminExists(ctx context.Context) (bool, error) {
 	var count int
 	err := r.pool.QueryRow(ctx, `
         SELECT COUNT(*) 
-        FROM finance.users 
+        FROM users.users 
         WHERE is_admin = true
     `).Scan(&count)
 	if err != nil {

@@ -6,16 +6,16 @@ import (
 	"backend/internal/core/config"
 	"backend/internal/core/logger"
 	core_http_middleware "backend/internal/core/transport/http/middleware"
-	userpb "backend/internal/features/users/transport/grpc/proto"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	adminpb "backend/internal/features/admin/transport/grpc"
-	authpb "backend/internal/features/auth/transport/grpc"
-	financepb "backend/internal/features/finance/transport/grpc"
+	adminpb "backend/internal/features/admin/transport/grpc/proto"
+	authpb "backend/internal/features/auth/transport/grpc/proto"
+	financepb "backend/internal/features/finance/transport/grpc/proto"
+	userpb "backend/internal/features/users/transport/grpc/proto"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -44,27 +44,27 @@ func main() {
 	jwtManager := jwt.NewJWTManager(cfg.JWTSecret, cfg.JWTDuration)
 	logger.Debug("JWT Manager initialized for Gateway")
 
-	authConn, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	authConn, err := grpc.Dial("auth:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logger.Fatal("fail to dial", zap.Error(err))
 	}
 	defer authConn.Close()
 
-	userConn, err := grpc.Dial("localhost:50052",
+	userConn, err := grpc.Dial("users:50052",
 		grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logger.Fatal("fail to dial", zap.Error(err))
 	}
 	defer userConn.Close()
 
-	financeConn, err := grpc.Dial("localhost:50053",
+	financeConn, err := grpc.Dial("finance:50053",
 		grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logger.Fatal("fail to dial", zap.Error(err))
 	}
 	defer financeConn.Close()
 
-	adminConn, err := grpc.Dial("localhost:50054",
+	adminConn, err := grpc.Dial("admin:50054",
 		grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logger.Fatal("fail to dial", zap.Error(err))

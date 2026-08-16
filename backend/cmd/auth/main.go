@@ -11,11 +11,12 @@ import (
 	postgres_auth "backend/internal/features/auth/repository/postgres"
 	service_auth "backend/internal/features/auth/service"
 	authgrpc "backend/internal/features/auth/transport/grpc"
-	"backend/internal/features/auth/transport/http/dto"
+	http_auth "backend/internal/features/auth/transport/http/dto"
 	"context"
 	"net"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -71,14 +72,7 @@ func main() {
 	logger.Debug("initializing auth service")
 	authRepo := postgres_auth.NewAuthRepository(pool)
 	authService := service_auth.NewAuthService(authRepo, jwtManager, redisClient, usersClient)
-	exists, err := authService.AdminExists(ctx)
-	if err != nil {
-		logger.Warn("failed to check admin exists", zap.Error(err))
-	} else if !exists {
-		createFirstAdmin(ctx, authService, logger)
-	} else {
-		logger.Info("admin already exists, skipping creation")
-	}
+	createFirstAdmin(ctx, authService, logger)
 
 	logger.Debug("initializing auth service gRPC")
 	grpcServer := grpc.NewServer(
@@ -135,22 +129,34 @@ func main() {
 }
 
 func createFirstAdmin(ctx context.Context, authService *service_auth.AuthService, log *logger.Logger) {
-	req := dto.RegisterRequest{
+	req := http_auth.RegisterRequest{
 		FullName:    "Admin",
 		Email:       "admin@finance.com",
 		Password:    "admin123",
-		PhoneNumber: "",
+		PhoneNumber: "+79998887766",
 		IsAdmin:     true,
 	}
 
-	token, user, err := authService.Register(ctx, req)
-	if err != nil {
-		log.Warn("failed to create first admin (may already exist)", zap.Error(err))
-		return
-	}
+	maxRetries := 10
+	for i := 0; i < maxRetries; i++ {
+		token, user, err := authService.Register(ctx, req)
+		if err == nil {
+			log.Info("first admin created successfully",
+				zap.String("email", user.Email),
+				zap.String("token", token[:20]+"..."),
+			)
+			return
+		}
 
-	log.Info("first admin created successfully",
-		zap.String("email", user.Email),
-		zap.String("token", token[:20]+"..."),
-	)
+		if strings.Contains(err.Error(), "already exists") {
+			log.Info("admin already exists, skipping creation")
+			return
+		}
+
+		log.Warn("failed to create first admin, retrying...",
+			zap.Error(err),
+			zap.Int("attempt", i+1),
+		)
+		time.Sleep(2 * time.Second)
+	}
 }

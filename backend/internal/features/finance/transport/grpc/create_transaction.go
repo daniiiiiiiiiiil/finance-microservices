@@ -1,9 +1,9 @@
-package gRPC
+package grpc
 
 import (
 	"backend/internal/core/domain"
 	"backend/internal/core/transport/grpc/interceptors"
-	"backend/internal/features/finance/transport/gRPC/proto"
+	"backend/internal/features/finance/transport/grpc/proto"
 	"time"
 
 	"go.uber.org/zap"

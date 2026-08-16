@@ -87,41 +87,113 @@ migrate-create:
 	-dir /migrations \
 	-seq $(seq)
 
-migrate-up:
-	@docker compose run --rm finance-postgres-migrate \
+migrate-up-auth:
+	@docker compose run --rm auth-postgres-migrate \
 		-path /migrations \
-		-database postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@finance-postgres:5432/${POSTGRES_DB}?sslmode=disable \
+		-database postgres://${AUTH_POSTGRES_USER}:${AUTH_POSTGRES_PASSWORD}@auth-postgres:5432/${AUTH_POSTGRES_DB}?sslmode=disable \
 		up
 
-migrate-down:
-	@docker compose run --rm finance-postgres-migrate \
+migrate-down-auth:
+	@docker compose run --rm auth-postgres-migrate \
 		-path /migrations \
-		-database postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@finance-postgres:5432/${POSTGRES_DB}?sslmode=disable \
+		-database postgres://${AUTH_POSTGRES_USER}:${AUTH_POSTGRES_PASSWORD}@auth-postgres:5432/${AUTH_POSTGRES_DB}?sslmode=disable \
 		down $(N)
 
-migrate-down-all:
-	@docker compose run --rm finance-postgres-migrate \
+migrate-down-all-auth:
+	@docker compose run --rm auth-postgres-migrate \
 		-path /migrations \
-		-database postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@finance-postgres:5432/${POSTGRES_DB}?sslmode=disable \
+		-database postgres://${AUTH_POSTGRES_USER}:${AUTH_POSTGRES_PASSWORD}@auth-postgres:5432/${AUTH_POSTGRES_DB}?sslmode=disable \
 		down -all
 
-migrate-force:
-	@docker compose run --rm finance-postgres-migrate \
+migrate-force-auth:
+	@docker compose run --rm auth-postgres-migrate \
 		-path /migrations \
-		-database "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@finance-postgres:5432/${POSTGRES_DB}?sslmode=disable" \
+		-database "postgres://${AUTH_POSTGRES_USER}:${AUTH_POSTGRES_PASSWORD}@auth-postgres:5432/${AUTH_POSTGRES_DB}?sslmode=disable" \
 		force $(version)
 
-migrate-version:
-	@docker compose run --rm finance-postgres-migrate \
+migrate-version-auth:
+	@docker compose run --rm auth-postgres-migrate \
 		-path /migrations \
-		-database "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@finance-postgres:5432/${POSTGRES_DB}?sslmode=disable" \
+		-database "postgres://${AUTH_POSTGRES_USER}:${AUTH_POSTGRES_PASSWORD}@auth-postgres:5432/${AUTH_POSTGRES_DB}?sslmode=disable" \
 		version
 
-migrate-action:
+migrate-up-users:
+	@docker compose run --rm users-postgres-migrate \
+		-path /migrations \
+		-database postgres://${USERS_POSTGRES_USER}:${USERS_POSTGRES_PASSWORD}@users-postgres:5432/${USERS_POSTGRES_DB}?sslmode=disable \
+		up
+
+migrate-down-users:
+	@docker compose run --rm users-postgres-migrate \
+		-path /migrations \
+		-database postgres://${USERS_POSTGRES_USER}:${USERS_POSTGRES_PASSWORD}@users-postgres:5432/${USERS_POSTGRES_DB}?sslmode=disable \
+		down $(N)
+
+migrate-down-all-users:
+	@docker compose run --rm users-postgres-migrate \
+		-path /migrations \
+		-database postgres://${USERS_POSTGRES_USER}:${USERS_POSTGRES_PASSWORD}@users-postgres:5432/${USERS_POSTGRES_DB}?sslmode=disable \
+		down -all
+
+migrate-force-users:
+	@docker compose run --rm users-postgres-migrate \
+		-path /migrations \
+		-database "postgres://${USERS_POSTGRES_USER}:${USERS_POSTGRES_PASSWORD}@users-postgres:5432/${USERS_POSTGRES_DB}?sslmode=disable" \
+		force $(version)
+
+migrate-version-users:
+	@docker compose run --rm users-postgres-migrate \
+		-path /migrations \
+		-database "postgres://${USERS_POSTGRES_USER}:${USERS_POSTGRES_PASSWORD}@users-postgres:5432/${USERS_POSTGRES_DB}?sslmode=disable" \
+		version
+
+migrate-up-finance:
 	@docker compose run --rm finance-postgres-migrate \
 		-path /migrations \
-		-database postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@finance-postgres:5432/${POSTGRES_DB}?sslmode=disable \
-		"$(action)"
+		-database postgres://${FINANCE_POSTGRES_USER}:${FINANCE_POSTGRES_PASSWORD}@finance-postgres:5432/${FINANCE_POSTGRES_DB}?sslmode=disable \
+		up
+
+migrate-down-finance:
+	@docker compose run --rm finance-postgres-migrate \
+		-path /migrations \
+		-database postgres://${FINANCE_POSTGRES_USER}:${FINANCE_POSTGRES_PASSWORD}@finance-postgres:5432/${FINANCE_POSTGRES_DB}?sslmode=disable \
+		down $(N)
+
+migrate-down-all-finance:
+	@docker compose run --rm finance-postgres-migrate \
+		-path /migrations \
+		-database postgres://${FINANCE_POSTGRES_USER}:${FINANCE_POSTGRES_PASSWORD}@finance-postgres:5432/${FINANCE_POSTGRES_DB}?sslmode=disable \
+		down -all
+
+migrate-force-finance:
+	@docker compose run --rm finance-postgres-migrate \
+		-path /migrations \
+		-database "postgres://${FINANCE_POSTGRES_USER}:${FINANCE_POSTGRES_PASSWORD}@finance-postgres:5432/${FINANCE_POSTGRES_DB}?sslmode=disable" \
+		force $(version)
+
+migrate-version-finance:
+	@docker compose run --rm finance-postgres-migrate \
+		-path /migrations \
+		-database "postgres://${FINANCE_POSTGRES_USER}:${FINANCE_POSTGRES_PASSWORD}@finance-postgres:5432/${FINANCE_POSTGRES_DB}?sslmode=disable" \
+		version
+
+migrate-up-all:
+	@echo "Applying Auth migrations..."
+	@$(MAKE) migrate-up-auth
+	@echo "Applying Users migrations..."
+	@$(MAKE) migrate-up-users
+	@echo "Applying Finance migrations..."
+	@$(MAKE) migrate-up-finance
+	@echo "All migrations applied!"
+
+migrate-down-all:
+	@echo "Rolling back Finance migrations..."
+	@$(MAKE) migrate-down-finance
+	@echo "Rolling back Users migrations..."
+	@$(MAKE) migrate-down-users
+	@echo "Rolling back Auth migrations..."
+	@$(MAKE) migrate-down-auth
+	@echo "All migrations rolled back!"
 
 
 finance-deploy:
@@ -140,11 +212,11 @@ finance-restart:
 swagger-gen:
 	docker compose run --rm swagger \
 		init \
-		-g cmd/finance/main.go \
+		-g cmd/gateway/main.go \
 		-o docs \
 		--parseInternal \
-		--parseDependency
-
+		--parseDependency \
+		--parseVendor
 
 up:
 	docker compose up -d
@@ -153,7 +225,7 @@ down:
 	docker compose down
 
 build:
-	docker compose build
+	docker-compose up -d --build
 
 logs:
 	docker compose logs -f
@@ -233,3 +305,68 @@ run-finance:
 run-gateway:
 	@set ADDRESS=:8080 && go run cmd/gateway/main.go
 
+
+proto-gen-users:
+	@echo "Generating users proto..."
+	protoc \
+		--go_out=. \
+		--go_opt=paths=source_relative \
+		--go-grpc_out=. \
+		--go-grpc_opt=paths=source_relative \
+		--grpc-gateway_out=. \
+		--grpc-gateway_opt=paths=source_relative \
+		-I. \
+		-I./proto \
+		proto/users/users.proto
+
+proto-gen-auth:
+	@echo "Generating auth proto..."
+	protoc \
+		--go_out=. \
+		--go_opt=paths=source_relative \
+		--go-grpc_out=. \
+		--go-grpc_opt=paths=source_relative \
+		--grpc-gateway_out=. \
+		--grpc-gateway_opt=paths=source_relative \
+		-I. \
+		proto/auth/auth.proto
+
+proto-gen-finance:
+	@echo "Generating finance proto..."
+	protoc \
+		--go_out=. \
+		--go_opt=paths=source_relative \
+		--go-grpc_out=. \
+		--go-grpc_opt=paths=source_relative \
+		--grpc-gateway_out=. \
+		--grpc-gateway_opt=paths=source_relative \
+		-I. \
+		proto/finance/finance.proto
+
+proto-gen-admin:
+	@echo "Generating admin proto..."
+	protoc \
+		--go_out=. \
+		--go_opt=paths=source_relative \
+		--go-grpc_out=. \
+		--go-grpc_opt=paths=source_relative \
+		--grpc-gateway_out=. \
+		--grpc-gateway_opt=paths=source_relative \
+		-I. \
+		proto/admin/admin.proto
+
+proto-gen-all:
+	@echo "Generating all proto files..."
+	protoc \
+		--go_out=. \
+		--go_opt=paths=source_relative \
+		--go-grpc_out=. \
+		--go-grpc_opt=paths=source_relative \
+		--grpc-gateway_out=. \
+		--grpc-gateway_opt=paths=source_relative \
+		-I. \
+		proto/auth/auth.proto \
+		proto/users/users.proto \
+		proto/finance/finance.proto \
+		proto/admin/admin.proto
+	@echo "All proto files generated!"
