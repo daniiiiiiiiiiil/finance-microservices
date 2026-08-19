@@ -14,8 +14,6 @@ func (s *FinanceService) UpdateTransaction(ctx context.Context, transaction doma
 		return domain.Finance{}, fmt.Errorf("get existing transaction: %w", err)
 	}
 
-	fmt.Printf("UpdateTransaction called with ID: %d\n", transaction.ID)
-
 	transaction.Version = existing.Version
 	transaction.UserID = existing.UserID
 	transaction.CreatedAt = existing.CreatedAt

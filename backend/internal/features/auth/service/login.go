@@ -14,6 +14,10 @@ func (s *AuthService) Login(ctx context.Context, req http_auth.LoginRequest) (st
 		return "", nil, ErrInvalidCredentials
 	}
 
+	if cred.Status != "active" {
+		return "", nil, fmt.Errorf("account not active")
+	}
+
 	if err := bcrypt.CompareHashAndPassword([]byte(cred.PasswordHash), []byte(req.Password)); err != nil {
 		return "", nil, ErrInvalidCredentials
 	}
@@ -23,7 +27,7 @@ func (s *AuthService) Login(ctx context.Context, req http_auth.LoginRequest) (st
 		return "", nil, fmt.Errorf("failed to get user profile: %w", err)
 	}
 
-	token, err := s.jwtManager.Generate(cred.ID, cred.Email, profile.IsAdmin)
+	token, err := s.jwtManager.Generate(profile.ID, profile.Email, profile.IsAdmin)
 	if err != nil {
 		return "", nil, fmt.Errorf("generate token: %w", err)
 	}

@@ -22,6 +22,7 @@ type FinanceRepository interface {
 	GetDashboard(ctx context.Context, userID int) (domain.Dashboard, error)
 	DeleteUserTransactions(ctx context.Context, userID int) (int, error)
 	GetMetrics(ctx context.Context) (service_admin.Metrics, error)
+	GetTransactionsCount(ctx context.Context, userID int, transactionType, category *string, from, to *time.Time) (int, error)
 }
 
 type FinanceService struct {

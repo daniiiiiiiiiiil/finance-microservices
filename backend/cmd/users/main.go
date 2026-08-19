@@ -2,10 +2,12 @@ package main
 
 import (
 	"backend/internal/core/auth/jwt"
+	"backend/internal/core/cache"
 	"backend/internal/core/config"
 	"backend/internal/core/logger"
 	"backend/internal/core/repository/postgres/pool/pgx"
 	"backend/internal/core/transport/grpc/interceptors"
+	"backend/internal/features/auth/repository/redis"
 	"backend/internal/features/users/repository/postgres"
 	"backend/internal/features/users/service"
 	usersgrpc "backend/internal/features/users/transport/grpc"
@@ -37,6 +39,14 @@ func main() {
 	}
 	defer logger.Close()
 
+	logger.Debug("initializing redis")
+	redisAddr := os.Getenv("REDIS_ADDR")
+	if redisAddr == "" {
+		redisAddr = "localhost:6379"
+	}
+	redisClient := cache.NewRedisClient(redisAddr)
+	defer redisClient.Close()
+
 	logger.Debug("application time zone", zap.Any("time_zone", time.Local))
 
 	logger.Debug("initializing postgres connection pool")
@@ -49,9 +59,11 @@ func main() {
 	jwtManager := jwt.NewJWTManager(cfg.JWTSecret, cfg.JWTDuration)
 	logger.Debug("JWT Manager initialized")
 
+	blacklist := redis.NewBlacklistCache(redisClient)
+
 	logger.Debug("initializing users service")
 	usersRepository := postgres.NewUserRepository(pool)
-	usersService := service_user.NewUsersService(usersRepository, pool)
+	usersService := service_user.NewUsersService(usersRepository, pool, redisClient)
 
 	logger.Debug("initializing gRPC server with interceptors")
 
@@ -59,7 +71,7 @@ func main() {
 		grpc.ChainUnaryInterceptor(
 			interceptors.RequestIDInterceptor(),
 			interceptors.LoggerInterceptor(logger),
-			interceptors.AuthInterceptor(jwtManager),
+			interceptors.AuthInterceptor(jwtManager, blacklist),
 			interceptors.TraceInterceptor(logger.Logger)),
 	)
 

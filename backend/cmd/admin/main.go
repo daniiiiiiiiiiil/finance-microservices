@@ -11,6 +11,7 @@ import (
 	"backend/internal/core/transport/grpc/interceptors"
 	admin_service "backend/internal/features/admin/service"
 	admingrpc "backend/internal/features/admin/transport/grpc"
+	"backend/internal/features/auth/repository/redis"
 	"context"
 	"net"
 	"os"
@@ -63,6 +64,7 @@ func main() {
 	defer kafkaProducer.Close()
 
 	jwtManager := jwt.NewJWTManager(cfg.JWTSecret, cfg.JWTDuration)
+	blacklist := redis.NewBlacklistCache(redisClient)
 
 	logger.Debug("Initializing user client")
 	usersClient, err := usersclient.NewUsersClient("users:50052")
@@ -90,7 +92,7 @@ func main() {
 		grpc.ChainUnaryInterceptor(
 			interceptors.RequestIDInterceptor(),
 			interceptors.LoggerInterceptor(logger),
-			interceptors.AuthInterceptor(jwtManager),
+			interceptors.AuthInterceptor(jwtManager, blacklist),
 			interceptors.TraceInterceptor(logger.Logger),
 		))
 	adminServer := admingrpc.NewAdminServer(adminService, logger)

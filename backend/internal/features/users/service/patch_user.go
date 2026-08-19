@@ -21,5 +21,10 @@ func (s *UsersService) PatchUser(ctx context.Context, id int, patch domain.UserP
 		return domain.User{}, fmt.Errorf("userRepository.PatchUser: %w", err)
 	}
 
+	go func() {
+		_ = s.userCache.InvalidateUser(context.Background(), id)
+		_ = s.usersListCache.InvalidateAllUsersList(context.Background())
+	}()
+
 	return patchedUser, nil
 }

@@ -2,6 +2,7 @@ package interceptors
 
 import (
 	"backend/internal/core/auth/jwt"
+	"backend/internal/features/auth/repository/redis"
 	"context"
 	"strings"
 
@@ -19,7 +20,7 @@ const (
 	IsAdminKey contextKey = "is_admin"
 )
 
-func AuthInterceptor(jwtManager *jwt.JWTManager) grpc.UnaryServerInterceptor {
+func AuthInterceptor(jwtManager *jwt.JWTManager, blacklist *redis.BlacklistCache) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		var tokenString string
 
@@ -30,6 +31,12 @@ func AuthInterceptor(jwtManager *jwt.JWTManager) grpc.UnaryServerInterceptor {
 			return handler(ctx, req)
 		}
 		if strings.Contains(info.FullMethod, "AdminExists") {
+			return handler(ctx, req)
+		}
+		if strings.Contains(info.FullMethod, "Register") {
+			return handler(ctx, req)
+		}
+		if strings.Contains(info.FullMethod, "Login") {
 			return handler(ctx, req)
 		}
 
@@ -60,6 +67,16 @@ func AuthInterceptor(jwtManager *jwt.JWTManager) grpc.UnaryServerInterceptor {
 
 		if tokenString == "" {
 			return nil, status.Error(codes.Unauthenticated, "missing authorization header or cookie")
+		}
+
+		if blacklist != nil {
+			blacklisted, err := blacklist.IsBlacklisted(ctx, tokenString)
+			if err != nil {
+				return nil, status.Error(codes.Internal, "failed to check blacklist")
+			}
+			if blacklisted {
+				return nil, status.Error(codes.Unauthenticated, "token revoked")
+			}
 		}
 
 		claims, err := jwtManager.Validate(tokenString)

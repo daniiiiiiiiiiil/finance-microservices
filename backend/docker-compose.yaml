@@ -162,11 +162,13 @@ services:
     networks:
       - finance-net
     depends_on:
-      - finance-postgres
+      finance-postgres:
+        condition: service_started
     environment:
       - POSTGRES_USER=${FINANCE_POSTGRES_USER}
       - POSTGRES_PASSWORD=${FINANCE_POSTGRES_PASSWORD}
       - POSTGRES_DB=${FINANCE_POSTGRES_DB}
+    command: -path /migrations -database "postgres://${FINANCE_POSTGRES_USER}:${FINANCE_POSTGRES_PASSWORD}@finance-postgres:5432/${FINANCE_POSTGRES_DB}?sslmode=disable" up
 
   port-forwarder:
     image: alpine/socat:1.8.0.3
@@ -187,7 +189,7 @@ services:
       - POSTGRES_PASSWORD=${AUTH_POSTGRES_PASSWORD}
       - POSTGRES_DB=${AUTH_POSTGRES_DB}
     volumes:
-      - ./out/pgdata/auth:/var/lib/postgresql/auth/data:rw
+      - ./out/pgdata/auth:/var/lib/postgresql/data:rw
     restart: always
 
   auth-postgres-migrate:
@@ -223,7 +225,7 @@ services:
       - POSTGRES_PASSWORD=${USERS_POSTGRES_PASSWORD}
       - POSTGRES_DB=${USERS_POSTGRES_DB}
     volumes:
-      - ./out/pgdata/users:/var/lib/postgresql/users/data:rw
+      - ./out/pgdata/users:/var/lib/postgresql/data:rw
     restart: always
 
   users-postgres-migrate:

@@ -8,6 +8,7 @@ import (
 	"backend/internal/core/logger"
 	"backend/internal/core/repository/postgres/pool/pgx"
 	"backend/internal/core/transport/grpc/interceptors"
+	"backend/internal/features/auth/repository/redis"
 	finance_repo "backend/internal/features/finance/repository/postgres"
 	finance_service "backend/internal/features/finance/service"
 	finance_grpc "backend/internal/features/finance/transport/grpc"
@@ -65,6 +66,8 @@ func main() {
 
 	jwtManager := jwt.NewJWTManager(cfg.JWTSecret, cfg.JWTDuration)
 
+	blacklist := redis.NewBlacklistCache(redisClient)
+
 	logger.Debug("initializing finance service")
 	financeRepository := finance_repo.NewFinanceRepository(pool)
 	financeService := finance_service.NewFinanceService(financeRepository, pool, redisClient, kafkaProducer)
@@ -74,7 +77,7 @@ func main() {
 		grpc.ChainUnaryInterceptor(
 			interceptors.RequestIDInterceptor(),
 			interceptors.LoggerInterceptor(logger),
-			interceptors.AuthInterceptor(jwtManager),
+			interceptors.AuthInterceptor(jwtManager, blacklist),
 			interceptors.TraceInterceptor(logger.Logger)),
 	)
 

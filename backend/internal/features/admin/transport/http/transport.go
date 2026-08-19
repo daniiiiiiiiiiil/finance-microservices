@@ -21,18 +21,9 @@ func NewAdminHandler(s *service_admin.AdminService, jwtManager *jwt.JWTManager) 
 }
 
 func (h *AdminHandler) isAdmin(r *http.Request) bool {
-	userID, ok := core_middleware.GetUserID(r)
-	if !ok {
-		return false
-	}
-
-	_, err := h.service.GetUser(r.Context(), userID)
-	if err != nil {
-		return false
-	}
-
 	return core_middleware.IsAdmin(r)
 }
+
 func (h *AdminHandler) Routes() []server.Route {
 	authMiddleware := []core_middleware.Middleware{
 		core_middleware.Auth(h.jwtManager),
