@@ -4,22 +4,27 @@ import (
 	"context"
 	"fmt"
 
-	"google.golang.org/grpc/metadata"
+	"go.uber.org/zap"
 )
 
 func (s *AdminService) DeleteUser(ctx context.Context, id int) error {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if ok {
-		auth := md.Get("authorization")
-		if len(auth) > 0 {
-			ctx = metadata.AppendToOutgoingContext(ctx, "authorization", auth[0])
+	s.logger.Info("Starting DeleteUser saga", zap.Int("id", id))
+
+	if err := s.userClient.MarkDeleting(ctx, id); err != nil {
+		return fmt.Errorf("marking deleting user failed: %w", err)
+	}
+
+	if err := s.financeClient.DeleteUserTransactions(ctx, id); err != nil {
+		if restoreErr := s.userClient.RestoreUser(ctx, id); restoreErr != nil {
+			s.logger.Error("failed to restore user", zap.Error(restoreErr))
 		}
+		return fmt.Errorf("marking deleting user failed: %w", err)
 	}
-	if id <= 0 {
-		return fmt.Errorf("Id must be greater than 0")
+
+	if err := s.userClient.FinalizeDelete(ctx, id); err != nil {
+		return fmt.Errorf("finalize delete: %w", err)
 	}
-	if err := s.userClient.DeleteUser(ctx, id); err != nil {
-		return fmt.Errorf("DeleteUser id %v: %s", id, err)
-	}
+
+	s.logger.Info("saga completed successfully", zap.Int("user_id", id))
 	return nil
 }

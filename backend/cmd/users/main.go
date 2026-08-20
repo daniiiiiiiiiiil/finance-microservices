@@ -69,7 +69,7 @@ func main() {
 
 	logger.Debug("initializing users service")
 	usersRepository := postgres.NewUserRepository(pool)
-	usersService := service_user.NewUsersService(usersRepository, pool, redisClient, kafkaProducer)
+	usersService := service_user.NewUsersService(usersRepository, pool, redisClient, kafkaProducer, logger)
 
 	logger.Debug("initializing gRPC server with interceptors")
 

@@ -33,8 +33,11 @@ func (s *AuthService) Login(ctx context.Context, req http_auth.LoginRequest) (st
 	}
 
 	userResponse := &http_auth.UserResponse{
-		ID:    cred.ID,
-		Email: cred.Email,
+		ID:          profile.ID,
+		FullName:    profile.FullName,
+		Email:       profile.Email,
+		PhoneNumber: profile.PhoneNumber,
+		IsAdmin:     profile.IsAdmin,
 	}
 
 	return token, userResponse, nil

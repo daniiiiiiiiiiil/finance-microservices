@@ -37,7 +37,7 @@ func (c *UsersClient) CreateProfile(ctx context.Context, req *CreateProfileReque
 		IsAdmin:  req.IsAdmin,
 	}
 	if req.PhoneNumber != nil {
-		grpcReq.PhoneNumber = req.PhoneNumber
+		grpcReq.PhoneNumber = *req.PhoneNumber
 	}
 
 	resp, err := c.client.CreateProfile(ctx, grpcReq)
@@ -67,8 +67,8 @@ func (c *UsersClient) ListUsers(ctx context.Context, req *proto.ListUsersRequest
 	users := make([]UserProfile, len(resp.Users))
 	for i, user := range resp.Users {
 		var phoneNumber *string
-		if user.PhoneNumber != nil && *user.PhoneNumber != "" {
-			phoneNumber = user.PhoneNumber
+		if user.PhoneNumber != "" {
+			phoneNumber = &user.PhoneNumber
 		}
 		users[i] = UserProfile{
 			ID:          int(user.Id),
@@ -107,8 +107,8 @@ func (c *UsersClient) UpdateRole(ctx context.Context, req *proto.UpdateRoleReque
 		return nil, fmt.Errorf("failed to update role: %w", err)
 	}
 	var phoneNumber *string
-	if resp.PhoneNumber != nil && *resp.PhoneNumber != "" {
-		phoneNumber = resp.PhoneNumber
+	if len(resp.PhoneNumber) != 0 && resp.PhoneNumber != "" {
+		phoneNumber = &resp.PhoneNumber
 	}
 	return &UserProfile{
 		ID:          int(resp.Id),
@@ -129,8 +129,8 @@ func (c *UsersClient) GetUserByEmail(ctx context.Context, email string) (*UserPr
 		return nil, fmt.Errorf("failed to get user by email: %w", err)
 	}
 	var phoneNumber *string
-	if resp.PhoneNumber != nil && *resp.PhoneNumber != "" {
-		phoneNumber = resp.PhoneNumber
+	if resp.PhoneNumber != "" {
+		phoneNumber = &resp.PhoneNumber
 	}
 	return &UserProfile{
 		ID:          int(resp.Id),
@@ -166,4 +166,31 @@ func (c *UsersClient) AdminExists(ctx context.Context) (bool, error) {
 		return false, fmt.Errorf("failed to check admin exists: %w", err)
 	}
 	return resp.Exists, nil
+}
+
+func (c *UsersClient) MarkDeleting(ctx context.Context, id int) error {
+	req := &proto.MarkDeletingRequest{Id: int32(id)}
+	_, err := c.client.MarkDeleting(ctx, req)
+	if err != nil {
+		return fmt.Errorf("failed to mark deleting: %w", err)
+	}
+	return nil
+}
+
+func (c *UsersClient) FinalizeDelete(ctx context.Context, id int) error {
+	req := &proto.FinalizeDeleteRequest{Id: int32(id)}
+	_, err := c.client.FinalizeDelete(ctx, req)
+	if err != nil {
+		return fmt.Errorf("failed to finalize delete: %w", err)
+	}
+	return nil
+}
+
+func (c *UsersClient) RestoreUser(ctx context.Context, id int) error {
+	req := &proto.RestoreUserRequest{Id: int32(id)}
+	_, err := c.client.RestoreUser(ctx, req)
+	if err != nil {
+		return fmt.Errorf("failed to restore user: %w", err)
+	}
+	return nil
 }

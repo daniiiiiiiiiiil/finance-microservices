@@ -4,6 +4,7 @@ import "context"
 
 type FinanceClientInterface interface {
 	GetMetrics(ctx context.Context) (*FinanceMetrics, error)
+	DeleteUserTransactions(ctx context.Context, userID int) error
 	Close() error
 }
 

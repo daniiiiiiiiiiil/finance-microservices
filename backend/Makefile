@@ -318,10 +318,12 @@ proto-gen-users:
 		-I. \
 		-I./proto \
 		proto/users/users.proto
-
+		
 proto-gen-auth:
 	@echo "Generating auth proto..."
-	protoc \
+	docker run --rm -v $(CURDIR):/code -w /code \
+		-v $(CURDIR)/proto:/proto \
+		znly/protoc \
 		--go_out=. \
 		--go_opt=paths=source_relative \
 		--go-grpc_out=. \
@@ -329,11 +331,14 @@ proto-gen-auth:
 		--grpc-gateway_out=. \
 		--grpc-gateway_opt=paths=source_relative \
 		-I. \
+		-I./proto \
 		proto/auth/auth.proto
 
 proto-gen-finance:
 	@echo "Generating finance proto..."
-	protoc \
+	docker run --rm -v $(CURDIR):/code -w /code \
+		-v $(CURDIR)/proto:/proto \
+		znly/protoc \
 		--go_out=. \
 		--go_opt=paths=source_relative \
 		--go-grpc_out=. \
@@ -341,11 +346,14 @@ proto-gen-finance:
 		--grpc-gateway_out=. \
 		--grpc-gateway_opt=paths=source_relative \
 		-I. \
+		-I./proto \
 		proto/finance/finance.proto
 
 proto-gen-admin:
 	@echo "Generating admin proto..."
-	protoc \
+	docker run --rm -v $(CURDIR):/code -w /code \
+		-v $(CURDIR)/proto:/proto \
+		znly/protoc \
 		--go_out=. \
 		--go_opt=paths=source_relative \
 		--go-grpc_out=. \
@@ -353,11 +361,14 @@ proto-gen-admin:
 		--grpc-gateway_out=. \
 		--grpc-gateway_opt=paths=source_relative \
 		-I. \
+		-I./proto \
 		proto/admin/admin.proto
 
 proto-gen-all:
 	@echo "Generating all proto files..."
-	protoc \
+	docker run --rm -v $(CURDIR):/code -w /code \
+		-v $(CURDIR)/proto:/proto \
+		znly/protoc \
 		--go_out=. \
 		--go_opt=paths=source_relative \
 		--go-grpc_out=. \
@@ -365,6 +376,7 @@ proto-gen-all:
 		--grpc-gateway_out=. \
 		--grpc-gateway_opt=paths=source_relative \
 		-I. \
+		-I./proto \
 		proto/auth/auth.proto \
 		proto/users/users.proto \
 		proto/finance/finance.proto \

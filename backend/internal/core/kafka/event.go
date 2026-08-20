@@ -36,6 +36,7 @@ type UserEvent struct {
 	Email    string `json:"email"`
 	FullName string `json:"full_name"`
 	IsAdmin  bool   `json:"is_admin"`
+	Status   string `json:"status"`
 }
 
 type MetricsEvent struct {

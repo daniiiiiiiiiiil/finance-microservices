@@ -44,3 +44,15 @@ func (c *FinanceClient) GetMetrics(ctx context.Context) (*FinanceMetrics, error)
 		TotalBalance:      resp.TotalBalance,
 	}, nil
 }
+
+func (c *FinanceClient) DeleteUserTransactions(ctx context.Context, userID int) error {
+	req := &proto.DeleteUserTransactionsRequest{
+		UserId: int32(userID),
+	}
+
+	_, err := c.client.DeleteUserTransaction(ctx, req)
+	if err != nil {
+		return fmt.Errorf("delete user transactions: %w", err)
+	}
+	return nil
+}

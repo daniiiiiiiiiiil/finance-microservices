@@ -55,6 +55,24 @@ service UserService{
       get: "/api/v1/users/admin-exists"
     };
   }
+  rpc MarkDeleting(MarkDeletingRequest) returns(google.protobuf.Empty){
+    option (google.api.http) = {
+      post: "/api/v1/users/{id}/mark-deleting"
+      body: "*"
+    };
+  }
+  rpc FinalizeDelete(FinalizeDeleteRequest) returns (google.protobuf.Empty){
+    option (google.api.http) = {
+      post: "/api/v1/users/{id}/finalize-delete"
+      body: "*"
+    };
+  }
+  rpc RestoreUser(RestoreUserRequest) returns (google.protobuf.Empty){
+    option(google.api.http) = {
+      post: "/api/v1/users/{id}/restore"
+      body: "*"
+    };
+  }
 }
 
 message GetUserRequest{
@@ -75,20 +93,21 @@ message UserResponse{
   int32 version = 2;
   string full_name = 3;
   string email = 4;
-  optional string phone_number = 5;
+  string phone_number = 5;
   bool is_admin = 6;
   bool is_active = 7;
+  string status = 8;
 }
 
 message PatchUserData{
-  optional string full_name = 1;
-  optional string phone_number = 2;
+  string full_name = 1;
+  string phone_number = 2;
 }
 
 message CreateProfileRequest {
   string email = 1;
   string full_name = 2;
-  optional string phone_number = 3;
+  string phone_number = 3;
   bool is_admin = 4;
 }
 
@@ -119,4 +138,16 @@ message GetUserByEmailRequest {
 
 message AdminExistsResponse {
   bool exists = 1;
+}
+
+message MarkDeletingRequest{
+  int32 id = 1;
+}
+
+message FinalizeDeleteRequest{
+  int32 id = 1;
+}
+
+message RestoreUserRequest{
+  int32 id = 1;
 }

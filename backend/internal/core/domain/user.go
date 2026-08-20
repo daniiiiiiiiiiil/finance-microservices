@@ -14,9 +14,10 @@ type User struct {
 	PasswordHash string
 	PhoneNumber  *string
 	IsAdmin      bool
+	Status       string
 }
 
-func NewUser(id int, version int, fullName string, email string, passwordHash string, phoneNumber *string, isAdmin bool) User {
+func NewUser(id int, version int, fullName string, email string, passwordHash string, phoneNumber *string, isAdmin bool, status string) User {
 	return User{
 		ID:           id,
 		Version:      version,
@@ -25,11 +26,12 @@ func NewUser(id int, version int, fullName string, email string, passwordHash st
 		PasswordHash: passwordHash,
 		PhoneNumber:  phoneNumber,
 		IsAdmin:      isAdmin,
+		Status:       status,
 	}
 }
 
-func NewUserUninitialized(fullName, email, passwordHash string, phoneNumber *string, isAdmin bool) User {
-	return NewUser(UninitializedID, UninitializedVersion, fullName, email, passwordHash, phoneNumber, isAdmin)
+func NewUserUninitialized(fullName, email, passwordHash string, phoneNumber *string, isAdmin bool, status string) User {
+	return NewUser(UninitializedID, UninitializedVersion, fullName, email, passwordHash, phoneNumber, isAdmin, status)
 }
 
 func (u *User) Validate() error {
