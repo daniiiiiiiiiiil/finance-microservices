@@ -18,7 +18,9 @@ import (
 	userpb "backend/internal/features/users/transport/grpc/proto"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	httpSwagger "github.com/swaggo/http-swagger"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.uber.org/zap"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -96,13 +98,16 @@ func main() {
 		logger.Fatal("fail to register admin service", zap.Error(err))
 	}
 
+	otelMux := otelhttp.NewHandler(mux, "gateway-http")
+
 	httpMux := http.NewServeMux()
+
+	httpMux.Handle("/metrics", promhttp.Handler())
 
 	httpMux.Handle("/swagger/", httpSwagger.Handler(
 		httpSwagger.URL("/swagger/swagger.json"),
 		httpSwagger.UIConfig(map[string]string{
 			"requestInterceptor": `(req) => {
-                // Поддержка авторизации через Bearer токен
                 const token = localStorage.getItem('swagger_token');
                 if (token) {
                     req.headers['Authorization'] = 'Bearer ' + token;
@@ -123,7 +128,7 @@ func main() {
 		w.Write([]byte("ok"))
 	})
 
-	httpMux.Handle("/api/", mux)
+	httpMux.Handle("/api/", otelMux)
 
 	handler := core_http_middleware.ChainMiddlewares(
 		httpMux,

@@ -7,7 +7,7 @@ import (
 	"golang.org/x/net/context"
 )
 
-func (s *UsersService) UpdateRoleUsers(ctx context.Context, id int, isAdmin bool) (domain.User, error) {
+func (s *UsersService) UpdateRole(ctx context.Context, id int, isAdmin bool) (domain.User, error) {
 	if id <= 0 {
 		return domain.User{}, fmt.Errorf("id must be positive")
 	}
@@ -21,7 +21,7 @@ func (s *UsersService) UpdateRoleUsers(ctx context.Context, id int, isAdmin bool
 		return domain.User{}, fmt.Errorf("apply patch role: %w", err)
 	}
 
-	update, err := s.userRepository.UpdateRoleUsers(ctx, id, isAdmin)
+	update, err := s.userRepository.UpdateRole(ctx, id, isAdmin)
 	if err != nil {
 		return domain.User{}, fmt.Errorf("failed update user role: %w", err)
 	}

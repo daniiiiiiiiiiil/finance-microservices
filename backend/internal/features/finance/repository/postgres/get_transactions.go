@@ -7,7 +7,6 @@ import (
 	"time"
 )
 
-// GetTransactions возвращает список транзакций с фильтрацией и пагинацией
 func (r *FinanceRepository) GetTransactions(
 	ctx context.Context,
 	userID int,

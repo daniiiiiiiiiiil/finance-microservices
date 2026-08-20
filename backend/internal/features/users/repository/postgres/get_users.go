@@ -18,7 +18,7 @@ func (r *UserRepository) ListUsers(ctx context.Context, limit, offset int) ([]do
 	}
 
 	query := `
-		SELECT id, version, full_name, email, password_hash, phone_number, is_admin
+		SELECT id, version, full_name, email, password_hash, phone_number, is_admin,status
 		FROM users.users
 		ORDER BY id
 		LIMIT $1 OFFSET $2`
@@ -40,6 +40,7 @@ func (r *UserRepository) ListUsers(ctx context.Context, limit, offset int) ([]do
 			&user.PasswordHash,
 			&user.PhoneNumber,
 			&user.IsAdmin,
+			&user.Status,
 		)
 		if err != nil {
 			return nil, 0, fmt.Errorf("scan user: %w", err)

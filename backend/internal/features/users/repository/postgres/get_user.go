@@ -14,7 +14,7 @@ func (r *UserRepository) GetUser(ctx context.Context, id int) (domain.User, erro
 	defer cancel()
 
 	query :=
-		`SELECT id,version,full_name,email,password_hash,phone_number,is_admin
+		`SELECT id,version,full_name,email,password_hash,phone_number,is_admin,status
 		 FROM users.users 
          WHERE id = $1;`
 	row := r.pool.QueryRow(ctx, query, id)
@@ -26,7 +26,9 @@ func (r *UserRepository) GetUser(ctx context.Context, id int) (domain.User, erro
 		&userModal.Email,
 		&userModal.Password,
 		&userModal.PhoneNumber,
-		&userModal.IsAdmin)
+		&userModal.IsAdmin,
+		&userModal.Status,
+	)
 	if err != nil {
 		if errors.Is(err, pool.ErrNoRows) {
 			return domain.User{}, fmt.Errorf("user with id %d : %w", id, errors_core.ErrNotFound)
@@ -40,6 +42,7 @@ func (r *UserRepository) GetUser(ctx context.Context, id int) (domain.User, erro
 		userModal.Email,
 		userModal.Password,
 		userModal.PhoneNumber,
-		userModal.IsAdmin)
+		userModal.IsAdmin,
+		userModal.Status)
 	return UserDomain, nil
 }

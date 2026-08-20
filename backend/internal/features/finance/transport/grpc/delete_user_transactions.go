@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *FinanceServer) DeleteUserTransactions(ctx context.Context, req *proto.DeleteUserTransactionsRequest) (*proto.DeleteUserTransactionsResponse, error) {
+func (s *FinanceServer) DeleteUserTransaction(ctx context.Context, req *proto.DeleteUserTransactionsRequest) (*proto.DeleteUserTransactionsResponse, error) {
 	userID, ok := interceptors.GetUserID(ctx)
 	if !ok {
 		return nil, status.Error(codes.InvalidArgument, "user id not found in context")

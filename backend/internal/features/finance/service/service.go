@@ -4,6 +4,7 @@ import (
 	"backend/internal/core/cache"
 	"backend/internal/core/domain"
 	"backend/internal/core/kafka"
+	"backend/internal/core/logger"
 	"backend/internal/core/repository/postgres/pool"
 	"backend/internal/features/admin/service"
 
@@ -30,8 +31,9 @@ type FinanceService struct {
 	pool     pool.Pool
 	redis    cache.RedisInterface
 	producer *kafka.Producer
+	logger   *logger.Logger
 }
 
-func NewFinanceService(repo FinanceRepository, pool pool.Pool, redis cache.RedisInterface, producer *kafka.Producer) *FinanceService {
-	return &FinanceService{repo: repo, pool: pool, redis: redis, producer: producer}
+func NewFinanceService(repo FinanceRepository, pool pool.Pool, redis cache.RedisInterface, producer *kafka.Producer, logger *logger.Logger) *FinanceService {
+	return &FinanceService{repo: repo, pool: pool, redis: redis, producer: producer, logger: logger}
 }

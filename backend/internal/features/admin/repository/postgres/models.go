@@ -8,6 +8,7 @@ type AdminUserModel struct {
 	Password    string
 	PhoneNumber *string
 	IsAdmin     bool
+	Status      string
 }
 
 type MetricsModel struct {

@@ -7,6 +7,7 @@ import (
 	"backend/internal/core/config"
 	"backend/internal/core/logger"
 	"backend/internal/core/repository/postgres/pool/pgx"
+	"backend/internal/core/telemetry"
 	"backend/internal/core/transport/grpc/interceptors"
 	postgres_auth "backend/internal/features/auth/repository/postgres"
 	service_auth "backend/internal/features/auth/service"
@@ -14,12 +15,14 @@ import (
 	http_auth "backend/internal/features/auth/transport/http/dto"
 	"context"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -62,6 +65,13 @@ func main() {
 
 	jwtManager := jwt.NewJWTManager(cfg.JWTSecret, cfg.JWTDuration)
 
+	serviceName := "auth"
+	shutdown, err := telemetry.InitTracer(serviceName)
+	if err != nil {
+		logger.Fatal("failed to init tracer", zap.Error(err))
+	}
+	defer shutdown()
+
 	logger.Debug("initializing users client")
 	usersClient, err := usersclient.NewUsersClient("users:50052")
 	if err != nil {
@@ -79,13 +89,31 @@ func main() {
 		grpc.ChainUnaryInterceptor(
 			interceptors.RequestIDInterceptor(),
 			interceptors.LoggerInterceptor(logger),
-			interceptors.TraceInterceptor(logger.Logger)),
+			interceptors.MetricsInterceptor(serviceName),
+			interceptors.TraceInterceptor(),
+		),
 	)
 
 	authServer := authgrpc.NewAuthServer(authService, logger)
 	authgrpc.RegisterAuthServer(grpcServer, authServer)
 
 	reflection.Register(grpcServer)
+
+	metricsMux := http.NewServeMux()
+	metricsMux.Handle("/metrics", promhttp.Handler())
+
+	metricsPort := ":9091"
+	metricsServer := &http.Server{
+		Addr:    metricsPort,
+		Handler: metricsMux,
+	}
+
+	go func() {
+		logger.Info("starting metrics server", zap.String("addr", metricsPort))
+		if err := metricsServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Error("metrics server failed", zap.Error(err))
+		}
+	}()
 
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {

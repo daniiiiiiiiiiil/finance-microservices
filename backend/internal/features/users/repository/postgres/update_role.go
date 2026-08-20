@@ -10,7 +10,7 @@ import (
 	"golang.org/x/net/context"
 )
 
-func (r *UserRepository) UpdateRoleUsers(ctx context.Context, id int, isAdmin bool) (domain.User, error) {
+func (r *UserRepository) UpdateRole(ctx context.Context, id int, isAdmin bool) (domain.User, error) {
 	ctx, cancel := context.WithTimeout(ctx, r.pool.OpTimeout())
 	defer cancel()
 
@@ -19,7 +19,7 @@ func (r *UserRepository) UpdateRoleUsers(ctx context.Context, id int, isAdmin bo
 		is_admin = $1,
 		version = version + 1
 		WHERE id = $2
-		RETURNING id, version, full_name, email, password_hash, phone_number, is_admin`
+		RETURNING id, version, full_name, email, password_hash, phone_number, is_admin,status`
 
 	var user domain.User
 	err := r.pool.QueryRow(ctx, query, isAdmin, id).Scan(
@@ -30,6 +30,7 @@ func (r *UserRepository) UpdateRoleUsers(ctx context.Context, id int, isAdmin bo
 		&user.PasswordHash,
 		&user.PhoneNumber,
 		&user.IsAdmin,
+		&user.Status,
 	)
 	if err != nil {
 		if errors.Is(err, pool.ErrNoRows) {

@@ -18,9 +18,11 @@ func Auth(jwtManager *jwt.JWTManager) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.URL.Path == "/healthz" ||
+				r.URL.Path == "/metrics" ||
 				strings.HasPrefix(r.URL.Path, "/swagger/") ||
 				strings.HasPrefix(r.URL.Path, "/api/v1/auth/register") ||
-				strings.HasPrefix(r.URL.Path, "/api/v1/auth/login") {
+				strings.HasPrefix(r.URL.Path, "/api/v1/auth/login") ||
+				strings.HasPrefix(r.URL.Path, "/api/v1/auth/logout") {
 				next.ServeHTTP(w, r)
 				return
 			}

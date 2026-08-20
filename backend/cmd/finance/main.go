@@ -7,6 +7,7 @@ import (
 	"backend/internal/core/kafka"
 	"backend/internal/core/logger"
 	"backend/internal/core/repository/postgres/pool/pgx"
+	"backend/internal/core/telemetry"
 	"backend/internal/core/transport/grpc/interceptors"
 	"backend/internal/features/auth/repository/redis"
 	finance_repo "backend/internal/features/finance/repository/postgres"
@@ -15,11 +16,13 @@ import (
 	"backend/internal/features/finance/transport/grpc/proto"
 	"context"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 
@@ -68,9 +71,16 @@ func main() {
 
 	blacklist := redis.NewBlacklistCache(redisClient)
 
+	serviceName := "finance"
+	shutdown, err := telemetry.InitTracer(serviceName)
+	if err != nil {
+		logger.Fatal("failed to init tracer", zap.Error(err))
+	}
+	defer shutdown()
+
 	logger.Debug("initializing finance service")
 	financeRepository := finance_repo.NewFinanceRepository(pool)
-	financeService := finance_service.NewFinanceService(financeRepository, pool, redisClient, kafkaProducer)
+	financeService := finance_service.NewFinanceService(financeRepository, pool, redisClient, kafkaProducer, logger)
 
 	logger.Debug("initializing finance grpc server")
 	grpcServer := grpc.NewServer(
@@ -78,11 +88,22 @@ func main() {
 			interceptors.RequestIDInterceptor(),
 			interceptors.LoggerInterceptor(logger),
 			interceptors.AuthInterceptor(jwtManager, blacklist),
-			interceptors.TraceInterceptor(logger.Logger)),
+			interceptors.MetricsInterceptor(serviceName),
+			interceptors.TraceInterceptor(),
+		),
 	)
 
 	financeServer := finance_grpc.NewFinanceServer(financeService, logger)
 	proto.RegisterFinanceServiceServer(grpcServer, financeServer)
+
+	metricsPort := ":9093"
+	metricsServer := &http.Server{Addr: metricsPort, Handler: promhttp.Handler()}
+	go func() {
+		logger.Info("starting metrics server", zap.String("addr", metricsPort))
+		if err := metricsServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Error("metrics server failed", zap.Error(err))
+		}
+	}()
 
 	lis, err := net.Listen("tcp", ":50053")
 	if err != nil {
@@ -100,6 +121,12 @@ func main() {
 	logger.Warn("shutting down gRPC server", zap.String("address", ":50053"))
 	grpcServer.GracefulStop()
 	logger.Warn("gRPC server stopped", zap.String("address", ":50053"))
+
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer shutdownCancel()
+	if err := metricsServer.Shutdown(shutdownCtx); err != nil {
+		logger.Error("failed to shutdown metrics server", zap.Error(err))
+	}
 
 	//rest api
 	//financeHandler := finance_http.NewFinanceHandler(financeService, jwtManager)

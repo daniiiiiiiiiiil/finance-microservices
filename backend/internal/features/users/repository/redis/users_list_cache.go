@@ -34,10 +34,31 @@ func (c *UsersListCache) SetUsersList(ctx context.Context, users []domain.User, 
 	return nil
 }
 
-// InvalidateAllUsersList инвалидирует все кеши списков
 func (c *UsersListCache) InvalidateAllUsersList(ctx context.Context) error {
-	// Используем паттерн для удаления всех ключей users:list:*
-	// В Redis можно использовать SCAN + DEL, но для простоты используем Set
-	// Или хранить версию кеша
+	pattern := "users:list:*"
+	var cursor uint64
+	var keys []string
+
+	for {
+		var err error
+		var batch []string
+		batch, cursor, err = c.client.Scan(ctx, cursor, pattern, 100).Result()
+		if err != nil {
+			return fmt.Errorf("failed to scan keys: %w", err)
+		}
+		keys = append(keys, batch...)
+		if cursor == 0 {
+			break
+		}
+	}
+
+	if len(keys) > 0 {
+		for _, key := range keys {
+			if err := c.client.Delete(ctx, key); err != nil {
+				return fmt.Errorf("failed to delete key %s: %w", key, err)
+			}
+		}
+	}
+
 	return nil
 }

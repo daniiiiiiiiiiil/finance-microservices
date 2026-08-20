@@ -1,10 +1,11 @@
 package users
 
 type CreateProfileRequest struct {
-	Email       string
-	FullName    string
-	PhoneNumber *string
-	IsAdmin     bool
+	Email        string
+	FullName     string
+	PhoneNumber  *string
+	IsAdmin      bool
+	PasswordHash string
 }
 
 type UserProfile struct {

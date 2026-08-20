@@ -12,20 +12,28 @@ func convertUserToProto(user domain.User) *proto.UserResponse {
 	}
 	return &proto.UserResponse{
 		Id:          int32(user.ID),
+		Version:     int32(user.Version),
 		FullName:    user.FullName,
 		Email:       user.Email,
 		PhoneNumber: phoneNumber,
 		IsAdmin:     user.IsAdmin,
+		IsActive:    user.Status == "active",
+		Status:      user.Status,
 	}
 }
 
 func convertRegisterRequestToDomain(req *proto.RegisterRequest) domain.User {
+	var phoneNumber *string
+	if req.PhoneNumber != "" {
+		phoneNumber = &req.PhoneNumber
+	}
 	return domain.NewUserUninitialized(
 		req.FullName,
 		req.Email,
 		"",
-		&req.PhoneNumber,
+		phoneNumber,
 		req.IsAdmin,
+		"pending",
 	)
 }
 

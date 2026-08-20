@@ -14,15 +14,16 @@ func (s *UserServer) CreateProfile(ctx context.Context, req *proto.CreateProfile
 	s.logger.Debug("gRPC CreateProfile", zap.String("email", req.Email))
 
 	var phoneNumber *string
-	if req.PhoneNumber != nil && *req.PhoneNumber != "" {
-		phoneNumber = req.PhoneNumber
+	if req.PhoneNumber != "" {
+		phoneNumber = &req.PhoneNumber
 	}
 
 	user, err := s.service.CreateProfile(ctx, &service_user.CreateProfileRequest{
-		Email:       req.Email,
-		FullName:    req.FullName,
-		PhoneNumber: phoneNumber,
-		IsAdmin:     req.IsAdmin,
+		Email:        req.Email,
+		FullName:     req.FullName,
+		PhoneNumber:  phoneNumber,
+		IsAdmin:      req.IsAdmin,
+		PasswordHash: req.PasswordHash,
 	})
 	if err != nil {
 		s.logger.Error("create profile failed", zap.Error(err))

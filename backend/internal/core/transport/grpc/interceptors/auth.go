@@ -39,6 +39,9 @@ func AuthInterceptor(jwtManager *jwt.JWTManager, blacklist *redis.BlacklistCache
 		if strings.Contains(info.FullMethod, "Login") {
 			return handler(ctx, req)
 		}
+		if strings.Contains(info.FullMethod, "Logout") {
+			return handler(ctx, req)
+		}
 
 		md, ok := metadata.FromIncomingContext(ctx)
 		if !ok {

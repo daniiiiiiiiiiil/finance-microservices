@@ -12,8 +12,8 @@ func (r *UserRepository) CreateUser(ctx context.Context, user domain.User) (int,
 	defer cancel()
 
 	query := `
-		INSERT INTO users.users (full_name, email, password_hash, phone_number, is_admin)
-		VALUES ($1, $2, $3, $4, $5)
+		INSERT INTO users.users (full_name, email, password_hash, phone_number, is_admin,status)
+		VALUES ($1, $2, $3, $4, $5,$6)
 		RETURNING id`
 
 	var id int
@@ -23,6 +23,7 @@ func (r *UserRepository) CreateUser(ctx context.Context, user domain.User) (int,
 		user.PasswordHash,
 		user.PhoneNumber,
 		user.IsAdmin,
+		user.Status,
 	).Scan(&id)
 	if err != nil {
 		return 0, fmt.Errorf("create user: %w", err)

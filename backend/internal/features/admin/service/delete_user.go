@@ -5,10 +5,19 @@ import (
 	"fmt"
 
 	"go.uber.org/zap"
+	"google.golang.org/grpc/metadata"
 )
 
-func (s *AdminService) DeleteUser(ctx context.Context, id int) error {
+func (s *AdminService) DeleteUser(ctx context.Context, id int, adminID int) error {
 	s.logger.Info("Starting DeleteUser saga", zap.Int("id", id))
+	md, ok := metadata.FromIncomingContext(ctx)
+	if ok {
+		ctx = metadata.NewOutgoingContext(ctx, md)
+	}
+
+	if id == adminID {
+		return fmt.Errorf("admin cannot delete themselves")
+	}
 
 	if err := s.userClient.MarkDeleting(ctx, id); err != nil {
 		return fmt.Errorf("marking deleting user failed: %w", err)

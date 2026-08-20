@@ -321,9 +321,7 @@ proto-gen-users:
 		
 proto-gen-auth:
 	@echo "Generating auth proto..."
-	docker run --rm -v $(CURDIR):/code -w /code \
-		-v $(CURDIR)/proto:/proto \
-		znly/protoc \
+	protoc \
 		--go_out=. \
 		--go_opt=paths=source_relative \
 		--go-grpc_out=. \

@@ -1,0 +1,25 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'auth'
+    static_configs:
+      - targets: ['auth:9091']
+
+  - job_name: 'users'
+    static_configs:
+      - targets: ['users:9092']
+
+  - job_name: 'finance'
+    static_configs:
+      - targets: ['finance:9093']
+
+  - job_name: 'admin'
+    static_configs:
+      - targets: ['admin:9094']
+
+  - job_name: 'gateway'
+    static_configs:
+      - targets: ['gateway:8081']
+    metrics_path: '/metrics'

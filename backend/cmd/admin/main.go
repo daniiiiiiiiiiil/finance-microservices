@@ -8,17 +8,20 @@ import (
 	"backend/internal/core/config"
 	"backend/internal/core/kafka"
 	"backend/internal/core/logger"
+	"backend/internal/core/telemetry"
 	"backend/internal/core/transport/grpc/interceptors"
 	admin_service "backend/internal/features/admin/service"
 	admingrpc "backend/internal/features/admin/transport/grpc"
 	"backend/internal/features/auth/repository/redis"
 	"context"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 
@@ -66,6 +69,13 @@ func main() {
 	jwtManager := jwt.NewJWTManager(cfg.JWTSecret, cfg.JWTDuration)
 	blacklist := redis.NewBlacklistCache(redisClient)
 
+	serviceName := "admin"
+	shutdown, err := telemetry.InitTracer(serviceName)
+	if err != nil {
+		logger.Fatal("failed to init tracer", zap.Error(err))
+	}
+	defer shutdown()
+
 	logger.Debug("Initializing user client")
 	usersClient, err := usersclient.NewUsersClient("users:50052")
 	if err != nil {
@@ -94,10 +104,20 @@ func main() {
 			interceptors.RequestIDInterceptor(),
 			interceptors.LoggerInterceptor(logger),
 			interceptors.AuthInterceptor(jwtManager, blacklist),
-			interceptors.TraceInterceptor(logger.Logger),
+			interceptors.MetricsInterceptor(serviceName),
+			interceptors.TraceInterceptor(),
 		))
 	adminServer := admingrpc.NewAdminServer(adminService, logger)
 	admingrpc.RegisterAdminServer(grpcServer, adminServer)
+
+	metricsPort := ":9094"
+	metricsServer := &http.Server{Addr: metricsPort, Handler: promhttp.Handler()}
+	go func() {
+		logger.Info("starting metrics server", zap.String("addr", metricsPort))
+		if err := metricsServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Error("metrics server failed", zap.Error(err))
+		}
+	}()
 
 	lis, err := net.Listen("tcp", ":50054")
 	if err != nil {
@@ -111,10 +131,18 @@ func main() {
 			logger.Error("failed to serve gRPC", zap.Error(err))
 		}
 	}()
+
 	<-ctx.Done()
+
 	logger.Warn("shutting down gRPC server", zap.String("address", ":50054"))
 	grpcServer.GracefulStop()
 	logger.Info("gRPC server stopped", zap.String("address", ":50054"))
+
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer shutdownCancel()
+	if err := metricsServer.Shutdown(shutdownCtx); err != nil {
+		logger.Error("failed to shutdown metrics server", zap.Error(err))
+	}
 
 	//rest api
 	//adminHandler := admin_http.NewAdminHandler(adminService, jwtManager)

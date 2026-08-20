@@ -4,10 +4,13 @@ import (
 	"backend/internal/core/domain"
 	"backend/internal/features/auth/transport/grpc/proto"
 	http_auth "backend/internal/features/auth/transport/http/dto"
+	"fmt"
+	"time"
 
 	"go.uber.org/zap"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -20,6 +23,21 @@ func (s *AuthServer) Login(ctx context.Context, req *proto.LoginRequest) (*proto
 	}
 
 	s.logger.Debug("Auth Login", zap.String("email", req.Email))
+
+	ip := "unknown"
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		if clientIP := md.Get("x-forwarded-for"); len(clientIP) > 0 {
+			ip = clientIP[0]
+		}
+	}
+	key := fmt.Sprintf("rate:login:%s", ip)
+	allowed, err := s.service.RateLimitCheck(ctx, key, 5, 1*time.Minute)
+	if err != nil {
+		s.logger.Warn("rate limit check failed", zap.Error(err))
+	}
+	if !allowed {
+		return nil, status.Error(codes.ResourceExhausted, "too many login attempts, try again later")
+	}
 
 	loginReq := http_auth.LoginRequest{
 		Email:    req.Email,

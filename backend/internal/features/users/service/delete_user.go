@@ -64,6 +64,10 @@ func (s *UsersService) FinalizeDelete(ctx context.Context, id int) error {
 		return fmt.Errorf("get user: %w", err)
 	}
 
+	if user.Status != "deleting" {
+		return fmt.Errorf("user status is '%s', expected 'deleting'", user.Status)
+	}
+
 	if err := s.userRepository.DeleteUserTx(ctx, tx, id); err != nil {
 		return fmt.Errorf("delete user: %w", err)
 	}

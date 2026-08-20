@@ -6,9 +6,9 @@ import (
 )
 
 func convertUserToProto(user domain.User) *proto.UserResponse {
-	var phoneNumber *string
+	phoneNumber := ""
 	if user.PhoneNumber != nil && *user.PhoneNumber != "" {
-		phoneNumber = &(*user.PhoneNumber)
+		phoneNumber = *user.PhoneNumber
 	}
 	return &proto.UserResponse{
 		Id:          int32(user.ID),
@@ -22,16 +22,16 @@ func convertUserToProto(user domain.User) *proto.UserResponse {
 
 func convertPatchProtoToDomain(data *proto.PatchUserData) domain.UserPatch {
 	return domain.NewUserPatch(
-		convertOptionalStringToNullable(data.FullName),
-		convertOptionalStringToNullable(data.PhoneNumber),
+		convertStringToNullable(data.FullName),
+		convertStringToNullable(data.PhoneNumber),
 	)
 }
 
-func convertOptionalStringToNullable(value *string) domain.Nullable[string] {
-	if value == nil {
+func convertStringToNullable(value string) domain.Nullable[string] {
+	if value == "" {
 		return domain.Nullable[string]{Value: nil, Set: false}
 	}
-	return domain.Nullable[string]{Value: value, Set: true}
+	return domain.Nullable[string]{Value: &value, Set: true}
 }
 
 func ConvertUsersToProto(users []domain.User) []*proto.UserResponse {

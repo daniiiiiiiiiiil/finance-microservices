@@ -35,12 +35,17 @@ func (s *AdminService) GetUser(ctx context.Context, id int) (domain.User, error)
 		return domain.User{}, fmt.Errorf("get user from users service: %w", err)
 	}
 
+	var phoneNumber *string
+	if resp.PhoneNumber != "" {
+		phoneNumber = &resp.PhoneNumber
+	}
+
 	user = domain.User{
 		ID:          int(resp.Id),
 		Version:     int(resp.Version),
 		FullName:    resp.FullName,
 		Email:       resp.Email,
-		PhoneNumber: resp.PhoneNumber,
+		PhoneNumber: phoneNumber,
 		IsAdmin:     resp.IsAdmin,
 	}
 

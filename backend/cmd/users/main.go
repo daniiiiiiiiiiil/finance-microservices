@@ -7,11 +7,13 @@ import (
 	"backend/internal/core/kafka"
 	"backend/internal/core/logger"
 	"backend/internal/core/repository/postgres/pool/pgx"
+	"backend/internal/core/telemetry"
 	"backend/internal/core/transport/grpc/interceptors"
 	"backend/internal/features/auth/repository/redis"
 	"backend/internal/features/users/repository/postgres"
 	"backend/internal/features/users/service"
 	usersgrpc "backend/internal/features/users/transport/grpc"
+	"net/http"
 
 	"context"
 	"net"
@@ -20,6 +22,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -67,9 +70,16 @@ func main() {
 	kafkaProducer := kafka.NewProducer(kafkaConfig, *logger)
 	defer kafkaProducer.Close()
 
+	serviceName := "users"
+	shutdown, err := telemetry.InitTracer(serviceName)
+	if err != nil {
+		logger.Fatal("failed to init tracer", zap.Error(err))
+	}
+	defer shutdown()
+
 	logger.Debug("initializing users service")
 	usersRepository := postgres.NewUserRepository(pool)
-	usersService := service_user.NewUsersService(usersRepository, pool, redisClient, kafkaProducer, logger)
+	usersService := service_user.NewUsersService(usersRepository, pool, redisClient, kafkaProducer, logger, redisClient)
 
 	logger.Debug("initializing gRPC server with interceptors")
 
@@ -78,13 +88,23 @@ func main() {
 			interceptors.RequestIDInterceptor(),
 			interceptors.LoggerInterceptor(logger),
 			interceptors.AuthInterceptor(jwtManager, blacklist),
-			interceptors.TraceInterceptor(logger.Logger)),
+			interceptors.MetricsInterceptor(serviceName),
+			interceptors.TraceInterceptor(),
+		),
 	)
-
 	userServer := usersgrpc.NewUserServer(usersService, logger)
 	usersgrpc.RegisterUserServer(grpcServer, userServer)
 
 	reflection.Register(grpcServer)
+
+	metricsPort := ":9092"
+	metricsServer := &http.Server{Addr: metricsPort, Handler: promhttp.Handler()}
+	go func() {
+		logger.Info("starting metrics server", zap.String("addr", metricsPort))
+		if err := metricsServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Error("metrics server failed", zap.Error(err))
+		}
+	}()
 
 	lis, err := net.Listen("tcp", ":50052")
 	if err != nil {
@@ -106,4 +126,9 @@ func main() {
 	logger.Warn("shutting down gRPC server", zap.String("address", ":50052"))
 	grpcServer.GracefulStop()
 	logger.Warn("gRPC server stopped", zap.String("address", ":50052"))
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer shutdownCancel()
+	if err := metricsServer.Shutdown(shutdownCtx); err != nil {
+		logger.Error("failed to shutdown metrics server", zap.Error(err))
+	}
 }

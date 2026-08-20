@@ -20,11 +20,10 @@ func (r *AdminRepository) GetUsers(ctx context.Context, limit, offset int) ([]do
 	}
 
 	query := `
-		SELECT id, version, full_name, email, password_hash, phone_number, is_admin
-		FROM finance.users
-		ORDER BY id ASC
-		LIMIT $1 OFFSET $2
-	`
+    SELECT id, version, full_name, email, password_hash, phone_number, is_admin, status
+    FROM users.users
+    ORDER BY id
+    LIMIT $1 OFFSET $2`
 
 	rows, err := r.pool.Query(ctx, query, limit, offset)
 	if err != nil {
@@ -43,6 +42,7 @@ func (r *AdminRepository) GetUsers(ctx context.Context, limit, offset int) ([]do
 			&model.Password,
 			&model.PhoneNumber,
 			&model.IsAdmin,
+			&model.Status,
 		)
 		if err != nil {
 			return nil, 0, fmt.Errorf("scan user: %w", err)
@@ -55,6 +55,7 @@ func (r *AdminRepository) GetUsers(ctx context.Context, limit, offset int) ([]do
 			model.Password,
 			model.PhoneNumber,
 			model.IsAdmin,
+			model.Status,
 		))
 	}
 

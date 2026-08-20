@@ -74,3 +74,7 @@ func (r *RedisClient) Close() error {
 func (r *RedisClient) Exists(ctx context.Context, key string) (int64, error) {
 	return r.client.Exists(ctx, key).Result()
 }
+
+func (r *RedisClient) Scan(ctx context.Context, cursor uint64, match string, count int64) *redis.ScanCmd {
+	return r.client.Scan(ctx, cursor, match, count)
+}

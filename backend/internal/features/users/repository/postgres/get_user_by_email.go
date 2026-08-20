@@ -12,7 +12,7 @@ func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (doma
 	defer cancel()
 
 	query := `
-		SELECT id, version, full_name, email, password_hash, phone_number, is_admin
+		SELECT id, version, full_name, email, password_hash, phone_number, is_admin,status
 		FROM users.users
 		WHERE email = $1`
 
@@ -25,6 +25,7 @@ func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (doma
 		&user.PasswordHash,
 		&user.PhoneNumber,
 		&user.IsAdmin,
+		&user.Status,
 	)
 	if err != nil {
 		return domain.User{}, fmt.Errorf("get user by email: %w", err)

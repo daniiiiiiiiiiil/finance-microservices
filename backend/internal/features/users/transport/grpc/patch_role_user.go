@@ -10,21 +10,29 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *UserServer) PatchUserRole(ctx context.Context, req *proto.UpdateRoleRequest) (*proto.UserResponse, error) {
-	UserID, ok := interceptors.GetUserID(ctx)
+func (s *UserServer) UpdateRole(ctx context.Context, req *proto.UpdateRoleRequest) (*proto.UserResponse, error) {
+	adminID, ok := interceptors.GetUserID(ctx)
 	if !ok {
-		return nil, status.Error(codes.InvalidArgument, "UserID not found in context")
+		return nil, status.Error(codes.Unauthenticated, "user not authenticated")
 	}
-	if UserID != int(req.Id) {
-		isAdmin := interceptors.IsAdmin(ctx)
-		if !isAdmin {
-			return nil, status.Error(codes.PermissionDenied, "access denied")
-		}
-	}
-	s.logger.Debug("gRPC patch user role", zap.Int32("id", req.Id))
 
-	users, err := s.service.UpdateRoleUsers(ctx, int(req.Id), req.IsAdmin)
+	if !interceptors.IsAdmin(ctx) {
+		return nil, status.Error(codes.PermissionDenied, "admin access required")
+	}
+
+	if int(req.Id) == adminID {
+		return nil, status.Error(codes.PermissionDenied, "admin cannot change their own role")
+	}
+
+	s.logger.Debug("gRPC UpdateRole",
+		zap.Int32("id", req.Id),
+		zap.Bool("is_admin", req.IsAdmin),
+		zap.Int("admin_id", adminID),
+	)
+
+	users, err := s.service.UpdateRole(ctx, int(req.Id), req.IsAdmin)
 	if err != nil {
+		s.logger.Error("failed to update role", zap.Error(err))
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 

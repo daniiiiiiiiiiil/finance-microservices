@@ -20,9 +20,13 @@ func (s *AdminServer) DeleteUser(ctx context.Context, req *proto.DeleteUserReque
 		return nil, status.Error(codes.PermissionDenied, "admin access required")
 	}
 
+	if int(req.Id) == adminID {
+		return nil, status.Error(codes.PermissionDenied, "admin cannot delete themselves")
+	}
+
 	s.logger.Debug("gRPC DeleteUser", zap.Int32("id", req.Id), zap.Int("admin_id", adminID))
 
-	err := s.service.DeleteUser(ctx, int(req.Id))
+	err := s.service.DeleteUser(ctx, int(req.Id), adminID)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

@@ -109,6 +109,7 @@ message CreateProfileRequest {
   string full_name = 2;
   string phone_number = 3;
   bool is_admin = 4;
+  string password_hash = 5;
 }
 
 message ListUsersRequest{

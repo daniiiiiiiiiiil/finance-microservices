@@ -17,9 +17,10 @@ func (s *UsersService) CreateProfile(ctx context.Context, req *CreateProfileRequ
 	user := domain.NewUserUninitialized(
 		req.FullName,
 		req.Email,
-		"",
+		req.PasswordHash,
 		req.PhoneNumber,
 		req.IsAdmin,
+		"active",
 	)
 
 	userID, err := s.userRepository.CreateUser(ctx, user)
@@ -32,7 +33,7 @@ func (s *UsersService) CreateProfile(ctx context.Context, req *CreateProfileRequ
 		return domain.User{}, err
 	}
 
-	go s.sendUserEvent(context.Background(), kafka.EventTypeUserCreated, created.ID, created.Email, created.FullName, created.IsAdmin)
+	go s.sendUserEvent(context.Background(), kafka.EventTypeUserCreated, created.ID, created.Email, created.FullName, created.IsAdmin, created.Status)
 
 	return created, nil
 }

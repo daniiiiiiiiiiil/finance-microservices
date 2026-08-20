@@ -32,9 +32,10 @@ func (c *UsersClient) Close() error {
 
 func (c *UsersClient) CreateProfile(ctx context.Context, req *CreateProfileRequest) (*UserProfile, error) {
 	grpcReq := &proto.CreateProfileRequest{
-		Email:    req.Email,
-		FullName: req.FullName,
-		IsAdmin:  req.IsAdmin,
+		Email:        req.Email,
+		FullName:     req.FullName,
+		IsAdmin:      req.IsAdmin,
+		PasswordHash: req.PasswordHash,
 	}
 	if req.PhoneNumber != nil {
 		grpcReq.PhoneNumber = *req.PhoneNumber

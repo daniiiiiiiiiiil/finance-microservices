@@ -17,7 +17,7 @@ func (r *UserRepository) PatchUser(ctx context.Context, id int, patch domain.Use
 		UPDATE users.users SET
 		full_name = $1,phone_number = $2,version=version+1
 		WHERE id = $3 AND version = $4
-		RETURNING id,full_name,phone_number,email,password_hash,version,is_admin`
+		RETURNING id,full_name,phone_number,email,password_hash,version,is_admin,status`
 
 	row := r.pool.QueryRow(ctx, query,
 		patch.FullName,
@@ -33,6 +33,7 @@ func (r *UserRepository) PatchUser(ctx context.Context, id int, patch domain.Use
 		&userModel.Password,
 		&userModel.Version,
 		&userModel.IsAdmin,
+		&userModel.Status,
 	); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return domain.User{}, fmt.Errorf("user with id='%d' concurrently accesed: %w", id, errors_core.ErrConflict)
@@ -47,6 +48,7 @@ func (r *UserRepository) PatchUser(ctx context.Context, id int, patch domain.Use
 		userModel.Password,
 		userModel.PhoneNumber,
 		userModel.IsAdmin,
+		userModel.Status,
 	)
 	return userDomain, nil
 

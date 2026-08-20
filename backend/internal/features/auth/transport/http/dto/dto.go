@@ -11,6 +11,7 @@ type RegisterRequest struct {
 	Password    string `json:"password"`
 	PhoneNumber string `json:"phone_number"`
 	IsAdmin     bool   `json:"is_admin"`
+	Status      string `json:"status"`
 }
 
 type UserResponse struct {

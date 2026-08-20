@@ -11,10 +11,6 @@ import (
 )
 
 func (s *AdminService) StartConsumer(ctx context.Context) {
-	if s.producer == nil {
-		return
-	}
-
 	config := kafka.NewConfig()
 	config.ConsumerGroup = "admin-group"
 
