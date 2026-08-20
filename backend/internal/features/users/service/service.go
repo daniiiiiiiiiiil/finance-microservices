@@ -3,6 +3,7 @@ package service_user
 import (
 	"backend/internal/core/cache"
 	"backend/internal/core/domain"
+	"backend/internal/core/kafka"
 	"backend/internal/core/repository/postgres/pool"
 	redisCache "backend/internal/features/users/repository/redis"
 	"context"
@@ -13,6 +14,7 @@ type UsersService struct {
 	pool           pool.Pool
 	userCache      *redisCache.UserCache
 	usersListCache *redisCache.UsersListCache
+	producer       *kafka.Producer
 }
 
 //go:generate mockgen -destination=mocks/mock_users_service.go -package=mocks -source=service.go UsersService
@@ -28,12 +30,14 @@ type UsersRepository interface {
 	AdminExists(ctx context.Context) (bool, error)
 }
 
-func NewUsersService(userRepository UsersRepository, pool pool.Pool, redisClient *cache.RedisClient) *UsersService {
+func NewUsersService(userRepository UsersRepository, pool pool.Pool, redisClient *cache.RedisClient, producer *kafka.Producer) *UsersService {
 	return &UsersService{
 		userRepository: userRepository,
 		pool:           pool,
 		userCache:      redisCache.NewUserCache(redisClient),
-		usersListCache: redisCache.NewUsersListCache(redisClient)}
+		usersListCache: redisCache.NewUsersListCache(redisClient),
+		producer:       producer,
+	}
 }
 
 type CreateProfileRequest struct {

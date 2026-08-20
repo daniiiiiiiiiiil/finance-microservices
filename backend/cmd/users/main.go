@@ -4,6 +4,7 @@ import (
 	"backend/internal/core/auth/jwt"
 	"backend/internal/core/cache"
 	"backend/internal/core/config"
+	"backend/internal/core/kafka"
 	"backend/internal/core/logger"
 	"backend/internal/core/repository/postgres/pool/pgx"
 	"backend/internal/core/transport/grpc/interceptors"
@@ -61,9 +62,14 @@ func main() {
 
 	blacklist := redis.NewBlacklistCache(redisClient)
 
+	logger.Debug("initializing kafka producer")
+	kafkaConfig := kafka.NewConfig()
+	kafkaProducer := kafka.NewProducer(kafkaConfig, *logger)
+	defer kafkaProducer.Close()
+
 	logger.Debug("initializing users service")
 	usersRepository := postgres.NewUserRepository(pool)
-	usersService := service_user.NewUsersService(usersRepository, pool, redisClient)
+	usersService := service_user.NewUsersService(usersRepository, pool, redisClient, kafkaProducer)
 
 	logger.Debug("initializing gRPC server with interceptors")
 

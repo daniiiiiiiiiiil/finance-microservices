@@ -7,16 +7,21 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
+	"go.uber.org/zap"
 	"google.golang.org/grpc/metadata"
 )
 
 func (s *AdminService) GetMetrics(ctx context.Context) (Metrics, error) {
-
 	key := "admin:metrics"
 	var metrics Metrics
 
 	err := s.redis.Get(ctx, key, &metrics)
 	if err == nil {
+		s.logger.Debug("metrics served from redis",
+			zap.Int("total_users", metrics.TotalUsers),
+			zap.Int("total_transactions", metrics.TotalTransactions),
+			zap.Float64("total_balance", metrics.TotalBalance),
+		)
 		return metrics, nil
 	}
 
@@ -42,13 +47,13 @@ func (s *AdminService) GetMetrics(ctx context.Context) (Metrics, error) {
 		metrics.TotalBalance = financeMetrics.TotalBalance
 
 		if err := s.redis.Set(ctx, key, metrics, 10*time.Minute); err != nil {
+			s.logger.Warn("failed to cache metrics in redis", zap.Error(err))
 			return Metrics{}, fmt.Errorf("set metrics to redis: %w", err)
 		}
-
-		go s.sendMetricsEvent(context.Background(), metrics)
 
 		return metrics, nil
 	}
 
+	s.logger.Error("failed to get metrics from redis", zap.Error(err))
 	return Metrics{}, fmt.Errorf("get metrics from redis: %w", err)
 }

@@ -83,7 +83,7 @@ services:
     restart: always
     depends_on:
       - finance-redis
-
+      - kafka
 
   finance:
     build:
@@ -154,6 +154,11 @@ services:
     volumes:
       - ./out/pgdata/finance:/var/lib/postgresql/data:rw
     restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${FINANCE_POSTGRES_USER} -d ${FINANCE_POSTGRES_DB}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   finance-postgres-migrate:
     image: migrate/migrate
@@ -191,6 +196,11 @@ services:
     volumes:
       - ./out/pgdata/auth:/var/lib/postgresql/data:rw
     restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${AUTH_POSTGRES_USER} -d ${AUTH_POSTGRES_DB}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   auth-postgres-migrate:
     image: migrate/migrate
@@ -227,6 +237,11 @@ services:
     volumes:
       - ./out/pgdata/users:/var/lib/postgresql/data:rw
     restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${USERS_POSTGRES_USER} -d ${USERS_POSTGRES_DB}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   users-postgres-migrate:
     image: migrate/migrate
@@ -292,6 +307,12 @@ services:
       ZOOKEEPER_TICK_TIME: 2000
     ports:
       - "2181:2181"
+    restart: always
+    healthcheck:
+      test: [ "CMD", "echo", "ruok", "|", "nc", "localhost", "2181" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   kafka:
     image: confluentinc/cp-kafka:latest
@@ -305,8 +326,10 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
     ports:
       - "9092:9092"
+    restart: always
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest

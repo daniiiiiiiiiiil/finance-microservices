@@ -2,6 +2,7 @@ package service_user
 
 import (
 	"backend/internal/core/domain"
+	"backend/internal/core/kafka"
 	"errors"
 
 	"golang.org/x/net/context"
@@ -30,6 +31,8 @@ func (s *UsersService) CreateProfile(ctx context.Context, req *CreateProfileRequ
 	if err != nil {
 		return domain.User{}, err
 	}
+
+	go s.sendUserEvent(context.Background(), kafka.EventTypeUserCreated, created.ID, created.Email, created.FullName, created.IsAdmin)
 
 	return created, nil
 }

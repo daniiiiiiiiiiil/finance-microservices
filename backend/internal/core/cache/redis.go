@@ -15,6 +15,7 @@ type RedisInterface interface {
 	Delete(ctx context.Context, key string) error
 	Incr(ctx context.Context, key string) (int64, error)
 	Expire(ctx context.Context, key string, ttl time.Duration) error
+	Exists(ctx context.Context, key string) (int64, error)
 }
 
 type RedisClient struct {
@@ -68,4 +69,8 @@ func (r *RedisClient) Expire(ctx context.Context, key string, ttl time.Duration)
 
 func (r *RedisClient) Close() error {
 	return r.client.Close()
+}
+
+func (r *RedisClient) Exists(ctx context.Context, key string) (int64, error) {
+	return r.client.Exists(ctx, key).Result()
 }

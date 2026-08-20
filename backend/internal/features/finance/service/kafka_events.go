@@ -9,9 +9,6 @@ import (
 )
 
 func (s *FinanceService) sendTransactionEvent(ctx context.Context, eventType string, transaction domain.Finance) {
-	if s.producer == nil {
-		return
-	}
 
 	eventData := kafka.TransactionEvent{
 		TransactionID:   transaction.ID,
@@ -27,9 +24,6 @@ func (s *FinanceService) sendTransactionEvent(ctx context.Context, eventType str
 }
 
 func (s *FinanceService) sendUserTransactionsDeletedEvent(ctx context.Context, userID int, count int) {
-	if s.producer == nil {
-		return
-	}
 
 	eventData := kafka.UserTransactionsDeletedEvent{
 		UserID:       userID,

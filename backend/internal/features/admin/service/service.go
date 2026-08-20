@@ -5,6 +5,7 @@ import (
 	financeСlient "backend/internal/core/clients/finance"
 	"backend/internal/core/clients/users"
 	"backend/internal/core/kafka"
+	"backend/internal/core/logger"
 	"backend/internal/core/repository/postgres/pool"
 	"context"
 	"fmt"
@@ -32,6 +33,7 @@ type AdminService struct {
 	producer      *kafka.Producer
 	userClient    *users.UsersClient
 	financeClient financeСlient.FinanceClientInterface //интерфейс чтобы не было цикличности
+	logger        *logger.Logger
 }
 
 func NewAdminService(
@@ -40,7 +42,8 @@ func NewAdminService(
 	redis cache.RedisInterface,
 	producer *kafka.Producer,
 	userClient *users.UsersClient,
-	financeClient financeСlient.FinanceClientInterface) *AdminService {
+	financeClient financeСlient.FinanceClientInterface,
+	logger *logger.Logger) *AdminService {
 	return &AdminService{
 		//repo:          repo,
 		//pool:          p,
@@ -48,6 +51,7 @@ func NewAdminService(
 		producer:      producer,
 		userClient:    userClient,
 		financeClient: financeClient,
+		logger:        logger,
 	}
 }
 

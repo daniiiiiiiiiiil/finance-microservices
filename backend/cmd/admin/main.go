@@ -87,7 +87,8 @@ func main() {
 		redisClient,
 		kafkaProducer,
 		usersClient,
-		financeClient)
+		financeClient,
+		logger)
 	grpcServer := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
 			interceptors.RequestIDInterceptor(),
