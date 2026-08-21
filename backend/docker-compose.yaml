@@ -119,6 +119,34 @@ services:
       - finance-redis
       - kafka
 
+  currency:
+    build:
+      context: .
+      dockerfile: ./cmd/currency/Dockerfile
+    container_name: currency
+    networks:
+      - finance-net
+    environment:
+      - LEVEL=${LOGGER_LEVEL}
+      - LOGGER_FOLDER=${LOGGER_FOLDER}
+      - ADDRESS=:5055
+      - SHUTDOWN_TIMEOUT=${SHUTDOWN_TIMEOUT}
+      - TIME_ZONE=${TIME_ZONE}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_DURATION=${JWT_DURATION}
+      - REDIS_ADDR=${REDIS_ADDR}
+      - KAFKA_BROKERS=${KAFKA_BROKERS}
+      - CURRENCY_API_URL=https://api.exchangerate-api.com/v4/latest
+      - CURRENCY_CACHE_TTL=1h
+    volumes:
+      - ./logs:/out/logs
+    ports:
+      - "5055:5055"
+    restart: always
+    depends_on:
+      - finance-redis
+      - kafka
+
   gateway:
     build:
       context: .

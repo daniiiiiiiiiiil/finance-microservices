@@ -218,6 +218,23 @@ swagger-gen:
 		--parseDependency \
 		--parseVendor
 
+proto-gen-swagger:
+	@echo "Generating swagger from proto..."
+	protoc \
+		--grpc-gateway_out=. \
+		--grpc-gateway_opt=paths=source_relative \
+		--grpc-gateway_opt=generate_unbound_methods=true \
+		--openapiv2_out=docs \
+		--openapiv2_opt=allow_merge=true,merge_file_name=swagger \
+		-I. \
+		-I./proto \
+		proto/auth/auth.proto \
+		proto/users/users.proto \
+		proto/finance/finance.proto \
+		proto/admin/admin.proto \
+		proto/currency/currency.proto
+	@echo "Swagger merged into docs/swagger.json"
+
 up:
 	docker compose up -d
 
@@ -334,9 +351,7 @@ proto-gen-auth:
 
 proto-gen-finance:
 	@echo "Generating finance proto..."
-	docker run --rm -v $(CURDIR):/code -w /code \
-		-v $(CURDIR)/proto:/proto \
-		znly/protoc \
+	protoc \
 		--go_out=. \
 		--go_opt=paths=source_relative \
 		--go-grpc_out=. \
@@ -349,9 +364,7 @@ proto-gen-finance:
 
 proto-gen-admin:
 	@echo "Generating admin proto..."
-	docker run --rm -v $(CURDIR):/code -w /code \
-		-v $(CURDIR)/proto:/proto \
-		znly/protoc \
+	protoc \
 		--go_out=. \
 		--go_opt=paths=source_relative \
 		--go-grpc_out=. \
@@ -362,11 +375,22 @@ proto-gen-admin:
 		-I./proto \
 		proto/admin/admin.proto
 
+proto-gen-currency:
+	@echo "Generating currency proto..."
+	protoc \
+		--go_out=. \
+		--go_opt=paths=source_relative \
+		--go-grpc_out=. \
+		--go-grpc_opt=paths=source_relative \
+		--grpc-gateway_out=. \
+		--grpc-gateway_opt=paths=source_relative \
+		-I. \
+		-I./proto \
+		proto/currency/currency.proto
+
 proto-gen-all:
 	@echo "Generating all proto files..."
-	docker run --rm -v $(CURDIR):/code -w /code \
-		-v $(CURDIR)/proto:/proto \
-		znly/protoc \
+	protoc \
 		--go_out=. \
 		--go_opt=paths=source_relative \
 		--go-grpc_out=. \
@@ -378,5 +402,6 @@ proto-gen-all:
 		proto/auth/auth.proto \
 		proto/users/users.proto \
 		proto/finance/finance.proto \
-		proto/admin/admin.proto
+		proto/admin/admin.proto \
+		proto/currency/currency.proto
 	@echo "All proto files generated!"

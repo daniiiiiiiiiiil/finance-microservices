@@ -14,6 +14,7 @@ import (
 
 	adminpb "backend/internal/features/admin/transport/grpc/proto"
 	authpb "backend/internal/features/auth/transport/grpc/proto"
+	currencypb "backend/internal/features/currency/transport/grpc/proto"
 	financepb "backend/internal/features/finance/transport/grpc/proto"
 	userpb "backend/internal/features/users/transport/grpc/proto"
 
@@ -73,6 +74,13 @@ func main() {
 	}
 	defer adminConn.Close()
 
+	currencyConn, err := grpc.Dial("currency:50055",
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		logger.Fatal("fail to dial currency", zap.Error(err))
+	}
+	defer currencyConn.Close()
+
 	mux := runtime.NewServeMux(
 		runtime.WithMetadata(func(ctx context.Context, r *http.Request) metadata.MD {
 			md := metadata.MD{}
@@ -96,6 +104,10 @@ func main() {
 
 	if err := adminpb.RegisterAdminServiceHandler(ctx, mux, adminConn); err != nil {
 		logger.Fatal("fail to register admin service", zap.Error(err))
+	}
+
+	if err := currencypb.RegisterCurrencyServiceHandler(ctx, mux, currencyConn); err != nil {
+		logger.Fatal("fail to register currency service", zap.Error(err))
 	}
 
 	otelMux := otelhttp.NewHandler(mux, "gateway-http")

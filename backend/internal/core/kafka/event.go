@@ -13,6 +13,8 @@ const (
 	EventTypeUserDeleted             = "user.deleted"
 	EventTypeAdminMetrics            = "admin.metrics"
 	EventTypeUserTransactionsDeleted = "user.transactions.deleted"
+	EventTypeCurrencyCreate          = "create.currency"
+	EventTypeCurrencyDelete          = "delete.currency"
 )
 
 type Event struct {
@@ -37,6 +39,29 @@ type UserEvent struct {
 	FullName string `json:"full_name"`
 	IsAdmin  bool   `json:"is_admin"`
 	Status   string `json:"status"`
+}
+
+type ConvertedEvent struct {
+	TransactionID    int       `json:"transaction_id"`
+	AmountUSD        float64   `json:"amount_usd"`
+	OriginalAmount   float64   `json:"original_amount"`
+	OriginalCurrency string    `json:"original_currency"`
+	ConvertedAt      time.Time `json:"converted_at"`
+}
+
+type RatesUpdatedEvent struct {
+	Base      string             `json:"base"`
+	Rates     map[string]float64 `json:"rates"`
+	UpdatedAt time.Time          `json:"updated_at"`
+}
+
+type TransactionCurrencyEvent struct {
+	TransactionID int       `json:"transaction_id"`
+	UserID        int       `json:"user_id"`
+	Amount        float64   `json:"amount"`
+	Currency      string    `json:"currency"`
+	Category      string    `json:"category"`
+	CreatedAt     time.Time `json:"created_at"`
 }
 
 type MetricsEvent struct {

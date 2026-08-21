@@ -18,16 +18,16 @@ func NewMetricsCache(client *cache.RedisClient) *MetricsCache {
 	}
 }
 
-func (c *MetricsCache) Get(ctx context.Context) (service.Metrics, error) {
+func (c *MetricsCache) Get(ctx context.Context) (service_admin.Metrics, error) {
 	key := "admin:metrics"
-	var metrics service.Metrics
+	var metrics service_admin.Metrics
 	if err := c.client.Get(ctx, key, &metrics); err != nil {
-		return service.Metrics{}, fmt.Errorf("Failed to get metrics from redis: %w", err)
+		return service_admin.Metrics{}, fmt.Errorf("Failed to get metrics from redis: %w", err)
 	}
 	return metrics, nil
 }
 
-func (c *MetricsCache) Set(ctx context.Context, metrics service.Metrics, ttl time.Duration) error {
+func (c *MetricsCache) Set(ctx context.Context, metrics service_admin.Metrics, ttl time.Duration) error {
 	key := "admin:metrics"
 	if err := c.client.Set(ctx, key, metrics, ttl); err != nil {
 		return fmt.Errorf("Failed to set metrics to redis: %w", err)

@@ -10,7 +10,7 @@
 <script>
     window.onload = function() {
         const ui = SwaggerUIBundle({
-            url: "/swagger/swagger.json",
+            url: "/swagger/swagger.json?t=" + new Date().getTime(),
             dom_id: "#swagger-ui",
             presets: [SwaggerUIBundle.presets.apis, SwaggerUIBundle.SwaggerUIStandalonePreset],
             layout: "BaseLayout",
