@@ -4,19 +4,6 @@
     "title": "proto/auth/auth.proto",
     "version": "version not set"
   },
-  "securityDefinitions": {
-    "BearerAuth": {
-      "type": "apiKey",
-      "in": "header",
-      "name": "Authorization",
-      "description": "Введите: Bearer <токен>"
-    }
-  },
-  "security": [
-    {
-      "BearerAuth": []
-    }
-  ],
   "tags": [
     {
       "name": "AuthService"

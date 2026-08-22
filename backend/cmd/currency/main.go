@@ -69,9 +69,9 @@ func main() {
 
 	apiURL := os.Getenv("CURRENCY_API_URL")
 	if apiURL == "" {
-		apiURL = "https://api.exchangerate-api.com/v4/latest"
+		apiURL = "https://api.frankfurter.app/latest"
 	}
-	currencyClient := service_currency.NewCurrencyClient(apiURL)
+	currencyClient := service_currency.NewCurrencyClient(apiURL, *logger)
 
 	rateCache := redisCache.NewRateCache(redisClient)
 

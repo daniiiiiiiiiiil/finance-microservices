@@ -73,3 +73,17 @@ func (c *RateCache) Exists(ctx context.Context, key string) (int64, error) {
 func (c *RateCache) Set(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
 	return c.client.Set(ctx, key, value, ttl)
 }
+
+func (c *RateCache) SetTransactionUSD(ctx context.Context, tx domain.TransactionUSD, ttl time.Duration) error {
+	key := fmt.Sprintf("currency:tx:%d:usd", tx.TransactionID)
+	return c.client.Set(ctx, key, tx, ttl)
+}
+
+func (c *RateCache) GetTransactionUSD(ctx context.Context, txID int) (domain.TransactionUSD, error) {
+	key := fmt.Sprintf("currency:tx:%d:usd", txID)
+	var tx domain.TransactionUSD
+	if err := c.client.Get(ctx, key, &tx); err != nil {
+		return domain.TransactionUSD{}, fmt.Errorf("get rate from redis: %w", err)
+	}
+	return tx, nil
+}

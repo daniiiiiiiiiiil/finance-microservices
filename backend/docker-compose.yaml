@@ -136,7 +136,7 @@ services:
       - JWT_DURATION=${JWT_DURATION}
       - REDIS_ADDR=${REDIS_ADDR}
       - KAFKA_BROKERS=${KAFKA_BROKERS}
-      - CURRENCY_API_URL=https://api.exchangerate-api.com/v4/latest
+      - CURRENCY_API_URL=https://api.frankfurter.app/latest
       - CURRENCY_CACHE_TTL=1h
     volumes:
       - ./logs:/out/logs

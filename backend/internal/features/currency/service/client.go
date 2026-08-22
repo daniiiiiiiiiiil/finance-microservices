@@ -18,14 +18,16 @@ import (
 type CurrencyClient struct {
 	client  *http.Client
 	baseURL string
+	logger  logger.Logger
 }
 
-func NewCurrencyClient(baseURL string) *CurrencyClient {
+func NewCurrencyClient(baseURL string, logger logger.Logger) *CurrencyClient {
 	return &CurrencyClient{
 		client: &http.Client{
 			Timeout: 10 * time.Second,
 		},
 		baseURL: baseURL,
+		logger:  logger,
 	}
 }
 
@@ -48,8 +50,8 @@ func NewCurrencyService(rateCache *redis.RateCache, client *CurrencyClient, logg
 }
 
 func (c *CurrencyClient) GetRatesFromAPI(ctx context.Context, base string) (*domain.Rate, error) {
-	// Формируем https://api.exchangerate-api.com/v4/latest/USD
-	url := fmt.Sprintf("%s/%s", c.baseURL, base)
+	url := fmt.Sprintf("%s?from=%s", c.baseURL, base)
+	c.logger.Debug("Calling API", zap.String("url", url))
 
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
@@ -59,12 +61,16 @@ func (c *CurrencyClient) GetRatesFromAPI(ctx context.Context, base string) (*dom
 
 	resp, err := c.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("http request: %w", err)
+		c.logger.Warn("API timeout, using fallback rates", zap.String("base", base))
+		return getFallbackRates(base), nil
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("api returned status: %s", resp.Status)
+		c.logger.Warn("API returned error, using fallback rates",
+			zap.String("base", base),
+			zap.Int("status", resp.StatusCode))
+		return getFallbackRates(base), nil
 	}
 
 	var apiResponse struct {
@@ -83,6 +89,7 @@ func (c *CurrencyClient) GetRatesFromAPI(ctx context.Context, base string) (*dom
 }
 
 func (s *CurrencyService) FetchRates(ctx context.Context, base string) (*domain.Rate, error) {
+	s.logger.Debug("FetchRates called", zap.String("base", base))
 	rate, err := s.rateCache.GetRate(ctx, base)
 	if err == nil {
 		s.logger.Debug("rates found in cache", zap.String("base", base))
@@ -94,7 +101,14 @@ func (s *CurrencyService) FetchRates(ctx context.Context, base string) (*domain.
 
 	rate, err = s.client.GetRatesFromAPI(ctx, base)
 	if err != nil {
+		s.logger.Warn("API failed, using fallback rates",
+			zap.String("base", base),
+			zap.Error(err))
 		return nil, fmt.Errorf("get rates from API: %w", err)
+	}
+
+	if rate == nil {
+		return nil, fmt.Errorf("rate from API is nil for base %s", base)
 	}
 
 	if err := s.rateCache.SetRate(ctx, *rate, 1*time.Hour); err != nil {
@@ -102,4 +116,28 @@ func (s *CurrencyService) FetchRates(ctx context.Context, base string) (*domain.
 	}
 
 	return rate, nil
+}
+
+func getFallbackRates(base string) *domain.Rate {
+	baseRates := map[string]float64{
+		"USD": 1.0, "EUR": 1.0, "RUB": 91.5,
+		"GBP": 0.78, "JPY": 147.2, "CNY": 7.25,
+		"AED": 3.67, "TRY": 48.04,
+	}
+
+	baseRate, ok := baseRates[base]
+	if !ok {
+		baseRate = 1.0
+	}
+
+	rates := make(map[string]float64)
+	for currency, rate := range baseRates {
+		rates[currency] = rate / baseRate
+	}
+
+	return &domain.Rate{
+		Base:      base,
+		Rates:     rates,
+		Timestamp: time.Now(),
+	}
 }

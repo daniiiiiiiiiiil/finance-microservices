@@ -17,8 +17,8 @@ func (s *CurrencyService) StartConsumer(ctx context.Context) {
 
 	consumer := kafka.NewConsumer(config, *s.logger)
 
-	consumer.RegisterHandler(kafka.EventTypeCurrencyCreate, s.handleTransactionCreated)
-	consumer.RegisterHandler(kafka.EventTypeCurrencyDelete, s.handleTransactionDeleted)
+	consumer.RegisterHandler(kafka.EventTypeTransactionCreated, s.handleTransactionCreated)
+	consumer.RegisterHandler(kafka.EventTypeTransactionDeleted, s.handleTransactionDeleted)
 
 	go func() {
 		s.logger.Info("start consumer currency", zap.String("group", "currency-group"))
@@ -58,8 +58,15 @@ func (s *CurrencyService) handleTransactionCreated(ctx context.Context, event ka
 		return nil
 	}
 
-	if err := s.rateCache.SetConvertedUSD(ctx, currencyEvent.TransactionID, conversion.Result, 24*time.Hour); err != nil {
-		s.logger.Error("failed to save converted USD", zap.Error(err))
+	txUSD := domain.TransactionUSD{
+		TransactionID:    currencyEvent.TransactionID,
+		AmountUSD:        conversion.Result,
+		OriginalAmount:   currencyEvent.Amount,
+		OriginalCurrency: currency,
+		ConvertedAt:      time.Now(),
+	}
+	if err := s.rateCache.SetTransactionUSD(ctx, txUSD, 24*time.Hour); err != nil {
+		s.logger.Error("failed to save transaction USD", zap.Error(err))
 	}
 
 	s.logger.Info("transaction converted to USD",
@@ -110,7 +117,7 @@ func (s *CurrencyService) isDuplicate(ctx context.Context, eventID string) bool 
 	if exists > 0 {
 		return true
 	}
-	if err := s.rateCache.Set(ctx, key, "processed", 24*time.Hour); err != nil { // ✅ используем метод
+	if err := s.rateCache.Set(ctx, key, "processed", 24*time.Hour); err != nil {
 		s.logger.Warn("failed to save processed marker", zap.Error(err))
 	}
 	return false

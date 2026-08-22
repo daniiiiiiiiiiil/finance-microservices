@@ -8,6 +8,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func (s *CurrencyServer) GetTransactionUSD(ctx context.Context, req *proto.GetTransactionUSDRequest) (*proto.GetTransactionUSDResponse, error) {
@@ -20,13 +21,16 @@ func (s *CurrencyServer) GetTransactionUSD(ctx context.Context, req *proto.GetTr
 		zap.Int64("transaction_id", req.Id),
 	)
 
-	txUSD, err := s.service.GetTransactionUSD(ctx, int(req.Id))
+	tx, err := s.service.GetTransactionUSD(ctx, int(req.Id))
 	if err != nil {
 		s.logger.Error("get transaction usd", zap.Error(err))
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	return &proto.GetTransactionUSDResponse{
-		TransactionId: req.Id,
-		AmountUsd:     txUSD,
+		TransactionId:    int64(tx.TransactionID),
+		AmountUsd:        tx.AmountUSD,
+		OriginalAmount:   tx.OriginalAmount,
+		OriginalCurrency: tx.OriginalCurrency,
+		ConvertedAt:      timestamppb.New(tx.ConvertedAt),
 	}, nil
 }
