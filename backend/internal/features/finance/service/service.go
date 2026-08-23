@@ -7,10 +7,11 @@ import (
 	"backend/internal/core/logger"
 	"backend/internal/core/repository/postgres/pool"
 	"backend/internal/features/admin/service"
-
 	"context"
 	"time"
 )
+
+var _ FinanceServiceInterface = (*FinanceService)(nil)
 
 //go:generate mockgen -destination=mocks/mock_finance_service.go -package=mocks -source=service.go FinanceService
 type FinanceRepository interface {

@@ -2,7 +2,7 @@ package grpc
 
 import (
 	"backend/internal/core/logger"
-	service_finance "backend/internal/features/finance/service"
+	service2 "backend/internal/features/finance/service"
 	"backend/internal/features/finance/transport/grpc/proto"
 
 	"google.golang.org/grpc"
@@ -10,11 +10,11 @@ import (
 
 type FinanceServer struct {
 	proto.UnimplementedFinanceServiceServer
-	service *service_finance.FinanceService
+	service service2.FinanceServiceInterface
 	logger  *logger.Logger
 }
 
-func NewFinanceServer(service *service_finance.FinanceService, logger *logger.Logger) *FinanceServer {
+func NewFinanceServer(service service2.FinanceServiceInterface, logger *logger.Logger) *FinanceServer {
 	return &FinanceServer{
 		service: service,
 		logger:  logger,

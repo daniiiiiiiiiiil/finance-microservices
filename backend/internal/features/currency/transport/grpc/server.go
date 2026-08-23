@@ -2,7 +2,7 @@ package grpc
 
 import (
 	"backend/internal/core/logger"
-	service_currency "backend/internal/features/currency/service"
+	"backend/internal/features/currency/service"
 	"backend/internal/features/currency/transport/grpc/proto"
 
 	"google.golang.org/grpc"
@@ -10,11 +10,11 @@ import (
 
 type CurrencyServer struct {
 	proto.UnimplementedCurrencyServiceServer
-	service *service_currency.CurrencyService
+	service service_currency.CurrencyServiceInterface
 	logger  *logger.Logger
 }
 
-func NewCurrencyServer(service *service_currency.CurrencyService, logger *logger.Logger) *CurrencyServer {
+func NewCurrencyServer(service service_currency.CurrencyServiceInterface, logger *logger.Logger) *CurrencyServer {
 	return &CurrencyServer{
 		service: service,
 		logger:  logger,

@@ -1,9 +1,10 @@
 package main
 
 import (
+	"backend/config"
 	_ "backend/docs"
 	"backend/internal/core/auth/jwt"
-	"backend/internal/core/config"
+	grpcclient "backend/internal/core/grpc"
 	"backend/internal/core/logger"
 	core_http_middleware "backend/internal/core/transport/http/middleware"
 	"net/http"
@@ -24,8 +25,6 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.uber.org/zap"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -47,35 +46,31 @@ func main() {
 	jwtManager := jwt.NewJWTManager(cfg.JWTSecret, cfg.JWTDuration)
 	logger.Debug("JWT Manager initialized for Gateway")
 
-	authConn, err := grpc.Dial("auth:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	authConn, err := grpcclient.NewGRPCClient("auth:50051", cfg)
 	if err != nil {
-		logger.Fatal("fail to dial", zap.Error(err))
+		logger.Fatal("fail to dial auth", zap.Error(err))
 	}
 	defer authConn.Close()
 
-	userConn, err := grpc.Dial("users:50052",
-		grpc.WithTransportCredentials(insecure.NewCredentials()))
+	userConn, err := grpcclient.NewGRPCClient("users:50052", cfg)
 	if err != nil {
-		logger.Fatal("fail to dial", zap.Error(err))
+		logger.Fatal("fail to dial users", zap.Error(err))
 	}
 	defer userConn.Close()
 
-	financeConn, err := grpc.Dial("finance:50053",
-		grpc.WithTransportCredentials(insecure.NewCredentials()))
+	financeConn, err := grpcclient.NewGRPCClient("finance:50053", cfg)
 	if err != nil {
-		logger.Fatal("fail to dial", zap.Error(err))
+		logger.Fatal("fail to dial finance", zap.Error(err))
 	}
 	defer financeConn.Close()
 
-	adminConn, err := grpc.Dial("admin:50054",
-		grpc.WithTransportCredentials(insecure.NewCredentials()))
+	adminConn, err := grpcclient.NewGRPCClient("admin:50054", cfg)
 	if err != nil {
-		logger.Fatal("fail to dial", zap.Error(err))
+		logger.Fatal("fail to dial admin", zap.Error(err))
 	}
 	defer adminConn.Close()
 
-	currencyConn, err := grpc.Dial("currency:50055",
-		grpc.WithTransportCredentials(insecure.NewCredentials()))
+	currencyConn, err := grpcclient.NewGRPCClient("currency:50055", cfg)
 	if err != nil {
 		logger.Fatal("fail to dial currency", zap.Error(err))
 	}
@@ -165,11 +160,29 @@ func main() {
 	}()
 
 	<-ctx.Done()
-	logger.Warn("shutting down http server", zap.String("addr", server.Addr))
-	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+
+	logger.Warn("shutting down gracefully...")
+
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer shutdownCancel()
-	if err := server.Shutdown(shutdownCtx); err != nil {
-		logger.Fatal("fail to shutdown http server", zap.Error(err))
+
+	done := make(chan struct{})
+	go func() {
+		if err := server.Shutdown(shutdownCtx); err != nil {
+			logger.Error("failed to shutdown http server", zap.Error(err))
+		}
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		logger.Info("HTTP server stopped gracefully")
+	case <-shutdownCtx.Done():
+		logger.Warn("HTTP server stop timeout, forcing stop")
+		if err := server.Close(); err != nil {
+			logger.Error("failed to force close http server", zap.Error(err))
+		}
 	}
-	logger.Info("http server stopped")
+
+	logger.Info("shutdown complete")
 }

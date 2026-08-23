@@ -84,3 +84,7 @@ func (c *Consumer) handleMessage(ctx context.Context, msg kafka.Message) error {
 	}
 	return handler(ctx, event)
 }
+
+func (c *Consumer) Close() error {
+	return c.reader.Close()
+}

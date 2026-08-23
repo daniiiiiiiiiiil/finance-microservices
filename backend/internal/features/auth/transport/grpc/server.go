@@ -2,7 +2,7 @@ package grpc
 
 import (
 	"backend/internal/core/logger"
-	service "backend/internal/features/auth/service"
+	"backend/internal/features/auth/service"
 	"backend/internal/features/auth/transport/grpc/proto"
 
 	"google.golang.org/grpc"
@@ -10,11 +10,11 @@ import (
 
 type AuthServer struct {
 	proto.UnimplementedAuthServiceServer
-	service *service.AuthService
+	service service_auth.AuthServiceInterface
 	logger  *logger.Logger
 }
 
-func NewAuthServer(service *service.AuthService, logger *logger.Logger) *AuthServer {
+func NewAuthServer(service service_auth.AuthServiceInterface, logger *logger.Logger) *AuthServer {
 	return &AuthServer{
 		service: service,
 		logger:  logger,

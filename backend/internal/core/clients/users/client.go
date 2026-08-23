@@ -1,12 +1,13 @@
 package users
 
 import (
+	"backend/config"
+	grpcclient "backend/internal/core/grpc"
 	"backend/internal/features/users/transport/grpc/proto"
 	"fmt"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -15,8 +16,8 @@ type UsersClient struct {
 	conn   *grpc.ClientConn
 }
 
-func NewUsersClient(addr string) (*UsersClient, error) {
-	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+func NewUsersClient(addr string, cfg *config.Config) (*UsersClient, error) {
+	conn, err := grpcclient.NewGRPCClient(addr, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to user service: %w", err)
 	}

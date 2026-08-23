@@ -15,6 +15,8 @@ import (
 	"golang.org/x/net/context"
 )
 
+var _ CurrencyServiceInterface = (*CurrencyService)(nil)
+
 type CurrencyClient struct {
 	client  *http.Client
 	baseURL string

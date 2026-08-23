@@ -1,11 +1,12 @@
 package main
 
 import (
+	"backend/config"
 	"backend/internal/core/auth/jwt"
 	"backend/internal/core/cache"
 	financeСlient "backend/internal/core/clients/finance"
 	usersclient "backend/internal/core/clients/users"
-	"backend/internal/core/config"
+	grpcclient "backend/internal/core/grpc"
 	"backend/internal/core/kafka"
 	"backend/internal/core/logger"
 	"backend/internal/core/telemetry"
@@ -21,11 +22,10 @@ import (
 	"syscall"
 	"time"
 
+	_ "backend/docs"
+
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
-
-	_ "backend/docs"
 )
 
 func main() {
@@ -70,13 +70,13 @@ func main() {
 	defer shutdown()
 
 	logger.Debug("Initializing user client")
-	usersClient, err := usersclient.NewUsersClient("users:50052")
+	usersClient, err := usersclient.NewUsersClient("users:50052", cfg)
 	if err != nil {
 		logger.Fatal("failed to initialize user client", zap.Error(err))
 	}
 	defer usersClient.Close()
 
-	financeClient, err := financeСlient.NewFinanceClient("finance:50053")
+	financeClient, err := financeСlient.NewFinanceClient("finance:50053", cfg)
 	if err != nil {
 		logger.Fatal("failed to connect to finance service", zap.Error(err))
 	}
@@ -89,14 +89,14 @@ func main() {
 		usersClient,
 		financeClient,
 		logger)
-	grpcServer := grpc.NewServer(
-		grpc.ChainUnaryInterceptor(
-			interceptors.RequestIDInterceptor(),
-			interceptors.LoggerInterceptor(logger),
-			interceptors.AuthInterceptor(jwtManager, blacklist),
-			interceptors.MetricsInterceptor(serviceName),
-			interceptors.TraceInterceptor(),
-		))
+	grpcServer := grpcclient.NewGRPCServer(
+		cfg,
+		interceptors.RequestIDInterceptor(),
+		interceptors.LoggerInterceptor(logger),
+		interceptors.AuthInterceptor(jwtManager, blacklist),
+		interceptors.MetricsInterceptor(serviceName),
+		interceptors.TraceInterceptor(),
+	)
 	adminServer := admingrpc.NewAdminServer(adminService, logger)
 	admingrpc.RegisterAdminServer(grpcServer, adminServer)
 
@@ -124,13 +124,28 @@ func main() {
 
 	<-ctx.Done()
 
-	logger.Warn("shutting down gRPC server", zap.String("address", ":50054"))
-	grpcServer.GracefulStop()
-	logger.Info("gRPC server stopped", zap.String("address", ":50054"))
+	logger.Warn("shutting down gracefully...")
 
-	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer shutdownCancel()
+
+	done := make(chan struct{})
+	go func() {
+		grpcServer.GracefulStop()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		logger.Info("gRPC server stopped gracefully")
+	case <-shutdownCtx.Done():
+		logger.Warn("gRPC server stop timeout, forcing stop")
+		grpcServer.Stop()
+	}
+
 	if err := metricsServer.Shutdown(shutdownCtx); err != nil {
 		logger.Error("failed to shutdown metrics server", zap.Error(err))
 	}
+
+	logger.Info("shutdown complete")
 }

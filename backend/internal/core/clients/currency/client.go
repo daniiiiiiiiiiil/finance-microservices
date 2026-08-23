@@ -1,12 +1,13 @@
 package currency
 
 import (
+	"backend/config"
+	grpcclient "backend/internal/core/grpc"
 	"backend/internal/features/currency/transport/grpc/proto"
 	"fmt"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type CurrencyClient struct {
@@ -14,8 +15,8 @@ type CurrencyClient struct {
 	conn   *grpc.ClientConn
 }
 
-func NewCurrencyClient(addr string) (*CurrencyClient, error) {
-	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+func NewCurrencyClient(addr string, cfg *config.Config) (*CurrencyClient, error) {
+	conn, err := grpcclient.NewGRPCClient(addr, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("could not connect to CurrencyServer %s", addr)
 	}

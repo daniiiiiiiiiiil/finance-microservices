@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+var _ UserCacheInterface = (*UserCache)(nil)
+
 type UserCache struct {
 	client *cache.RedisClient
 }

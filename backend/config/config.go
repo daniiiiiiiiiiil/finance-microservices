@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -10,6 +11,10 @@ type Config struct {
 	TimeZone    *time.Location
 	JWTSecret   string
 	JWTDuration time.Duration
+	TLSEnabled  bool
+	TLSCertFile string
+	TLSKeyFile  string
+	TLSCAFile   string
 }
 
 func NewConfig() (*Config, error) {
@@ -36,10 +41,19 @@ func NewConfig() (*Config, error) {
 		return nil, fmt.Errorf("invalid JWT_DURATION: %w", err)
 	}
 
+	tlsEnabled, _ := strconv.ParseBool(os.Getenv("TLS_ENABLED"))
+	tlsCertFile := os.Getenv("TLS_CERT_FILE")
+	tlsKeyFile := os.Getenv("TLS_KEY_FILE")
+	tlsCAFile := os.Getenv("TLS_CA_FILE")
+
 	return &Config{
 		TimeZone:    zone,
 		JWTSecret:   jwtSecret,
 		JWTDuration: duration,
+		TLSEnabled:  tlsEnabled,
+		TLSCertFile: tlsCertFile,
+		TLSKeyFile:  tlsKeyFile,
+		TLSCAFile:   tlsCAFile,
 	}, nil
 }
 

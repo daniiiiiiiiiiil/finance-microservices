@@ -11,6 +11,8 @@ import (
 	"time"
 )
 
+var _ AuthServiceInterface = (*AuthService)(nil)
+
 var (
 	ErrUserAlreadyExists  = errors.New("user already exists")
 	ErrInvalidCredentials = errors.New("invalid credentials")

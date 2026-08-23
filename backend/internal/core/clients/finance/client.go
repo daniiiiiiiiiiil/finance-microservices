@@ -1,12 +1,13 @@
 package finance
 
 import (
+	"backend/config"
+	grpcclient "backend/internal/core/grpc"
 	"backend/internal/features/finance/transport/grpc/proto"
 	"context"
 	"fmt"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -17,8 +18,8 @@ type FinanceClient struct {
 	conn   *grpc.ClientConn
 }
 
-func NewFinanceClient(addr string) (*FinanceClient, error) {
-	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+func NewFinanceClient(addr string, cfg *config.Config) (*FinanceClient, error) {
+	conn, err := grpcclient.NewGRPCClient(addr, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to finance service: %w", err)
 	}

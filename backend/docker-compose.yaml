@@ -22,8 +22,13 @@ services:
       - JWT_DURATION=${JWT_DURATION}
       - KAFKA_BROKERS=${KAFKA_BROKERS}
       - REDIS_ADDR=${REDIS_ADDR}
+      - TLS_ENABLED=${TLS_ENABLED}
+      - TLS_CERT_FILE=${TLS_CERT_FILE}
+      - TLS_KEY_FILE=${TLS_KEY_FILE}
+      - TLS_CA_FILE=${TLS_CA_FILE}
     volumes:
       - ./logs:/out/logs
+      - ./certs:/certs:ro
     ports:
       - "5051:5051"
     restart: always
@@ -53,8 +58,13 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - JWT_DURATION=${JWT_DURATION}
       - KAFKA_BROKERS=${KAFKA_BROKERS}
+      - TLS_ENABLED=${TLS_ENABLED}
+      - TLS_CERT_FILE=${TLS_CERT_FILE}
+      - TLS_KEY_FILE=${TLS_KEY_FILE}
+      - TLS_CA_FILE=${TLS_CA_FILE}
     volumes:
       - ./logs:/out/logs
+      - ./certs:/certs:ro
     ports:
       - "5052:5052"
     restart: always
@@ -77,8 +87,13 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - JWT_DURATION=${JWT_DURATION}
       - REDIS_ADDR=${REDIS_ADDR}
+      - TLS_ENABLED=${TLS_ENABLED}
+      - TLS_CERT_FILE=${TLS_CERT_FILE}
+      - TLS_KEY_FILE=${TLS_KEY_FILE}
+      - TLS_CA_FILE=${TLS_CA_FILE}
     volumes:
       - ./logs:/out/logs
+      - ./certs:/certs:ro
     ports:
       - "5053:5053"
     restart: always
@@ -109,8 +124,13 @@ services:
       - JWT_DURATION=${JWT_DURATION}
       - REDIS_ADDR=${REDIS_ADDR}
       - KAFKA_BROKERS=${KAFKA_BROKERS}
+      - TLS_ENABLED=${TLS_ENABLED}
+      - TLS_CERT_FILE=${TLS_CERT_FILE}
+      - TLS_KEY_FILE=${TLS_KEY_FILE}
+      - TLS_CA_FILE=${TLS_CA_FILE}
     volumes:
       - ./logs:/out/logs
+      - ./certs:/certs:ro
     ports:
       - "5050:5050"
     restart: always
@@ -138,8 +158,13 @@ services:
       - KAFKA_BROKERS=${KAFKA_BROKERS}
       - CURRENCY_API_URL=https://api.frankfurter.app/latest
       - CURRENCY_CACHE_TTL=1h
+      - TLS_ENABLED=${TLS_ENABLED}
+      - TLS_CERT_FILE=${TLS_CERT_FILE}
+      - TLS_KEY_FILE=${TLS_KEY_FILE}
+      - TLS_CA_FILE=${TLS_CA_FILE}
     volumes:
       - ./logs:/out/logs
+      - ./certs:/certs:ro
     ports:
       - "5055:5055"
     restart: always
@@ -162,6 +187,12 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - JWT_DURATION=${JWT_DURATION}
       - TIME_ZONE=${TIME_ZONE}
+      - TLS_ENABLED=${TLS_ENABLED}
+      - TLS_CERT_FILE=${TLS_CERT_FILE}
+      - TLS_KEY_FILE=${TLS_KEY_FILE}
+      - TLS_CA_FILE=${TLS_CA_FILE}
+    volumes:
+      - ./certs:/certs:ro
     ports:
       - "8081:8081"
     restart: always

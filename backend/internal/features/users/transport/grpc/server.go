@@ -10,12 +10,15 @@ import (
 
 type UserServer struct {
 	proto.UnimplementedUserServiceServer
-	service *service_user.UsersService
+	service service_user.UsersServiceInterface
 	logger  *logger.Logger
 }
 
-func NewUserServer(serviceUser *service_user.UsersService, logger *logger.Logger) *UserServer {
-	return &UserServer{service: serviceUser, logger: logger}
+func NewUserServer(service service_user.UsersServiceInterface, logger *logger.Logger) *UserServer {
+	return &UserServer{
+		service: service,
+		logger:  logger,
+	}
 }
 
 func RegisterUserServer(grpcServer *grpc.Server, userServer *UserServer) {

@@ -6,19 +6,11 @@ import (
 	"backend/internal/core/clients/users"
 	"backend/internal/core/kafka"
 	"backend/internal/core/logger"
-	"backend/internal/core/repository/postgres/pool"
 	"context"
 	"fmt"
 )
 
-////go:generate mockgen -destination=mocks/mock_admin_service.go -package=mocks -source=service.go AdminService
-//type AdminRepository interface {
-//	GetUsers(ctx context.Context, limit, offset int) ([]domain.User, int, error)
-//	GetUser(ctx context.Context, id int) (domain.User, error)
-//	DeleteUserTx(ctx context.Context, tx pool.Tx, id int) error
-//	UpdateUserRoleTx(ctx context.Context, tx pool.Tx, id int, isAdmin bool) (domain.User, error)
-//	GetMetrics(ctx context.Context) (Metrics, error)
-//}
+var _ AdminServiceInterface = (*AdminService)(nil)
 
 type Metrics struct {
 	TotalUsers        int     `json:"total_users"`
@@ -27,8 +19,6 @@ type Metrics struct {
 }
 
 type AdminService struct {
-	//repo          AdminRepository
-	pool          pool.Pool
 	redis         cache.RedisInterface
 	producer      *kafka.Producer
 	userClient    *users.UsersClient
@@ -37,16 +27,12 @@ type AdminService struct {
 }
 
 func NewAdminService(
-	//repo AdminRepository,
-	//p pool.Pool,
 	redis cache.RedisInterface,
 	producer *kafka.Producer,
 	userClient *users.UsersClient,
 	financeClient financeСlient.FinanceClientInterface,
 	logger *logger.Logger) *AdminService {
 	return &AdminService{
-		//repo:          repo,
-		//pool:          p,
 		redis:         redis,
 		producer:      producer,
 		userClient:    userClient,

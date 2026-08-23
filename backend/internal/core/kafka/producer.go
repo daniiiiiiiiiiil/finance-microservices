@@ -79,5 +79,5 @@ func (p *Producer) Close() error {
 }
 
 func generateEventID() string {
-	return fmt.Sprintf("%x", time.Now().UnixNano(), time.Now().Nanosecond())
+	return fmt.Sprintf("%d-%d", time.Now().UnixNano(), time.Now().Nanosecond())
 }

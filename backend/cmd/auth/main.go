@@ -1,15 +1,17 @@
 package main
 
 import (
+	"backend/config"
 	"backend/internal/core/auth/jwt"
 	"backend/internal/core/cache"
 	usersclient "backend/internal/core/clients/users"
-	"backend/internal/core/config"
+	grpcclient "backend/internal/core/grpc"
 	"backend/internal/core/logger"
 	"backend/internal/core/repository/postgres/pool/pgx"
 	"backend/internal/core/telemetry"
 	"backend/internal/core/transport/grpc/interceptors"
 	postgres_auth "backend/internal/features/auth/repository/postgres"
+	"backend/internal/features/auth/repository/redis"
 	service_auth "backend/internal/features/auth/service"
 	authgrpc "backend/internal/features/auth/transport/grpc"
 	"context"
@@ -23,7 +25,6 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 
 	_ "backend/docs"
@@ -63,6 +64,7 @@ func main() {
 	defer redisClient.Close()
 
 	jwtManager := jwt.NewJWTManager(cfg.JWTSecret, cfg.JWTDuration)
+	blacklist := redis.NewBlacklistCache(redisClient)
 
 	serviceName := "auth"
 	shutdown, err := telemetry.InitTracer(serviceName)
@@ -72,7 +74,7 @@ func main() {
 	defer shutdown()
 
 	logger.Debug("initializing users client")
-	usersClient, err := usersclient.NewUsersClient("users:50052")
+	usersClient, err := usersclient.NewUsersClient("users:50052", cfg)
 	if err != nil {
 		logger.Fatal("failed to connect to users service", zap.Error(err))
 	}
@@ -84,13 +86,13 @@ func main() {
 	createFirstAdmin(ctx, authService, logger)
 
 	logger.Debug("initializing auth service gRPC")
-	grpcServer := grpc.NewServer(
-		grpc.ChainUnaryInterceptor(
-			interceptors.RequestIDInterceptor(),
-			interceptors.LoggerInterceptor(logger),
-			interceptors.MetricsInterceptor(serviceName),
-			interceptors.TraceInterceptor(),
-		),
+	grpcServer := grpcclient.NewGRPCServer(
+		cfg,
+		interceptors.RequestIDInterceptor(),
+		interceptors.LoggerInterceptor(logger),
+		interceptors.AuthInterceptor(jwtManager, blacklist),
+		interceptors.MetricsInterceptor(serviceName),
+		interceptors.TraceInterceptor(),
 	)
 
 	authServer := authgrpc.NewAuthServer(authService, logger)
@@ -128,9 +130,31 @@ func main() {
 	}()
 
 	<-ctx.Done()
-	logger.Warn("shutting down gRPC server", zap.String("address", ":50051"))
-	grpcServer.GracefulStop()
-	logger.Warn("gRPC server stopped", zap.String("address", ":50051"))
+
+	logger.Warn("shutting down gracefully...")
+
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer shutdownCancel()
+
+	done := make(chan struct{})
+	go func() {
+		grpcServer.GracefulStop()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		logger.Info("gRPC server stopped gracefully")
+	case <-shutdownCtx.Done():
+		logger.Warn("gRPC server stop timeout, forcing stop")
+		grpcServer.Stop()
+	}
+
+	if err := metricsServer.Shutdown(shutdownCtx); err != nil {
+		logger.Error("failed to shutdown metrics server", zap.Error(err))
+	}
+
+	logger.Info("shutdown complete")
 }
 
 func createFirstAdmin(ctx context.Context, authService *service_auth.AuthService, log *logger.Logger) {

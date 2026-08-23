@@ -1,9 +1,10 @@
 package main
 
 import (
+	"backend/config"
 	"backend/internal/core/auth/jwt"
 	"backend/internal/core/cache"
-	"backend/internal/core/config"
+	grpcclient "backend/internal/core/grpc"
 	"backend/internal/core/kafka"
 	"backend/internal/core/logger"
 	"backend/internal/core/repository/postgres/pool/pgx"
@@ -22,11 +23,10 @@ import (
 	"syscall"
 	"time"
 
+	_ "backend/docs"
+
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
-
-	_ "backend/docs"
 )
 
 func main() {
@@ -83,14 +83,13 @@ func main() {
 	financeService := finance_service.NewFinanceService(financeRepository, pool, redisClient, kafkaProducer, logger)
 
 	logger.Debug("initializing finance grpc server")
-	grpcServer := grpc.NewServer(
-		grpc.ChainUnaryInterceptor(
-			interceptors.RequestIDInterceptor(),
-			interceptors.LoggerInterceptor(logger),
-			interceptors.AuthInterceptor(jwtManager, blacklist),
-			interceptors.MetricsInterceptor(serviceName),
-			interceptors.TraceInterceptor(),
-		),
+	grpcServer := grpcclient.NewGRPCServer(
+		cfg,
+		interceptors.RequestIDInterceptor(),
+		interceptors.LoggerInterceptor(logger),
+		interceptors.AuthInterceptor(jwtManager, blacklist),
+		interceptors.MetricsInterceptor(serviceName),
+		interceptors.TraceInterceptor(),
 	)
 
 	financeServer := finance_grpc.NewFinanceServer(financeService, logger)
@@ -118,13 +117,29 @@ func main() {
 	}()
 
 	<-ctx.Done()
-	logger.Warn("shutting down gRPC server", zap.String("address", ":50053"))
-	grpcServer.GracefulStop()
-	logger.Warn("gRPC server stopped", zap.String("address", ":50053"))
 
-	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	logger.Warn("shutting down gracefully...")
+
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer shutdownCancel()
+
+	done := make(chan struct{})
+	go func() {
+		grpcServer.GracefulStop()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		logger.Info("gRPC server stopped gracefully")
+	case <-shutdownCtx.Done():
+		logger.Warn("gRPC server stop timeout, forcing stop")
+		grpcServer.Stop()
+	}
+
 	if err := metricsServer.Shutdown(shutdownCtx); err != nil {
 		logger.Error("failed to shutdown metrics server", zap.Error(err))
 	}
+
+	logger.Info("shutdown complete")
 }

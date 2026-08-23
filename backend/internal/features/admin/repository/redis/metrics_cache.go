@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+var _ MetricsCacheInterface = (*MetricsCache)(nil)
+
 type MetricsCache struct {
 	client *cache.RedisClient
 }
