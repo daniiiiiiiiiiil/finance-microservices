@@ -12,7 +12,6 @@ import (
 	postgres_auth "backend/internal/features/auth/repository/postgres"
 	service_auth "backend/internal/features/auth/service"
 	authgrpc "backend/internal/features/auth/transport/grpc"
-	http_auth "backend/internal/features/auth/transport/http/dto"
 	"context"
 	"net"
 	"net/http"
@@ -132,32 +131,10 @@ func main() {
 	logger.Warn("shutting down gRPC server", zap.String("address", ":50051"))
 	grpcServer.GracefulStop()
 	logger.Warn("gRPC server stopped", zap.String("address", ":50051"))
-
-	//rest api
-	//authHandler := http_auth.NewAuthHandler(authService)
-	//
-	//logger.Debug("initializing http server")
-	//
-	//httpServer := server.NewHTTPServer(
-	//	server.NewConfigMust(),
-	//	logger,
-	//	core_http_middleware.CORS(),
-	//	core_http_middleware.RequestID(),
-	//	core_http_middleware.Logger(logger),
-	//	core_http_middleware.Trace(),
-	//	core_http_middleware.Panic(),
-	//)
-	//
-	//httpServer.RegisterRoutes(authHandler.Routes()...)
-	//httpServer.RegisterSwagger()
-	//
-	//if err := httpServer.Run(ctx); err != nil {
-	//	logger.Error("Failed to start server", zap.Error(err))
-	//}
 }
 
 func createFirstAdmin(ctx context.Context, authService *service_auth.AuthService, log *logger.Logger) {
-	req := http_auth.RegisterRequest{
+	req := service_auth.RegisterRequest{
 		FullName:    "Admin",
 		Email:       "admin@finance.com",
 		Password:    "admin123",

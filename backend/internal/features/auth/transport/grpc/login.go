@@ -2,8 +2,8 @@ package grpc
 
 import (
 	"backend/internal/core/domain"
+	service "backend/internal/features/auth/service"
 	"backend/internal/features/auth/transport/grpc/proto"
-	http_auth "backend/internal/features/auth/transport/http/dto"
 	"fmt"
 	"time"
 
@@ -39,7 +39,7 @@ func (s *AuthServer) Login(ctx context.Context, req *proto.LoginRequest) (*proto
 		return nil, status.Error(codes.ResourceExhausted, "too many login attempts, try again later")
 	}
 
-	loginReq := http_auth.LoginRequest{
+	loginReq := service.LoginRequest{
 		Email:    req.Email,
 		Password: req.Password,
 	}

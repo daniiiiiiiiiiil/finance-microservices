@@ -127,24 +127,4 @@ func main() {
 	if err := metricsServer.Shutdown(shutdownCtx); err != nil {
 		logger.Error("failed to shutdown metrics server", zap.Error(err))
 	}
-
-	//rest api
-	//financeHandler := finance_http.NewFinanceHandler(financeService, jwtManager)
-	//
-	//logger.Debug("initializing http server")
-	//httpServer := server.NewHTTPServer(
-	//	server.NewConfigMust(),
-	//	logger,
-	//	core_http_middleware.CORS(),
-	//	core_http_middleware.RequestID(),
-	//	core_http_middleware.Logger(logger),
-	//	core_http_middleware.Trace(),
-	//	core_http_middleware.Panic(),
-	//)
-	//
-	//httpServer.RegisterRoutes(financeHandler.Routes()...)
-	//
-	//if err := httpServer.Run(ctx); err != nil {
-	//	logger.Error("Failed to start server", zap.Error(err))
-	//}
 }

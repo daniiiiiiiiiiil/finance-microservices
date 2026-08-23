@@ -2,14 +2,29 @@ package service_auth
 
 import (
 	usersclient "backend/internal/core/clients/users"
-	http_auth "backend/internal/features/auth/transport/http/dto"
 	"context"
 	"fmt"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
-func (s *AuthService) Register(ctx context.Context, req http_auth.RegisterRequest) (string, *http_auth.UserResponse, error) {
+type RegisterRequest struct {
+	FullName    string
+	Email       string
+	Password    string
+	PhoneNumber string
+	IsAdmin     bool
+}
+
+type UserResponse struct {
+	ID          int
+	FullName    string
+	Email       string
+	PhoneNumber *string
+	IsAdmin     bool
+}
+
+func (s *AuthService) Register(ctx context.Context, req RegisterRequest) (string, *UserResponse, error) {
 	existing, _ := s.credRepo.GetByEmail(ctx, req.Email)
 	if existing != nil {
 		return "", nil, fmt.Errorf(`email "%s" already exists`, req.Email)
@@ -50,7 +65,7 @@ func (s *AuthService) Register(ctx context.Context, req http_auth.RegisterReques
 		return "", nil, fmt.Errorf("failed to generate token: %w", err)
 	}
 
-	userResponse := &http_auth.UserResponse{
+	userResponse := &UserResponse{
 		ID:          profile.ID,
 		FullName:    profile.FullName,
 		Email:       profile.Email,

@@ -46,13 +46,6 @@ func main() {
 
 	logger.Debug("application time zone", zap.Any("time_zone", time.Local))
 
-	//logger.Debug("initializing postgres connection pool")
-	//pool, err := pgx.NewPool(ctx, pgx.NewConfigMust())
-	//if err != nil {
-	//	logger.Fatal("failed to connect to postgres", zap.Error(err))
-	//}
-	//defer pool.Close()
-
 	logger.Debug("initializing redis")
 	redisAddr := os.Getenv("REDIS_ADDR")
 	if redisAddr == "" {
@@ -90,10 +83,7 @@ func main() {
 	defer financeClient.Close()
 
 	logger.Debug("initializing admin service")
-	//adminRepository := admin_repo.NewAdminRepository(pool)
 	adminService := admin_service.NewAdminService(
-		//adminRepository,
-		//pool,
 		redisClient,
 		kafkaProducer,
 		usersClient,
@@ -143,24 +133,4 @@ func main() {
 	if err := metricsServer.Shutdown(shutdownCtx); err != nil {
 		logger.Error("failed to shutdown metrics server", zap.Error(err))
 	}
-
-	//rest api
-	//adminHandler := admin_http.NewAdminHandler(adminService, jwtManager)
-	//
-	//logger.Debug("initializing http server")
-	//httpServer := server.NewHTTPServer(
-	//	server.NewConfigMust(),
-	//	logger,
-	//	core_http_middleware.CORS(),
-	//	core_http_middleware.RequestID(),
-	//	core_http_middleware.Logger(logger),
-	//	core_http_middleware.Trace(),
-	//	core_http_middleware.Panic(),
-	//)
-	//
-	//httpServer.RegisterRoutes(adminHandler.Routes()...)
-	//
-	//if err := httpServer.Run(ctx); err != nil {
-	//	logger.Error("Failed to start server", zap.Error(err))
-	//}
 }

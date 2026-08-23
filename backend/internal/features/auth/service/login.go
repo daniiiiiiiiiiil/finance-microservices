@@ -1,14 +1,18 @@
 package service_auth
 
 import (
-	http_auth "backend/internal/features/auth/transport/http/dto"
 	"context"
 	"fmt"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
-func (s *AuthService) Login(ctx context.Context, req http_auth.LoginRequest) (string, *http_auth.UserResponse, error) {
+type LoginRequest struct {
+	Email    string
+	Password string
+}
+
+func (s *AuthService) Login(ctx context.Context, req LoginRequest) (string, *UserResponse, error) {
 	cred, err := s.credRepo.GetByEmail(ctx, req.Email)
 	if err != nil {
 		return "", nil, ErrInvalidCredentials
@@ -32,7 +36,7 @@ func (s *AuthService) Login(ctx context.Context, req http_auth.LoginRequest) (st
 		return "", nil, fmt.Errorf("generate token: %w", err)
 	}
 
-	userResponse := &http_auth.UserResponse{
+	userResponse := &UserResponse{
 		ID:          profile.ID,
 		FullName:    profile.FullName,
 		Email:       profile.Email,

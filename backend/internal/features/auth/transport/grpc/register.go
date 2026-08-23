@@ -4,7 +4,6 @@ import (
 	"backend/internal/core/domain"
 	service "backend/internal/features/auth/service"
 	"backend/internal/features/auth/transport/grpc/proto"
-	http_auth "backend/internal/features/auth/transport/http/dto"
 
 	"go.uber.org/zap"
 	"golang.org/x/net/context"
@@ -24,7 +23,7 @@ func (s *AuthServer) Register(ctx context.Context, req *proto.RegisterRequest) (
 	}
 	s.logger.Debug("Auth Register", zap.String("email", req.Email))
 
-	registerReq := http_auth.RegisterRequest{
+	registerReq := service.RegisterRequest{
 		FullName:    req.FullName,
 		Email:       req.Email,
 		Password:    req.Password,
