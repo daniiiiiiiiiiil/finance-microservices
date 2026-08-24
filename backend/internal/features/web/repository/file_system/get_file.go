@@ -1,7 +1,7 @@
 package file_system_web
 
 import (
-	errors_core "backend/internal/core/errors"
+	errors_core "backend/pkg/errors"
 	"fmt"
 	"os"
 )

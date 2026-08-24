@@ -1,15 +1,15 @@
 package grpc
 
 import (
-	"backend/internal/core/logger"
 	"backend/internal/features/currency/service"
-	"backend/internal/features/currency/transport/grpc/proto"
+	"backend/pkg/logger"
+	"backend/proto/currency/gen"
 
 	"google.golang.org/grpc"
 )
 
 type CurrencyServer struct {
-	proto.UnimplementedCurrencyServiceServer
+	gen.UnimplementedCurrencyServiceServer
 	service service_currency.CurrencyServiceInterface
 	logger  *logger.Logger
 }
@@ -22,5 +22,5 @@ func NewCurrencyServer(service service_currency.CurrencyServiceInterface, logger
 }
 
 func RegisterCurrencyServer(grpcServer *grpc.Server, currencyServer *CurrencyServer) {
-	proto.RegisterCurrencyServiceServer(grpcServer, currencyServer)
+	gen.RegisterCurrencyServiceServer(grpcServer, currencyServer)
 }

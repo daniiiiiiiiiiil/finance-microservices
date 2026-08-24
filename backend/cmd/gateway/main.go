@@ -5,19 +5,18 @@ import (
 	_ "backend/docs"
 	"backend/internal/core/auth/jwt"
 	grpcclient "backend/internal/core/grpc"
-	"backend/internal/core/logger"
-	core_http_middleware "backend/internal/core/transport/http/middleware"
+	logger2 "backend/pkg/logger"
+	http2 "backend/pkg/middleware/http"
+	adminpb "backend/proto/admin/gen"
+	authpb "backend/proto/auth/gen"
+	currencypb "backend/proto/currency/gen"
+	financepb "backend/proto/finance/gen"
+	userpb "backend/proto/users/gen"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
-
-	adminpb "backend/internal/features/admin/transport/grpc/proto"
-	authpb "backend/internal/features/auth/transport/grpc/proto"
-	currencypb "backend/internal/features/currency/transport/grpc/proto"
-	financepb "backend/internal/features/finance/transport/grpc/proto"
-	userpb "backend/internal/features/users/transport/grpc/proto"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -35,7 +34,7 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
-	logger, err := logger.NewLogger(logger.NewConfigMust())
+	logger, err := logger2.NewLogger(logger2.NewConfigMust())
 	if err != nil {
 		os.Exit(1)
 	}
@@ -137,14 +136,14 @@ func main() {
 
 	httpMux.Handle("/api/", otelMux)
 
-	handler := core_http_middleware.ChainMiddlewares(
+	handler := http2.ChainMiddlewares(
 		httpMux,
-		core_http_middleware.CORS(),
-		core_http_middleware.Auth(jwtManager),
-		core_http_middleware.RequestID(),
-		core_http_middleware.Logger(logger),
-		core_http_middleware.Trace(),
-		core_http_middleware.Panic(),
+		http2.CORS(),
+		http2.Auth(jwtManager),
+		http2.RequestID(),
+		http2.Logger(logger),
+		http2.Trace(),
+		http2.Panic(),
 	)
 
 	server := &http.Server{

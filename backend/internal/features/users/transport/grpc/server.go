@@ -1,15 +1,15 @@
 package grpc
 
 import (
-	"backend/internal/core/logger"
 	service_user "backend/internal/features/users/service"
-	"backend/internal/features/users/transport/grpc/proto"
+	"backend/pkg/logger"
+	"backend/proto/users/gen"
 
 	"google.golang.org/grpc"
 )
 
 type UserServer struct {
-	proto.UnimplementedUserServiceServer
+	gen.UnimplementedUserServiceServer
 	service service_user.UsersServiceInterface
 	logger  *logger.Logger
 }
@@ -22,5 +22,5 @@ func NewUserServer(service service_user.UsersServiceInterface, logger *logger.Lo
 }
 
 func RegisterUserServer(grpcServer *grpc.Server, userServer *UserServer) {
-	proto.RegisterUserServiceServer(grpcServer, userServer)
+	gen.RegisterUserServiceServer(grpcServer, userServer)
 }

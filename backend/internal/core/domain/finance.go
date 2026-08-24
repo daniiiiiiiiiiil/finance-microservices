@@ -1,7 +1,7 @@
 package domain
 
 import (
-	errors_core "backend/internal/core/errors"
+	errors_core "backend/pkg/errors"
 	"fmt"
 	"time"
 )

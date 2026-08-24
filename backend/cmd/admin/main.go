@@ -8,12 +8,12 @@ import (
 	usersclient "backend/internal/core/clients/users"
 	grpcclient "backend/internal/core/grpc"
 	"backend/internal/core/kafka"
-	"backend/internal/core/logger"
 	"backend/internal/core/telemetry"
-	"backend/internal/core/transport/grpc/interceptors"
 	admin_service "backend/internal/features/admin/service"
 	admingrpc "backend/internal/features/admin/transport/grpc"
 	"backend/internal/features/auth/repository/redis"
+	interceptors2 "backend/pkg/grpcutil/interceptors"
+	logger2 "backend/pkg/logger"
 	"context"
 	"net"
 	"net/http"
@@ -38,7 +38,7 @@ func main() {
 		syscall.SIGTERM)
 	defer cancel()
 
-	logger, err := logger.NewLogger(logger.NewConfigMust())
+	logger, err := logger2.NewLogger(logger2.NewConfigMust())
 	if err != nil {
 		os.Exit(1)
 	}
@@ -91,11 +91,11 @@ func main() {
 		logger)
 	grpcServer := grpcclient.NewGRPCServer(
 		cfg,
-		interceptors.RequestIDInterceptor(),
-		interceptors.LoggerInterceptor(logger),
-		interceptors.AuthInterceptor(jwtManager, blacklist),
-		interceptors.MetricsInterceptor(serviceName),
-		interceptors.TraceInterceptor(),
+		interceptors2.RequestIDInterceptor(),
+		interceptors2.LoggerInterceptor(logger),
+		interceptors2.AuthInterceptor(jwtManager, blacklist),
+		interceptors2.MetricsInterceptor(serviceName),
+		interceptors2.TraceInterceptor(),
 	)
 	adminServer := admingrpc.NewAdminServer(adminService, logger)
 	admingrpc.RegisterAdminServer(grpcServer, adminServer)

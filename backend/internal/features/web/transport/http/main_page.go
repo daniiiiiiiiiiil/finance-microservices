@@ -1,8 +1,8 @@
 package http_web
 
 import (
-	"backend/internal/core/logger"
-	response_core "backend/internal/core/transport/http/response"
+	response_core "backend/pkg/httputil/response"
+	"backend/pkg/logger"
 	"net/http"
 )
 

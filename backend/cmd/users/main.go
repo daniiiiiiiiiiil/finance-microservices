@@ -6,14 +6,14 @@ import (
 	"backend/internal/core/cache"
 	grpcclient "backend/internal/core/grpc"
 	"backend/internal/core/kafka"
-	"backend/internal/core/logger"
 	"backend/internal/core/repository/postgres/pool/pgx"
 	"backend/internal/core/telemetry"
-	"backend/internal/core/transport/grpc/interceptors"
 	"backend/internal/features/auth/repository/redis"
 	"backend/internal/features/users/repository/postgres"
 	"backend/internal/features/users/service"
 	usersgrpc "backend/internal/features/users/transport/grpc"
+	interceptors2 "backend/pkg/grpcutil/interceptors"
+	logger2 "backend/pkg/logger"
 	"net/http"
 
 	"context"
@@ -37,7 +37,7 @@ func main() {
 		syscall.SIGTERM)
 	defer cancel()
 
-	logger, err := logger.NewLogger(logger.NewConfigMust())
+	logger, err := logger2.NewLogger(logger2.NewConfigMust())
 	if err != nil {
 		os.Exit(1)
 	}
@@ -85,11 +85,11 @@ func main() {
 
 	grpcServer := grpcclient.NewGRPCServer(
 		cfg,
-		interceptors.RequestIDInterceptor(),
-		interceptors.LoggerInterceptor(logger),
-		interceptors.AuthInterceptor(jwtManager, blacklist),
-		interceptors.MetricsInterceptor(serviceName),
-		interceptors.TraceInterceptor(),
+		interceptors2.RequestIDInterceptor(),
+		interceptors2.LoggerInterceptor(logger),
+		interceptors2.AuthInterceptor(jwtManager, blacklist),
+		interceptors2.MetricsInterceptor(serviceName),
+		interceptors2.TraceInterceptor(),
 	)
 	userServer := usersgrpc.NewUserServer(usersService, logger)
 	usersgrpc.RegisterUserServer(grpcServer, userServer)

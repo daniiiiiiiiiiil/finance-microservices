@@ -6,15 +6,15 @@ import (
 	"backend/internal/core/cache"
 	grpcclient "backend/internal/core/grpc"
 	"backend/internal/core/kafka"
-	"backend/internal/core/logger"
 	"backend/internal/core/repository/postgres/pool/pgx"
 	"backend/internal/core/telemetry"
-	"backend/internal/core/transport/grpc/interceptors"
 	"backend/internal/features/auth/repository/redis"
 	finance_repo "backend/internal/features/finance/repository/postgres"
 	finance_service "backend/internal/features/finance/service"
 	finance_grpc "backend/internal/features/finance/transport/grpc"
-	"backend/internal/features/finance/transport/grpc/proto"
+	interceptors2 "backend/pkg/grpcutil/interceptors"
+	logger2 "backend/pkg/logger"
+	"backend/proto/finance/gen"
 	"context"
 	"net"
 	"net/http"
@@ -39,7 +39,7 @@ func main() {
 		syscall.SIGTERM)
 	defer cancel()
 
-	logger, err := logger.NewLogger(logger.NewConfigMust())
+	logger, err := logger2.NewLogger(logger2.NewConfigMust())
 	if err != nil {
 		os.Exit(1)
 	}
@@ -85,15 +85,15 @@ func main() {
 	logger.Debug("initializing finance grpc server")
 	grpcServer := grpcclient.NewGRPCServer(
 		cfg,
-		interceptors.RequestIDInterceptor(),
-		interceptors.LoggerInterceptor(logger),
-		interceptors.AuthInterceptor(jwtManager, blacklist),
-		interceptors.MetricsInterceptor(serviceName),
-		interceptors.TraceInterceptor(),
+		interceptors2.RequestIDInterceptor(),
+		interceptors2.LoggerInterceptor(logger),
+		interceptors2.AuthInterceptor(jwtManager, blacklist),
+		interceptors2.MetricsInterceptor(serviceName),
+		interceptors2.TraceInterceptor(),
 	)
 
 	financeServer := finance_grpc.NewFinanceServer(financeService, logger)
-	proto.RegisterFinanceServiceServer(grpcServer, financeServer)
+	gen.RegisterFinanceServiceServer(grpcServer, financeServer)
 
 	metricsPort := ":9093"
 	metricsServer := &http.Server{Addr: metricsPort, Handler: promhttp.Handler()}

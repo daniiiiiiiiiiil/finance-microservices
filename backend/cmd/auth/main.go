@@ -6,14 +6,14 @@ import (
 	"backend/internal/core/cache"
 	usersclient "backend/internal/core/clients/users"
 	grpcclient "backend/internal/core/grpc"
-	"backend/internal/core/logger"
 	"backend/internal/core/repository/postgres/pool/pgx"
 	"backend/internal/core/telemetry"
-	"backend/internal/core/transport/grpc/interceptors"
 	postgres_auth "backend/internal/features/auth/repository/postgres"
 	"backend/internal/features/auth/repository/redis"
 	service_auth "backend/internal/features/auth/service"
 	authgrpc "backend/internal/features/auth/transport/grpc"
+	interceptors2 "backend/pkg/grpcutil/interceptors"
+	logger2 "backend/pkg/logger"
 	"context"
 	"net"
 	"net/http"
@@ -40,7 +40,7 @@ func main() {
 		syscall.SIGTERM)
 	defer cancel()
 
-	logger, err := logger.NewLogger(logger.NewConfigMust())
+	logger, err := logger2.NewLogger(logger2.NewConfigMust())
 	if err != nil {
 		os.Exit(1)
 	}
@@ -88,11 +88,11 @@ func main() {
 	logger.Debug("initializing auth service gRPC")
 	grpcServer := grpcclient.NewGRPCServer(
 		cfg,
-		interceptors.RequestIDInterceptor(),
-		interceptors.LoggerInterceptor(logger),
-		interceptors.AuthInterceptor(jwtManager, blacklist),
-		interceptors.MetricsInterceptor(serviceName),
-		interceptors.TraceInterceptor(),
+		interceptors2.RequestIDInterceptor(),
+		interceptors2.LoggerInterceptor(logger),
+		interceptors2.AuthInterceptor(jwtManager, blacklist),
+		interceptors2.MetricsInterceptor(serviceName),
+		interceptors2.TraceInterceptor(),
 	)
 
 	authServer := authgrpc.NewAuthServer(authService, logger)
@@ -157,7 +157,7 @@ func main() {
 	logger.Info("shutdown complete")
 }
 
-func createFirstAdmin(ctx context.Context, authService *service_auth.AuthService, log *logger.Logger) {
+func createFirstAdmin(ctx context.Context, authService *service_auth.AuthService, log *logger2.Logger) {
 	req := service_auth.RegisterRequest{
 		FullName:    "Admin",
 		Email:       "admin@finance.com",

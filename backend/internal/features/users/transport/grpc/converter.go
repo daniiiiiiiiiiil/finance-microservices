@@ -2,15 +2,15 @@ package grpc
 
 import (
 	"backend/internal/core/domain"
-	"backend/internal/features/users/transport/grpc/proto"
+	"backend/proto/users/gen"
 )
 
-func convertUserToProto(user domain.User) *proto.UserResponse {
+func convertUserToProto(user domain.User) *gen.UserResponse {
 	phoneNumber := ""
 	if user.PhoneNumber != nil && *user.PhoneNumber != "" {
 		phoneNumber = *user.PhoneNumber
 	}
-	return &proto.UserResponse{
+	return &gen.UserResponse{
 		Id:          int32(user.ID),
 		Version:     int32(user.Version),
 		FullName:    user.FullName,
@@ -20,7 +20,7 @@ func convertUserToProto(user domain.User) *proto.UserResponse {
 	}
 }
 
-func convertPatchProtoToDomain(data *proto.PatchUserData) domain.UserPatch {
+func convertPatchProtoToDomain(data *gen.PatchUserData) domain.UserPatch {
 	return domain.NewUserPatch(
 		convertStringToNullable(data.FullName),
 		convertStringToNullable(data.PhoneNumber),
@@ -34,8 +34,8 @@ func convertStringToNullable(value string) domain.Nullable[string] {
 	return domain.Nullable[string]{Value: &value, Set: true}
 }
 
-func ConvertUsersToProto(users []domain.User) []*proto.UserResponse {
-	result := make([]*proto.UserResponse, len(users))
+func ConvertUsersToProto(users []domain.User) []*gen.UserResponse {
+	result := make([]*gen.UserResponse, len(users))
 	for i, user := range users {
 		result[i] = convertUserToProto(user)
 	}

@@ -4,9 +4,9 @@ import (
 	"backend/internal/core/cache"
 	"backend/internal/core/domain"
 	"backend/internal/core/kafka"
-	"backend/internal/core/logger"
 	"backend/internal/core/repository/postgres/pool"
 	redisCache "backend/internal/features/users/repository/redis"
+	"backend/pkg/logger"
 	"context"
 )
 

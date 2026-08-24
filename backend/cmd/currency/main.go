@@ -6,13 +6,13 @@ import (
 	"backend/internal/core/cache"
 	grpcclient "backend/internal/core/grpc"
 	"backend/internal/core/kafka"
-	"backend/internal/core/logger"
 	"backend/internal/core/telemetry"
-	"backend/internal/core/transport/grpc/interceptors"
 	"backend/internal/features/auth/repository/redis"
 	redisCache "backend/internal/features/currency/repository/redis"
 	service_currency "backend/internal/features/currency/service"
 	currency_grpc "backend/internal/features/currency/transport/grpc"
+	interceptors2 "backend/pkg/grpcutil/interceptors"
+	logger2 "backend/pkg/logger"
 	"context"
 	"net"
 	"net/http"
@@ -36,7 +36,7 @@ func main() {
 	)
 	defer cancel()
 
-	logger, err := logger.NewLogger(logger.NewConfigMust())
+	logger, err := logger2.NewLogger(logger2.NewConfigMust())
 	if err != nil {
 		os.Exit(1)
 	}
@@ -88,11 +88,11 @@ func main() {
 	logger.Debug("initializing currency grpc server")
 	grpcServer := grpcclient.NewGRPCServer(
 		cfg,
-		interceptors.RequestIDInterceptor(),
-		interceptors.LoggerInterceptor(logger),
-		interceptors.AuthInterceptor(jwtManager, blacklist),
-		interceptors.MetricsInterceptor(serviceName),
-		interceptors.TraceInterceptor(),
+		interceptors2.RequestIDInterceptor(),
+		interceptors2.LoggerInterceptor(logger),
+		interceptors2.AuthInterceptor(jwtManager, blacklist),
+		interceptors2.MetricsInterceptor(serviceName),
+		interceptors2.TraceInterceptor(),
 	)
 
 	currencyServer := currency_grpc.NewCurrencyServer(currencyService, logger)

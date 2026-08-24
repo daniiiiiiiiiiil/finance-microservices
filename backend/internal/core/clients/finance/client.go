@@ -3,7 +3,7 @@ package finance
 import (
 	"backend/config"
 	grpcclient "backend/internal/core/grpc"
-	"backend/internal/features/finance/transport/grpc/proto"
+	"backend/proto/finance/gen"
 	"context"
 	"fmt"
 
@@ -14,7 +14,7 @@ import (
 var _ FinanceClientInterface = (*FinanceClient)(nil)
 
 type FinanceClient struct {
-	client proto.FinanceServiceClient
+	client gen.FinanceServiceClient
 	conn   *grpc.ClientConn
 }
 
@@ -25,7 +25,7 @@ func NewFinanceClient(addr string, cfg *config.Config) (*FinanceClient, error) {
 	}
 
 	return &FinanceClient{
-		client: proto.NewFinanceServiceClient(conn),
+		client: gen.NewFinanceServiceClient(conn),
 		conn:   conn,
 	}, nil
 }
@@ -47,7 +47,7 @@ func (c *FinanceClient) GetMetrics(ctx context.Context) (*FinanceMetrics, error)
 }
 
 func (c *FinanceClient) DeleteUserTransactions(ctx context.Context, userID int) error {
-	req := &proto.DeleteUserTransactionsRequest{
+	req := &gen.DeleteUserTransactionsRequest{
 		UserId: int32(userID),
 	}
 

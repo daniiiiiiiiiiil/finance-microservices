@@ -3,7 +3,7 @@ package users
 import (
 	"backend/config"
 	grpcclient "backend/internal/core/grpc"
-	"backend/internal/features/users/transport/grpc/proto"
+	"backend/proto/users/gen"
 	"fmt"
 
 	"golang.org/x/net/context"
@@ -12,7 +12,7 @@ import (
 )
 
 type UsersClient struct {
-	client proto.UserServiceClient
+	client gen.UserServiceClient
 	conn   *grpc.ClientConn
 }
 
@@ -22,7 +22,7 @@ func NewUsersClient(addr string, cfg *config.Config) (*UsersClient, error) {
 		return nil, fmt.Errorf("failed to connect to user service: %w", err)
 	}
 	return &UsersClient{
-		client: proto.NewUserServiceClient(conn),
+		client: gen.NewUserServiceClient(conn),
 		conn:   conn,
 	}, nil
 }
@@ -32,7 +32,7 @@ func (c *UsersClient) Close() error {
 }
 
 func (c *UsersClient) CreateProfile(ctx context.Context, req *CreateProfileRequest) (*UserProfile, error) {
-	grpcReq := &proto.CreateProfileRequest{
+	grpcReq := &gen.CreateProfileRequest{
 		Email:        req.Email,
 		FullName:     req.FullName,
 		IsAdmin:      req.IsAdmin,
@@ -57,8 +57,8 @@ func (c *UsersClient) CreateProfile(ctx context.Context, req *CreateProfileReque
 	}, nil
 }
 
-func (c *UsersClient) ListUsers(ctx context.Context, req *proto.ListUsersRequest) (*ListUsersResponse, error) {
-	grpcReq := &proto.ListUsersRequest{
+func (c *UsersClient) ListUsers(ctx context.Context, req *gen.ListUsersRequest) (*ListUsersResponse, error) {
+	grpcReq := &gen.ListUsersRequest{
 		Offset: req.Offset,
 		Limit:  req.Limit,
 	}
@@ -89,7 +89,7 @@ func (c *UsersClient) ListUsers(ctx context.Context, req *proto.ListUsersRequest
 }
 
 func (c *UsersClient) DeleteUser(ctx context.Context, id int) error {
-	grpcReq := &proto.DeleteUserRequest{
+	grpcReq := &gen.DeleteUserRequest{
 		Id: int32(id),
 	}
 	_, err := c.client.DeleteUser(ctx, grpcReq)
@@ -99,8 +99,8 @@ func (c *UsersClient) DeleteUser(ctx context.Context, id int) error {
 	return nil
 }
 
-func (c *UsersClient) UpdateRole(ctx context.Context, req *proto.UpdateRoleRequest) (*UserProfile, error) {
-	grpcReq := &proto.UpdateRoleRequest{
+func (c *UsersClient) UpdateRole(ctx context.Context, req *gen.UpdateRoleRequest) (*UserProfile, error) {
+	grpcReq := &gen.UpdateRoleRequest{
 		Id:      req.Id,
 		IsAdmin: req.IsAdmin,
 	}
@@ -123,7 +123,7 @@ func (c *UsersClient) UpdateRole(ctx context.Context, req *proto.UpdateRoleReque
 }
 
 func (c *UsersClient) GetUserByEmail(ctx context.Context, email string) (*UserProfile, error) {
-	req := &proto.GetUserByEmailRequest{
+	req := &gen.GetUserByEmailRequest{
 		Email: email,
 	}
 	resp, err := c.client.GetUserByEmail(ctx, req)
@@ -154,7 +154,7 @@ func (c *UsersClient) GetMetrics(ctx context.Context) (*UserMetrics, error) {
 	}, nil
 }
 
-func (c *UsersClient) GetUser(ctx context.Context, req *proto.GetUserRequest) (*proto.UserResponse, error) {
+func (c *UsersClient) GetUser(ctx context.Context, req *gen.GetUserRequest) (*gen.UserResponse, error) {
 	resp, err := c.client.GetUser(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %w", err)
@@ -171,7 +171,7 @@ func (c *UsersClient) AdminExists(ctx context.Context) (bool, error) {
 }
 
 func (c *UsersClient) MarkDeleting(ctx context.Context, id int) error {
-	req := &proto.MarkDeletingRequest{Id: int32(id)}
+	req := &gen.MarkDeletingRequest{Id: int32(id)}
 	_, err := c.client.MarkDeleting(ctx, req)
 	if err != nil {
 		return fmt.Errorf("failed to mark deleting: %w", err)
@@ -180,7 +180,7 @@ func (c *UsersClient) MarkDeleting(ctx context.Context, id int) error {
 }
 
 func (c *UsersClient) FinalizeDelete(ctx context.Context, id int) error {
-	req := &proto.FinalizeDeleteRequest{Id: int32(id)}
+	req := &gen.FinalizeDeleteRequest{Id: int32(id)}
 	_, err := c.client.FinalizeDelete(ctx, req)
 	if err != nil {
 		return fmt.Errorf("failed to finalize delete: %w", err)
@@ -189,7 +189,7 @@ func (c *UsersClient) FinalizeDelete(ctx context.Context, id int) error {
 }
 
 func (c *UsersClient) RestoreUser(ctx context.Context, id int) error {
-	req := &proto.RestoreUserRequest{Id: int32(id)}
+	req := &gen.RestoreUserRequest{Id: int32(id)}
 	_, err := c.client.RestoreUser(ctx, req)
 	if err != nil {
 		return fmt.Errorf("failed to restore user: %w", err)

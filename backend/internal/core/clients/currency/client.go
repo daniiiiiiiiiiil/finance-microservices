@@ -3,7 +3,7 @@ package currency
 import (
 	"backend/config"
 	grpcclient "backend/internal/core/grpc"
-	"backend/internal/features/currency/transport/grpc/proto"
+	"backend/proto/currency/gen"
 	"fmt"
 
 	"golang.org/x/net/context"
@@ -11,7 +11,7 @@ import (
 )
 
 type CurrencyClient struct {
-	client proto.CurrencyServiceClient
+	client gen.CurrencyServiceClient
 	conn   *grpc.ClientConn
 }
 
@@ -21,13 +21,13 @@ func NewCurrencyClient(addr string, cfg *config.Config) (*CurrencyClient, error)
 		return nil, fmt.Errorf("could not connect to CurrencyServer %s", addr)
 	}
 	return &CurrencyClient{
-		client: proto.NewCurrencyServiceClient(conn),
+		client: gen.NewCurrencyServiceClient(conn),
 		conn:   conn,
 	}, nil
 }
 
-func (c *CurrencyClient) GetRates(ctx context.Context, base string) (*proto.GetRatesResponse, error) {
-	resp, err := c.client.GetRates(ctx, &proto.GetRatesRequest{Base: base})
+func (c *CurrencyClient) GetRates(ctx context.Context, base string) (*gen.GetRatesResponse, error) {
+	resp, err := c.client.GetRates(ctx, &gen.GetRatesRequest{Base: base})
 	if err != nil {
 		return nil, fmt.Errorf("could not get rates for base %s: %w", base, err)
 	}
@@ -35,7 +35,7 @@ func (c *CurrencyClient) GetRates(ctx context.Context, base string) (*proto.GetR
 }
 
 func (c *CurrencyClient) Convert(ctx context.Context, from string, to string, amount float64) (float64, error) {
-	resp, err := c.client.Convert(ctx, &proto.ConvertRequest{
+	resp, err := c.client.Convert(ctx, &gen.ConvertRequest{
 		From:   from,
 		To:     to,
 		Amount: amount,

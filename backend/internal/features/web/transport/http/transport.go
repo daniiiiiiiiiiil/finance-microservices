@@ -1,7 +1,7 @@
 package http_web
 
 import (
-	"backend/internal/core/transport/http/server"
+	"backend/pkg/server/http"
 )
 
 type WebHTTPHandler struct {
@@ -18,8 +18,8 @@ func NewWebHTTPHandler(webService WebService) *WebHTTPHandler {
 	}
 }
 
-func (h *WebHTTPHandler) Routes() []server.Route {
-	return []server.Route{
+func (h *WebHTTPHandler) Routes() []http.Route {
+	return []http.Route{
 		{
 			Path:    "/",
 			Handler: h.GetMainPage,

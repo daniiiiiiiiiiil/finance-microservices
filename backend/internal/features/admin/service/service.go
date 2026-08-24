@@ -5,7 +5,7 @@ import (
 	financeСlient "backend/internal/core/clients/finance"
 	"backend/internal/core/clients/users"
 	"backend/internal/core/kafka"
-	"backend/internal/core/logger"
+	"backend/pkg/logger"
 	"context"
 	"fmt"
 )

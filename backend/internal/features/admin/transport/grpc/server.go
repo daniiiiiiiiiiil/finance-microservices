@@ -1,15 +1,15 @@
 package grpc
 
 import (
-	"backend/internal/core/logger"
 	"backend/internal/features/admin/service"
-	"backend/internal/features/admin/transport/grpc/proto"
+	"backend/pkg/logger"
+	"backend/proto/admin/gen"
 
 	"google.golang.org/grpc"
 )
 
 type AdminServer struct {
-	proto.UnimplementedAdminServiceServer
+	gen.UnimplementedAdminServiceServer
 	service service_admin.AdminServiceInterface
 	logger  *logger.Logger
 }
@@ -22,5 +22,5 @@ func NewAdminServer(service service_admin.AdminServiceInterface, logger *logger.
 }
 
 func RegisterAdminServer(grpcServer *grpc.Server, server *AdminServer) {
-	proto.RegisterAdminServiceServer(grpcServer, server)
+	gen.RegisterAdminServiceServer(grpcServer, server)
 }

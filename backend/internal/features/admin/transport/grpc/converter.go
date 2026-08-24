@@ -2,15 +2,15 @@ package grpc
 
 import (
 	"backend/internal/core/domain"
-	"backend/internal/features/admin/transport/grpc/proto"
+	"backend/proto/admin/gen"
 )
 
-func convertUserToProto(user domain.User) *proto.AdminUserResponse {
+func convertUserToProto(user domain.User) *gen.AdminUserResponse {
 	var phoneNumber *string
 	if user.PhoneNumber != nil && *user.PhoneNumber != "" {
 		phoneNumber = user.PhoneNumber
 	}
-	return &proto.AdminUserResponse{
+	return &gen.AdminUserResponse{
 		Id:          int32(user.ID),
 		Version:     int32(user.Version),
 		FullName:    user.FullName,
@@ -20,12 +20,12 @@ func convertUserToProto(user domain.User) *proto.AdminUserResponse {
 	}
 }
 
-func convertUsersToProto(users []domain.User, limit, offset int) *proto.GetUsersResponse {
-	responses := make([]*proto.AdminUserResponse, len(users))
+func convertUsersToProto(users []domain.User, limit, offset int) *gen.GetUsersResponse {
+	responses := make([]*gen.AdminUserResponse, len(users))
 	for i, user := range users {
 		responses[i] = convertUserToProto(user)
 	}
-	return &proto.GetUsersResponse{
+	return &gen.GetUsersResponse{
 		Data:  responses,
 		Limit: int32(limit),
 		Page:  int32(offset/limit + 1),

@@ -2,13 +2,13 @@ package grpc
 
 import (
 	"backend/internal/core/domain"
-	"backend/internal/features/finance/transport/grpc/proto"
+	"backend/proto/finance/gen"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func convertFinanceToProto(finance domain.Finance) *proto.TransactionResponse {
-	return &proto.TransactionResponse{
+func convertFinanceToProto(finance domain.Finance) *gen.TransactionResponse {
+	return &gen.TransactionResponse{
 		Id:              int32(finance.ID),
 		Version:         int32(finance.Version),
 		TypeTransaction: finance.TypeTransaction,
@@ -19,27 +19,27 @@ func convertFinanceToProto(finance domain.Finance) *proto.TransactionResponse {
 	}
 }
 
-func ConvertFinanceToProto(finance []domain.Finance) []*proto.TransactionResponse {
-	result := make([]*proto.TransactionResponse, len(finance))
+func ConvertFinanceToProto(finance []domain.Finance) []*gen.TransactionResponse {
+	result := make([]*gen.TransactionResponse, len(finance))
 	for i, fin := range finance {
 		result[i] = convertFinanceToProto(fin)
 	}
 	return result
 }
 
-func convertDashboardToProto(dashboard domain.Dashboard) *proto.DashboardResponse {
-	dailyStats := make([]*proto.DailyStat, len(dashboard.DailyStats))
+func convertDashboardToProto(dashboard domain.Dashboard) *gen.DashboardResponse {
+	dailyStats := make([]*gen.DailyStat, len(dashboard.DailyStats))
 	for i, stat := range dashboard.DailyStats {
-		dailyStats[i] = &proto.DailyStat{
+		dailyStats[i] = &gen.DailyStat{
 			Date:    stat.Date.Format("2006-01-02"),
 			Income:  stat.Income,
 			Expense: stat.Expense,
 		}
 	}
 
-	recentTxs := make([]*proto.RecentTransaction, len(dashboard.RecentTxs))
+	recentTxs := make([]*gen.RecentTransaction, len(dashboard.RecentTxs))
 	for i, tx := range dashboard.RecentTxs {
-		recentTxs[i] = &proto.RecentTransaction{
+		recentTxs[i] = &gen.RecentTransaction{
 			Id:        int32(tx.ID),
 			Type:      tx.Type,
 			Amount:    tx.Amount,
@@ -48,16 +48,16 @@ func convertDashboardToProto(dashboard domain.Dashboard) *proto.DashboardRespons
 		}
 	}
 
-	topCategories := make([]*proto.CategoryStat, len(dashboard.TopCategories))
+	topCategories := make([]*gen.CategoryStat, len(dashboard.TopCategories))
 	for i, cat := range dashboard.TopCategories {
-		topCategories[i] = &proto.CategoryStat{
+		topCategories[i] = &gen.CategoryStat{
 			Category:   cat.Category,
 			Total:      cat.Total,
 			Percentage: cat.Percentage,
 		}
 	}
 
-	return &proto.DashboardResponse{
+	return &gen.DashboardResponse{
 		TotalBalance:       dashboard.TotalBalance,
 		MonthlyIncome:      dashboard.MonthlyIncome,
 		MonthlyExpenses:    dashboard.MonthlyExpenses,

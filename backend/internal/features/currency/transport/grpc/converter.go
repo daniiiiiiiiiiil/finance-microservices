@@ -2,21 +2,21 @@ package grpc
 
 import (
 	"backend/internal/core/domain"
-	"backend/internal/features/currency/transport/grpc/proto"
+	"backend/proto/currency/gen"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func convertRateToProto(rate *domain.Rate) *proto.GetRatesResponse {
-	return &proto.GetRatesResponse{
+func convertRateToProto(rate *domain.Rate) *gen.GetRatesResponse {
+	return &gen.GetRatesResponse{
 		Base:      rate.Base,
 		Rates:     rate.Rates,
 		Timestamp: timestamppb.New(rate.Timestamp),
 	}
 }
 
-func convertConversionToProto(conversion *domain.Conversion) *proto.ConvertResponse {
-	return &proto.ConvertResponse{
+func convertConversionToProto(conversion *domain.Conversion) *gen.ConvertResponse {
+	return &gen.ConvertResponse{
 		From:      conversion.From,
 		To:        conversion.To,
 		Amount:    conversion.Amount,
@@ -26,7 +26,7 @@ func convertConversionToProto(conversion *domain.Conversion) *proto.ConvertRespo
 	}
 }
 
-func convertProtoToConvertRequest(req *proto.ConvertRequest) *domain.Conversion {
+func convertProtoToConvertRequest(req *gen.ConvertRequest) *domain.Conversion {
 	return &domain.Conversion{
 		From:   req.From,
 		To:     req.To,

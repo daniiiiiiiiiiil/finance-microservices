@@ -1,7 +1,7 @@
 package kafka
 
 import (
-	"backend/internal/core/logger"
+	"backend/pkg/logger"
 	"context"
 	"encoding/json"
 	"fmt"

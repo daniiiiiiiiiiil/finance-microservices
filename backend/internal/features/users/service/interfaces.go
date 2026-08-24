@@ -2,12 +2,11 @@ package service_user
 
 import (
 	"backend/internal/core/domain"
-	"backend/internal/features/users/transport/grpc/proto"
 	"context"
 )
 
 type UsersServiceInterface interface {
-	CreateProfile(ctx context.Context, req *proto.CreateProfileRequest) (domain.User, error)
+	CreateProfile(ctx context.Context, req *CreateProfileRequest) (domain.User, error)
 	GetUser(ctx context.Context, id int) (domain.User, error)
 	GetUserByEmail(ctx context.Context, email string) (domain.User, error)
 	ListUsers(ctx context.Context, limit, offset int) ([]domain.User, int, error)
