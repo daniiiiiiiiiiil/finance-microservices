@@ -1,7 +1,0 @@
-.env
-out
-logs
-pgdata
-redisdata
-*.tmp
-*.swp

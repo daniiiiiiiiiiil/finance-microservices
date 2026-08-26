@@ -1,0 +1,89 @@
+syntax = "proto3";
+
+package admin.v1;
+
+option go_package = "./admin";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+
+service AdminService {
+  rpc GetUsers(google.protobuf.Empty)
+      returns (GetUsersResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/admin/users"
+    };
+  }
+
+  rpc GetUser(GetUserRequest)
+      returns (AdminUserResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/admin/users/{id}"
+    };
+  }
+
+  rpc DeleteUser(DeleteUserRequest)
+      returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/api/v1/admin/users/{id}"
+    };
+  }
+
+  rpc UpdateUserRole(UpdateRoleRequest)
+      returns (AdminUserResponse) {
+    option (google.api.http) = {
+      patch: "/api/v1/admin/users/{id}/role"
+      body: "*"
+    };
+  }
+
+  rpc GetMetrics(google.protobuf.Empty)
+      returns (MetricsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/admin/metrics"
+    };
+  }
+}
+
+
+message AdminUserResponse {
+  int32 id = 1;
+  int32 version = 2;
+  string full_name = 3;
+  string email = 4;
+  optional string phone_number = 5;
+  bool is_admin = 6;
+}
+
+
+message GetUserRequest {
+  int32 id = 1;
+}
+
+
+message GetUsersResponse {
+  repeated AdminUserResponse data = 1;
+  int32 total = 2;
+  int32 limit = 3;
+  int32 page = 4;
+}
+
+
+message UpdateRoleRequest {
+  int32 id = 1;
+  bool is_admin = 2;
+}
+
+
+message DeleteUserRequest {
+  int32 id = 1;
+}
+
+
+message MetricsResponse {
+  int32 total_users = 1;
+  int32 total_transactions = 2;
+  double total_balance = 3;
+}

@@ -1,0 +1,557 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "proto/finance/finance.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "FinanceService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/api/v1/finance/categories": {
+      "get": {
+        "operationId": "FinanceService_GetCategories",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/financeGetCategoriesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "FinanceService"
+        ]
+      }
+    },
+    "/api/v1/finance/dashboard": {
+      "get": {
+        "operationId": "FinanceService_GetDashboard",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/financeDashboardResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "FinanceService"
+        ]
+      }
+    },
+    "/api/v1/finance/transaction": {
+      "post": {
+        "operationId": "FinanceService_CreateTransaction",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/financeTransactionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/financeCreateTransactionRequest"
+            }
+          }
+        ],
+        "tags": [
+          "FinanceService"
+        ]
+      }
+    },
+    "/api/v1/finance/transaction/{id}": {
+      "get": {
+        "operationId": "FinanceService_GetTransaction",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/financeTransactionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "FinanceService"
+        ]
+      },
+      "delete": {
+        "operationId": "FinanceService_DeleteTransaction",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "FinanceService"
+        ]
+      },
+      "put": {
+        "operationId": "FinanceService_UpdateTransaction",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/financeTransactionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/FinanceServiceUpdateTransactionBody"
+            }
+          }
+        ],
+        "tags": [
+          "FinanceService"
+        ]
+      }
+    },
+    "/api/v1/finance/transactions": {
+      "get": {
+        "operationId": "FinanceService_GetTransactions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/financeGetTransactionsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "FinanceService"
+        ]
+      }
+    },
+    "/api/v1/finance/transactions/user/{userId}": {
+      "delete": {
+        "operationId": "FinanceService_DeleteUserTransaction",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/financeDeleteUserTransactionsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "FinanceService"
+        ]
+      }
+    },
+    "/api/v1/metrics": {
+      "get": {
+        "operationId": "FinanceService_GetMetrics",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/financeMetricsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "FinanceService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "FinanceServiceUpdateTransactionBody": {
+      "type": "object",
+      "properties": {
+        "typeTransaction": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number",
+          "format": "double"
+        },
+        "category": {
+          "type": "string"
+        }
+      }
+    },
+    "financeCategoryStat": {
+      "type": "object",
+      "properties": {
+        "category": {
+          "type": "string"
+        },
+        "total": {
+          "type": "number",
+          "format": "double"
+        },
+        "percentage": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "financeCreateTransactionRequest": {
+      "type": "object",
+      "properties": {
+        "typeTransaction": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number",
+          "format": "double"
+        },
+        "category": {
+          "type": "string"
+        }
+      }
+    },
+    "financeDailyStat": {
+      "type": "object",
+      "properties": {
+        "date": {
+          "type": "string"
+        },
+        "income": {
+          "type": "number",
+          "format": "double"
+        },
+        "expense": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "financeDashboardResponse": {
+      "type": "object",
+      "properties": {
+        "totalBalance": {
+          "type": "number",
+          "format": "double"
+        },
+        "monthlyIncome": {
+          "type": "number",
+          "format": "double"
+        },
+        "monthlyExpenses": {
+          "type": "number",
+          "format": "double"
+        },
+        "savingsRate": {
+          "type": "number",
+          "format": "double"
+        },
+        "dailyStats": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/financeDailyStat"
+          }
+        },
+        "recentTransactions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/financeRecentTransaction"
+          }
+        },
+        "topCategories": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/financeCategoryStat"
+          }
+        }
+      }
+    },
+    "financeDeleteUserTransactionsResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "deletedCount": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "financeGetCategoriesResponse": {
+      "type": "object",
+      "properties": {
+        "categories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "financeGetTransactionsResponse": {
+      "type": "object",
+      "properties": {
+        "transactions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/financeTransactionResponse"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "offset": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "financeMetricsResponse": {
+      "type": "object",
+      "properties": {
+        "totalTransactions": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "totalBalance": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "financeRecentTransaction": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "type": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number",
+          "format": "double"
+        },
+        "category": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "financeTransactionResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "version": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "typeTransaction": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number",
+          "format": "double"
+        },
+        "category": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}

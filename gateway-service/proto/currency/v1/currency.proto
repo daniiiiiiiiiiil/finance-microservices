@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package currency;
+option go_package = "./currency";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+
+service CurrencyService {
+  rpc GetRates(GetRatesRequest) returns (GetRatesResponse){
+    option (google.api.http) = {
+      get: "/api/v1/currency/{base}"
+    };
+  }
+  rpc Convert(ConvertRequest) returns (ConvertResponse){
+    option (google.api.http) = {
+      post: "/api/v1/currency/convert";
+      body: "*"
+    };
+  }
+  rpc ConvertBatch(ConvertBatchRequest) returns (ConvertBatchResponse){
+    option (google.api.http) = {
+      post: "/api/v1/currency/convert/batch"
+      body: "*"
+    };
+  }
+  rpc GetTransactionUSD(GetTransactionUSDRequest) returns (GetTransactionUSDResponse){
+    option (google.api.http) = {
+      get: "/api/v1/currency/transaction/{id}"
+    };
+  }
+}
+
+message GetRatesRequest{
+  string base = 1;
+}
+
+message GetRatesResponse{
+  string base = 1;
+  map<string, double> rates = 2;
+  google.protobuf.Timestamp timestamp = 3;
+}
+
+message ConvertRequest{
+  string from = 1;
+  string to = 2;
+  double amount = 3;
+}
+
+message ConvertResponse{
+  string from = 1;
+  string to = 2;
+  double amount = 3;
+  double result = 4;
+  double rate = 5;
+  google.protobuf.Timestamp timestamp = 6;
+}
+
+message ConvertBatchRequest{
+  string from = 1;
+  repeated string to = 2;
+  double amount = 3;
+}
+
+message ConvertBatchResponse{
+  string from = 1;
+  map<string, double> results = 2;
+  double amount = 3;
+  google.protobuf.Timestamp timestamp = 4;
+}
+
+message GetTransactionUSDRequest{
+  int64 id = 1;
+}
+
+message GetTransactionUSDResponse{
+  int64 transaction_id = 1;
+  double amount_usd = 2;
+  double original_amount = 3;
+  string original_currency = 4;
+  google.protobuf.Timestamp converted_at = 6;
+}

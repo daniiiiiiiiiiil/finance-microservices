@@ -1,0 +1,154 @@
+syntax = "proto3";
+
+package users;
+option go_package ="./users";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+service UserService{
+  rpc GetUser (GetUserRequest) returns (UserResponse){
+    option (google.api.http) = {
+      get: "/api/v1/user/{id}"
+    };
+  }
+  rpc PatchUser (PatchUserRequest) returns (UserResponse){
+    option (google.api.http) = {
+      patch: "/api/v1/user/{id}"
+      body: "*"
+    };
+  }
+  rpc DeleteUser (DeleteUserRequest) returns (google.protobuf.Empty){
+    option (google.api.http) = {
+      delete: "/api/v1/user/{id}"
+    };
+  }
+  rpc CreateProfile(CreateProfileRequest) returns(UserResponse){
+    option(google.api.http) = {
+      post: "/api/v1/user/profile"
+      body: "*"
+    };
+  }
+  rpc ListUsers(ListUsersRequest) returns(ListUsersResponse){
+    option(google.api.http) = {
+      get: "/api/v1/users"
+    };
+  }
+  rpc UpdateRole(UpdateRoleRequest) returns(UserResponse){
+    option(google.api.http) = {
+      patch: "/api/v1/user/{id}/role"
+      body: "*"
+    };
+  }
+  rpc GetMetrics(google.protobuf.Empty) returns (MetricsResponse){
+    option(google.api.http) = {
+      get: "/api/v1/metrics"
+    };
+  }
+  rpc GetUserByEmail(GetUserByEmailRequest) returns (UserResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/user/by-email/{email}"
+    };
+  }
+  rpc AdminExists(google.protobuf.Empty) returns (AdminExistsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/users/admin-exists"
+    };
+  }
+  rpc MarkDeleting(MarkDeletingRequest) returns(google.protobuf.Empty){
+    option (google.api.http) = {
+      post: "/api/v1/users/{id}/mark-deleting"
+      body: "*"
+    };
+  }
+  rpc FinalizeDelete(FinalizeDeleteRequest) returns (google.protobuf.Empty){
+    option (google.api.http) = {
+      post: "/api/v1/users/{id}/finalize-delete"
+      body: "*"
+    };
+  }
+  rpc RestoreUser(RestoreUserRequest) returns (google.protobuf.Empty){
+    option(google.api.http) = {
+      post: "/api/v1/users/{id}/restore"
+      body: "*"
+    };
+  }
+}
+
+message GetUserRequest{
+  int32 id = 1;
+}
+
+message DeleteUserRequest{
+  int32 id = 1;
+}
+
+message PatchUserRequest{
+  int32 id = 1;
+  PatchUserData data =2;
+}
+
+message UserResponse{
+  int32 id = 1;
+  int32 version = 2;
+  string full_name = 3;
+  string email = 4;
+  string phone_number = 5;
+  bool is_admin = 6;
+  bool is_active = 7;
+  string status = 8;
+}
+
+message PatchUserData{
+  string full_name = 1;
+  string phone_number = 2;
+}
+
+message CreateProfileRequest {
+  string email = 1;
+  string full_name = 2;
+  string phone_number = 3;
+  bool is_admin = 4;
+  string password_hash = 5;
+}
+
+message ListUsersRequest{
+  int32 limit = 1;
+  int32 offset = 2;
+}
+
+message ListUsersResponse{
+  repeated UserResponse users = 1;
+  int32 total = 2;
+  int32 limit = 3;
+  int32 offset = 4;
+}
+
+message UpdateRoleRequest{
+  int32 id = 1;
+  bool is_admin = 2;
+}
+
+message MetricsResponse{
+  int32 total_users = 1;
+}
+
+message GetUserByEmailRequest {
+  string email = 1;
+}
+
+message AdminExistsResponse {
+  bool exists = 1;
+}
+
+message MarkDeletingRequest{
+  int32 id = 1;
+}
+
+message FinalizeDeleteRequest{
+  int32 id = 1;
+}
+
+message RestoreUserRequest{
+  int32 id = 1;
+}

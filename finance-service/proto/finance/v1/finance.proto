@@ -1,0 +1,162 @@
+syntax = "proto3";
+
+package finance;
+option go_package = "./finance";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+
+service FinanceService {
+  rpc GetDashboard (GetDashboardRequest) returns (DashboardResponse){
+    option (google.api.http) = {
+      get: "/api/v1/finance/dashboard"
+    };
+  }
+  rpc GetCategories (GetCategoriesRequest) returns (GetCategoriesResponse){
+    option (google.api.http) = {
+      get: "/api/v1/finance/categories"
+    };
+  }
+  rpc CreateTransaction (CreateTransactionRequest) returns (TransactionResponse){
+    option (google.api.http) = {
+      post: "/api/v1/finance/transaction"
+      body: "*"
+    };
+  }
+  rpc GetTransactions (GetTransactionsRequest) returns (GetTransactionsResponse){
+    option (google.api.http) = {
+      get: "/api/v1/finance/transactions"
+    };
+  }
+  rpc GetTransaction (GetTransactionRequest) returns (TransactionResponse){
+    option (google.api.http) = {
+      get: "/api/v1/finance/transaction/{id}"
+    };
+  }
+  rpc UpdateTransaction (UpdateTransactionRequest) returns (TransactionResponse){
+    option (google.api.http) = {
+      put: "/api/v1/finance/transaction/{id}"
+      body: "*"
+    };
+  }
+  rpc DeleteTransaction (DeleteTransactionRequest) returns (google.protobuf.Empty){
+    option (google.api.http) = {
+      delete: "/api/v1/finance/transaction/{id}"
+    };
+  }
+  rpc DeleteUserTransaction(DeleteUserTransactionsRequest) returns (DeleteUserTransactionsResponse){
+    option (google.api.http) = {
+      delete: "/api/v1/finance/transactions/user/{user_id}"
+    };
+  }
+  rpc GetMetrics(google.protobuf.Empty) returns(MetricsResponse){
+    option (google.api.http) = {
+      get: "/api/v1/metrics"
+    };
+  }
+}
+
+message GetDashboardRequest {
+  // Пустой — user_id берется из JWT
+}
+
+message GetCategoriesRequest {
+  // Пустой — user_id берется из JWT
+}
+
+message GetTransactionRequest {
+  int32 id = 1;
+}
+
+message GetTransactionsRequest {
+  optional string type = 1;
+  optional string category = 2;
+  optional string from = 3;
+  optional string to = 4;
+  int32 limit = 5;
+  int32 offset = 6;
+}
+
+message CreateTransactionRequest {
+  string type_transaction = 1;
+  double amount = 2;
+  string category = 3;
+}
+
+message UpdateTransactionRequest {
+  int32 id = 1;
+  string type_transaction = 2;
+  double amount = 3;
+  string category = 4;
+}
+
+message DeleteTransactionRequest {
+  int32 id = 1;
+}
+
+message TransactionResponse {
+  int32 id = 1;
+  int32 version = 2;
+  string type_transaction = 3;
+  double amount = 4;
+  string category = 5;
+  google.protobuf.Timestamp created_at = 6;
+  int32 user_id = 7;
+}
+
+message GetTransactionsResponse {
+  repeated TransactionResponse transactions = 1;
+  int32 total = 2;
+  int32 limit = 3;
+  int32 offset = 4;
+}
+
+message DashboardResponse {
+  double total_balance = 1;
+  double monthly_income = 2;
+  double monthly_expenses = 3;
+  double savings_rate = 4;
+  repeated DailyStat daily_stats = 5;
+  repeated RecentTransaction recent_transactions = 6;
+  repeated CategoryStat top_categories = 7;
+}
+
+message DailyStat {
+  string date = 1;
+  double income = 2;
+  double expense = 3;
+}
+
+message RecentTransaction {
+  int32 id = 1;
+  string type = 2;
+  double amount = 3;
+  string category = 4;
+  google.protobuf.Timestamp created_at = 5;
+}
+
+message CategoryStat {
+  string category = 1;
+  double total = 2;
+  double percentage = 3;
+}
+
+message GetCategoriesResponse {
+  repeated string categories = 1;
+}
+
+message DeleteUserTransactionsRequest {
+  int32 user_id = 1;
+}
+
+message DeleteUserTransactionsResponse{
+  bool success = 1;
+  int32 deleted_count = 2;
+}
+
+message MetricsResponse {
+  int32 total_transactions = 1;
+  double total_balance = 2;
+}

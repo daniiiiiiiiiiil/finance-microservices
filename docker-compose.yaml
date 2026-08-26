@@ -1,0 +1,364 @@
+version: '3.8'
+
+services:
+  # ==================== POSTGRES ====================
+
+  finance-postgres:
+    image: postgres:15-alpine
+    container_name: finance-env-postgres
+    networks:
+      - finance-net
+    environment:
+      - POSTGRES_USER=${FINANCE_POSTGRES_USER}
+      - POSTGRES_PASSWORD=${FINANCE_POSTGRES_PASSWORD}
+      - POSTGRES_DB=${FINANCE_POSTGRES_DB}
+    volumes:
+      - ./out/pgdata/finance:/var/lib/postgresql/data:rw
+    restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${FINANCE_POSTGRES_USER} -d ${FINANCE_POSTGRES_DB}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  auth-postgres:
+    image: postgres:15-alpine
+    container_name: auth-env-postgres
+    networks:
+      - finance-net
+    environment:
+      - POSTGRES_USER=${AUTH_POSTGRES_USER}
+      - POSTGRES_PASSWORD=${AUTH_POSTGRES_PASSWORD}
+      - POSTGRES_DB=${AUTH_POSTGRES_DB}
+    volumes:
+      - ./out/pgdata/auth:/var/lib/postgresql/data:rw
+    restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${AUTH_POSTGRES_USER} -d ${AUTH_POSTGRES_DB}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  users-postgres:
+    image: postgres:15-alpine
+    container_name: users-env-postgres
+    networks:
+      - finance-net
+    environment:
+      - POSTGRES_USER=${USERS_POSTGRES_USER}
+      - POSTGRES_PASSWORD=${USERS_POSTGRES_PASSWORD}
+      - POSTGRES_DB=${USERS_POSTGRES_DB}
+    volumes:
+      - ./out/pgdata/users:/var/lib/postgresql/data:rw
+    restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${USERS_POSTGRES_USER} -d ${USERS_POSTGRES_DB}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
+  finance-redis:
+    image: redis:7-alpine
+    container_name: finance-redis
+    networks:
+      - finance-net
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./out/redisdata:/data
+    restart: always
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ==================== KAFKA ====================
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: finance-kafka
+    networks:
+      - finance-net
+    environment:
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    ports:
+      - "9092:9092"
+    restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==================== MICROSERVICES ====================
+
+  auth:
+    build:
+      context: .
+      dockerfile: build/auth/Dockerfile
+    container_name: auth-service
+    networks:
+      - finance-net
+    environment:
+      - POSTGRES_USER=${AUTH_POSTGRES_USER}
+      - POSTGRES_PASSWORD=${AUTH_POSTGRES_PASSWORD}
+      - POSTGRES_DB=${AUTH_POSTGRES_DB}
+      - POSTGRES_HOST=auth-postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_TIMEOUT=${POSTGRES_TIMEOUT}
+      - LOGGER_LEVEL=${LOGGER_LEVEL}
+      - LOGGER_FOLDER=${LOGGER_FOLDER}
+      - TIME_ZONE=${TIME_ZONE}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_DURATION=${JWT_DURATION}
+      - REDIS_ADDR=finance-redis:6379
+      - KAFKA_BROKERS=kafka:9092
+      - TLS_ENABLED=${TLS_ENABLED}
+      - TLS_CERT_FILE=${TLS_CERT_FILE}
+      - TLS_KEY_FILE=${TLS_KEY_FILE}
+      - TLS_CA_FILE=${TLS_CA_FILE}
+    volumes:
+      - ./logs:/out/logs
+      - ./certs:/certs:ro
+    ports:
+      - "50051:50051"
+      - "9091:9091"
+    restart: always
+    depends_on:
+      auth-postgres:
+        condition: service_healthy
+      finance-redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  users:
+    build:
+      context: .
+      dockerfile: build/users/Dockerfile
+    container_name: users-service
+    networks:
+      - finance-net
+    environment:
+      - POSTGRES_USER=${USERS_POSTGRES_USER}
+      - POSTGRES_PASSWORD=${USERS_POSTGRES_PASSWORD}
+      - POSTGRES_DB=${USERS_POSTGRES_DB}
+      - POSTGRES_HOST=users-postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_TIMEOUT=${POSTGRES_TIMEOUT}
+      - LOGGER_LEVEL=${LOGGER_LEVEL}
+      - LOGGER_FOLDER=${LOGGER_FOLDER}
+      - TIME_ZONE=${TIME_ZONE}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_DURATION=${JWT_DURATION}
+      - REDIS_ADDR=finance-redis:6379
+      - KAFKA_BROKERS=kafka:9092
+      - TLS_ENABLED=${TLS_ENABLED}
+      - TLS_CERT_FILE=${TLS_CERT_FILE}
+      - TLS_KEY_FILE=${TLS_KEY_FILE}
+      - TLS_CA_FILE=${TLS_CA_FILE}
+    volumes:
+      - ./logs:/out/logs
+      - ./certs:/certs:ro
+    ports:
+      - "50052:50052"
+      - "9096:9092"
+    restart: always
+    depends_on:
+      users-postgres:
+        condition: service_healthy
+      finance-redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  finance:
+    build:
+      context: .
+      dockerfile: build/finance/Dockerfile
+    container_name: finance-service
+    networks:
+      - finance-net
+    environment:
+      - POSTGRES_USER=${FINANCE_POSTGRES_USER}
+      - POSTGRES_PASSWORD=${FINANCE_POSTGRES_PASSWORD}
+      - POSTGRES_DB=${FINANCE_POSTGRES_DB}
+      - POSTGRES_HOST=finance-postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_TIMEOUT=${POSTGRES_TIMEOUT}
+      - LOGGER_LEVEL=${LOGGER_LEVEL}
+      - LOGGER_FOLDER=${LOGGER_FOLDER}
+      - TIME_ZONE=${TIME_ZONE}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_DURATION=${JWT_DURATION}
+      - REDIS_ADDR=finance-redis:6379
+      - KAFKA_BROKERS=kafka:9092
+      - TLS_ENABLED=${TLS_ENABLED}
+      - TLS_CERT_FILE=${TLS_CERT_FILE}
+      - TLS_KEY_FILE=${TLS_KEY_FILE}
+      - TLS_CA_FILE=${TLS_CA_FILE}
+    volumes:
+      - ./logs:/out/logs
+      - ./certs:/certs:ro
+    ports:
+      - "50053:50053"
+      - "9093:9093"
+    restart: always
+    depends_on:
+      finance-postgres:
+        condition: service_healthy
+      finance-redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  admin:
+    build:
+      context: .
+      dockerfile: build/admin/Dockerfile
+    container_name: admin-service
+    networks:
+      - finance-net
+    environment:
+      - LOGGER_LEVEL=${LOGGER_LEVEL}
+      - LOGGER_FOLDER=${LOGGER_FOLDER}
+      - TIME_ZONE=${TIME_ZONE}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_DURATION=${JWT_DURATION}
+      - REDIS_ADDR=finance-redis:6379
+      - KAFKA_BROKERS=kafka:9092
+      - TLS_ENABLED=${TLS_ENABLED}
+      - TLS_CERT_FILE=${TLS_CERT_FILE}
+      - TLS_KEY_FILE=${TLS_KEY_FILE}
+      - TLS_CA_FILE=${TLS_CA_FILE}
+    volumes:
+      - ./logs:/out/logs
+      - ./certs:/certs:ro
+    ports:
+      - "50054:50054"
+      - "9094:9094"
+    restart: always
+    depends_on:
+      finance-redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  currency:
+    build:
+      context: .
+      dockerfile: build/currency/Dockerfile
+    container_name: currency-service
+    networks:
+      - finance-net
+    environment:
+      - LOGGER_LEVEL=${LOGGER_LEVEL}
+      - LOGGER_FOLDER=${LOGGER_FOLDER}
+      - TIME_ZONE=${TIME_ZONE}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_DURATION=${JWT_DURATION}
+      - REDIS_ADDR=finance-redis:6379
+      - KAFKA_BROKERS=kafka:9092
+      - CURRENCY_API_URL=https://api.frankfurter.app/latest
+      - TLS_ENABLED=${TLS_ENABLED}
+      - TLS_CERT_FILE=${TLS_CERT_FILE}
+      - TLS_KEY_FILE=${TLS_KEY_FILE}
+      - TLS_CA_FILE=${TLS_CA_FILE}
+    volumes:
+      - ./logs:/out/logs
+      - ./certs:/certs:ro
+    ports:
+      - "50055:50055"
+      - "9095:9095"
+    restart: always
+    depends_on:
+      finance-redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  gateway:
+    build:
+      context: .
+      dockerfile: build/gateway/Dockerfile
+    container_name: gateway-service
+    networks:
+      - finance-net
+    environment:
+      - LOGGER_LEVEL=${LOGGER_LEVEL}
+      - LOGGER_FOLDER=${LOGGER_FOLDER}
+      - TIME_ZONE=${TIME_ZONE}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_DURATION=${JWT_DURATION}
+      - TLS_ENABLED=${TLS_ENABLED}
+      - TLS_CERT_FILE=${TLS_CERT_FILE}
+      - TLS_KEY_FILE=${TLS_KEY_FILE}
+      - TLS_CA_FILE=${TLS_CA_FILE}
+    volumes:
+      - ./certs:/certs:ro
+    ports:
+      - "8081:8081"
+    restart: always
+    depends_on:
+      - auth
+      - users
+      - finance
+      - admin
+      - currency
+
+  # ==================== OBSERVABILITY ====================
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: finance-kafka-ui
+    networks:
+      - finance-net
+    depends_on:
+      - kafka
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: finance-jaeger
+    networks:
+      - finance-net
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+    restart: unless-stopped
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: finance-prometheus
+    networks:
+      - finance-net
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./out/prometheus:/prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+
+networks:
+  finance-net:
+    driver: bridge
