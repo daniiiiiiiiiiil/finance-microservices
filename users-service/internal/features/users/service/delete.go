@@ -77,7 +77,7 @@ func (s *UsersService) FinalizeDelete(ctx context.Context, id int) error {
 		return fmt.Errorf("commit transaction: %w", err)
 	}
 
-	go s.sendUserEvent(context.Background(), kafka.EventTypeUserDeleted, user.ID, user.Email, user.FullName, user.IsAdmin, user.Status)
+	go s.publishUserEvent(context.Background(), kafka.EventTypeUserDeleted, user.ID, user.Email, user.FullName, user.IsAdmin, user.Status)
 
 	return nil
 }

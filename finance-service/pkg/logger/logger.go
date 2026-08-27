@@ -19,7 +19,6 @@ var (
 
 type Logger struct {
 	*zap.Logger
-
 	file *os.File
 }
 

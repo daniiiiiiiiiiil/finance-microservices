@@ -2,6 +2,7 @@ package service_currency
 
 import (
 	"github.com/daniiiiiiiiiiil/finance-microservices/currency-service/internal/core/domain"
+	"github.com/daniiiiiiiiiiil/finance-microservices/currency-service/internal/core/kafka"
 	"golang.org/x/net/context"
 )
 
@@ -12,6 +13,8 @@ type CurrencyServiceInterface interface {
 	GetTransactionUSD(ctx context.Context, txID int) (domain.TransactionUSD, error)
 	FetchRates(ctx context.Context, base string) (*domain.Rate, error)
 	StartConsumer(ctx context.Context)
+	ConvertTransactionToUSD(ctx context.Context, tx kafka.TransactionCurrencyEvent) error
+	DeleteConvertedUSD(ctx context.Context, txID int) error
 }
 
 type CurrencyAPIClientInterface interface {

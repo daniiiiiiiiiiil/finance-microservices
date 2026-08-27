@@ -20,9 +20,11 @@ import (
 	"github.com/daniiiiiiiiiiil/finance-microservices/users-service/internal/core/kafka"
 	"github.com/daniiiiiiiiiiil/finance-microservices/users-service/internal/core/repository/postgres/pool/pgx"
 	"github.com/daniiiiiiiiiiil/finance-microservices/users-service/internal/core/telemetry"
-	"github.com/daniiiiiiiiiiil/finance-microservices/users-service/internal/features/users/repository/postgres"
+	postgres_users "github.com/daniiiiiiiiiiil/finance-microservices/users-service/internal/features/users/repository/postgres"
+	redis_cache "github.com/daniiiiiiiiiiil/finance-microservices/users-service/internal/features/users/repository/redis"
 	service_user "github.com/daniiiiiiiiiiil/finance-microservices/users-service/internal/features/users/service"
 	usersgrpc "github.com/daniiiiiiiiiiil/finance-microservices/users-service/internal/features/users/transport/grpc"
+	transportkafka "github.com/daniiiiiiiiiiil/finance-microservices/users-service/internal/features/users/transport/kafka"
 	"github.com/daniiiiiiiiiiil/finance-microservices/users-service/pkg/grpcutil/interceptors"
 	"github.com/daniiiiiiiiiiil/finance-microservices/users-service/pkg/logger"
 )
@@ -68,6 +70,8 @@ func main() {
 	kafkaProducer := kafka.NewProducer(kafkaConfig, *logger)
 	defer kafkaProducer.Close()
 
+	eventPublisher := transportkafka.NewUserEventPublisher(kafkaProducer)
+
 	serviceName := "users"
 	shutdown, err := telemetry.InitTracer(serviceName)
 	if err != nil {
@@ -75,9 +79,21 @@ func main() {
 	}
 	defer shutdown()
 
+	logger.Debug("initializing users repository and caches")
+	usersRepository := postgres_users.NewUserRepository(pool)
+	userCache := redis_cache.NewUserCache(redisClient)
+	usersListCache := redis_cache.NewUsersListCache(redisClient)
+
 	logger.Debug("initializing users service")
-	usersRepository := postgres.NewUserRepository(pool)
-	usersService := service_user.NewUsersService(usersRepository, pool, redisClient, kafkaProducer, logger, redisClient)
+	usersService := service_user.NewUsersService(
+		usersRepository,
+		pool,
+		userCache,
+		usersListCache,
+		eventPublisher,
+		logger,
+		redisClient,
+	)
 
 	logger.Debug("initializing gRPC server with interceptors")
 

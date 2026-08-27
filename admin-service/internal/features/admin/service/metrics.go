@@ -6,14 +6,15 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/daniiiiiiiiiiil/finance-microservices/admin-service/internal/core/ports"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/metadata"
 )
 
-func (s *AdminService) GetMetrics(ctx context.Context) (Metrics, error) {
+func (s *AdminService) GetMetrics(ctx context.Context) (ports.Metrics, error) {
 	key := "admin:metrics"
-	var metrics Metrics
+	var metrics ports.Metrics
 
 	err := s.redis.Get(ctx, key, &metrics)
 	if err == nil {
@@ -35,25 +36,25 @@ func (s *AdminService) GetMetrics(ctx context.Context) (Metrics, error) {
 		}
 		usersMetrics, err := s.userClient.GetMetrics(ctx)
 		if err != nil {
-			return Metrics{}, fmt.Errorf("get users metrics: %w", err)
+			return ports.Metrics{}, fmt.Errorf("get users metrics: %w", err)
 		}
-		metrics.TotalUsers = usersMetrics.TotalUsers
+		metrics.TotalUsers = int(usersMetrics.TotalUsers)
 
 		financeMetrics, err := s.financeClient.GetMetrics(ctx)
 		if err != nil {
-			return Metrics{}, fmt.Errorf("get finance metrics: %w", err)
+			return ports.Metrics{}, fmt.Errorf("get finance metrics: %w", err)
 		}
 		metrics.TotalTransactions = financeMetrics.TotalTransactions
 		metrics.TotalBalance = financeMetrics.TotalBalance
 
 		if err := s.redis.Set(ctx, key, metrics, 10*time.Minute); err != nil {
 			s.logger.Warn("failed to cache metrics in redis", zap.Error(err))
-			return Metrics{}, fmt.Errorf("set metrics to redis: %w", err)
+			return ports.Metrics{}, fmt.Errorf("set metrics to redis: %w", err)
 		}
 
 		return metrics, nil
 	}
 
 	s.logger.Error("failed to get metrics from redis", zap.Error(err))
-	return Metrics{}, fmt.Errorf("get metrics from redis: %w", err)
+	return ports.Metrics{}, fmt.Errorf("get metrics from redis: %w", err)
 }

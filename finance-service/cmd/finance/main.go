@@ -22,6 +22,7 @@ import (
 	finance_repo "github.com/daniiiiiiiiiiil/finance-microservices/finance-service/internal/features/finance/repository/postgres"
 	finance_service "github.com/daniiiiiiiiiiil/finance-microservices/finance-service/internal/features/finance/service"
 	finance_grpc "github.com/daniiiiiiiiiiil/finance-microservices/finance-service/internal/features/finance/transport/grpc"
+	transportkafka "github.com/daniiiiiiiiiiil/finance-microservices/finance-service/internal/features/finance/transport/kafka"
 	"github.com/daniiiiiiiiiiil/finance-microservices/finance-service/pkg/grpcutil/interceptors"
 	"github.com/daniiiiiiiiiiil/finance-microservices/finance-service/pkg/logger"
 	"github.com/daniiiiiiiiiiil/finance-microservices/finance-service/proto/finance/gen"
@@ -65,6 +66,8 @@ func main() {
 	kafkaProducer := kafka.NewProducer(kafkaConfig, *logger)
 	defer kafkaProducer.Close()
 
+	eventPublisher := transportkafka.NewFinanceEventPublisher(kafkaProducer)
+
 	jwtManager := jwt.NewJWTManager(cfg.JWTSecret, cfg.JWTDuration)
 
 	serviceName := "finance"
@@ -76,7 +79,7 @@ func main() {
 
 	logger.Debug("initializing finance service")
 	financeRepository := finance_repo.NewFinanceRepository(pool)
-	financeService := finance_service.NewFinanceService(financeRepository, pool, redisClient, kafkaProducer, logger)
+	financeService := finance_service.NewFinanceService(financeRepository, pool, redisClient, eventPublisher, logger)
 
 	logger.Debug("initializing finance grpc server")
 	grpcServer := grpcclient.NewGRPCServer(

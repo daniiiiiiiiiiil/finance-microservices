@@ -4,28 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"golang.org/x/crypto/bcrypt"
-
 	usersclient "github.com/daniiiiiiiiiiil/finance-microservices/auth-service/internal/core/clients/users"
+	"github.com/daniiiiiiiiiiil/finance-microservices/auth-service/internal/core/ports"
+	"golang.org/x/crypto/bcrypt"
 )
 
-type RegisterRequest struct {
-	FullName    string
-	Email       string
-	Password    string
-	PhoneNumber string
-	IsAdmin     bool
-}
-
-type UserResponse struct {
-	ID          int
-	FullName    string
-	Email       string
-	PhoneNumber *string
-	IsAdmin     bool
-}
-
-func (s *AuthService) Register(ctx context.Context, req RegisterRequest) (string, *UserResponse, error) {
+func (s *AuthService) Register(ctx context.Context, req ports.RegisterRequest) (string, *ports.UserResponse, error) {
 	existing, _ := s.credRepo.GetByEmail(ctx, req.Email)
 	if existing != nil {
 		return "", nil, fmt.Errorf(`email "%s" already exists`, req.Email)
@@ -66,7 +50,7 @@ func (s *AuthService) Register(ctx context.Context, req RegisterRequest) (string
 		return "", nil, fmt.Errorf("failed to generate token: %w", err)
 	}
 
-	userResponse := &UserResponse{
+	userResponse := &ports.UserResponse{
 		ID:          profile.ID,
 		FullName:    profile.FullName,
 		Email:       profile.Email,

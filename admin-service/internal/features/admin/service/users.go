@@ -78,10 +78,11 @@ func (s *AdminService) GetUsers(ctx context.Context, limit, offset int) ([]domai
 	if err != nil {
 		return nil, fmt.Errorf("get users: %w", err)
 	}
+
 	domainUsers := make([]domain.User, len(resp.Users))
 	for i, user := range resp.Users {
 		var phoneNumber *string
-		if user.PhoneNumber != nil {
+		if user.PhoneNumber != nil && *user.PhoneNumber != "" {
 			phoneNumber = user.PhoneNumber
 		}
 		domainUsers[i] = domain.User{

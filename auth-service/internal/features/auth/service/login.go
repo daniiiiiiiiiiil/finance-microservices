@@ -4,15 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/daniiiiiiiiiiil/finance-microservices/auth-service/internal/core/ports"
 	"golang.org/x/crypto/bcrypt"
 )
 
-type LoginRequest struct {
-	Email    string
-	Password string
-}
-
-func (s *AuthService) Login(ctx context.Context, req LoginRequest) (string, *UserResponse, error) {
+func (s *AuthService) Login(ctx context.Context, req ports.LoginRequest) (string, *ports.UserResponse, error) {
 	cred, err := s.credRepo.GetByEmail(ctx, req.Email)
 	if err != nil {
 		return "", nil, ErrInvalidCredentials
@@ -36,7 +32,7 @@ func (s *AuthService) Login(ctx context.Context, req LoginRequest) (string, *Use
 		return "", nil, fmt.Errorf("generate token: %w", err)
 	}
 
-	userResponse := &UserResponse{
+	userResponse := &ports.UserResponse{
 		ID:          profile.ID,
 		FullName:    profile.FullName,
 		Email:       profile.Email,

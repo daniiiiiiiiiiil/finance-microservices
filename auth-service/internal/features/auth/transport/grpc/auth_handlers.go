@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/daniiiiiiiiiiil/finance-microservices/auth-service/internal/core/ports"
 	"github.com/golang/protobuf/ptypes/empty"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
@@ -30,7 +31,7 @@ func (s *AuthServer) Register(ctx context.Context, req *gen.RegisterRequest) (*g
 	}
 	s.logger.Debug("Auth Register", zap.String("email", req.Email))
 
-	registerReq := service.RegisterRequest{
+	registerReq := ports.RegisterRequest{
 		FullName:    req.FullName,
 		Email:       req.Email,
 		Password:    req.Password,
@@ -83,7 +84,7 @@ func (s *AuthServer) Login(ctx context.Context, req *gen.LoginRequest) (*gen.Aut
 		return nil, status.Error(codes.ResourceExhausted, "too many login attempts, try again later")
 	}
 
-	loginReq := service.LoginRequest{
+	loginReq := ports.LoginRequest{
 		Email:    req.Email,
 		Password: req.Password,
 	}

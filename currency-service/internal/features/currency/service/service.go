@@ -5,12 +5,11 @@ import (
 	"time"
 
 	"github.com/daniiiiiiiiiiil/finance-microservices/currency-service/internal/core/cache"
-	"github.com/daniiiiiiiiiiil/finance-microservices/currency-service/internal/core/kafka"
-	"github.com/daniiiiiiiiiiil/finance-microservices/currency-service/internal/features/currency/repository/redis"
+	"github.com/daniiiiiiiiiiil/finance-microservices/currency-service/internal/core/ports"
 	"github.com/daniiiiiiiiiiil/finance-microservices/currency-service/pkg/logger"
 )
 
-var _ CurrencyServiceInterface = (*CurrencyService)(nil)
+var _ ports.CurrencyServiceInterface = (*CurrencyService)(nil)
 
 type CurrencyClient struct {
 	client  *http.Client
@@ -29,19 +28,28 @@ func NewCurrencyClient(baseURL string, logger logger.Logger) *CurrencyClient {
 }
 
 type CurrencyService struct {
-	rateCache *redis.RateCache
-	client    *CurrencyClient
-	logger    *logger.Logger
-	redis     cache.RedisInterface
-	producer  *kafka.Producer
+	rateCache      ports.RateCacheInterface
+	client         ports.CurrencyAPIClientInterface
+	logger         *logger.Logger
+	redis          cache.RedisInterface
+	eventPublisher ports.EventPublisherInterface
+	eventConsumer  ports.EventConsumerInterface
 }
 
-func NewCurrencyService(rateCache *redis.RateCache, client *CurrencyClient, logger *logger.Logger, redis cache.RedisInterface, producer *kafka.Producer) *CurrencyService {
+func NewCurrencyService(
+	rateCache ports.RateCacheInterface,
+	client ports.CurrencyAPIClientInterface,
+	logger *logger.Logger,
+	redis cache.RedisInterface,
+	eventPublisher ports.EventPublisherInterface,
+	eventConsumer ports.EventConsumerInterface,
+) *CurrencyService {
 	return &CurrencyService{
-		rateCache: rateCache,
-		client:    client,
-		logger:    logger,
-		redis:     redis,
-		producer:  producer,
+		rateCache:      rateCache,
+		client:         client,
+		logger:         logger,
+		redis:          redis,
+		eventPublisher: eventPublisher,
+		eventConsumer:  eventConsumer,
 	}
 }

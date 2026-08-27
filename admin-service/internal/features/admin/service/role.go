@@ -30,11 +30,16 @@ func (s *AdminService) UpdateUserRole(ctx context.Context, id int, isAdmin bool)
 		return domain.User{}, fmt.Errorf("Update User Role: %w", err)
 	}
 
+	var phoneNumber *string
+	if update.PhoneNumber != nil && *update.PhoneNumber != "" {
+		phoneNumber = update.PhoneNumber
+	}
+
 	return domain.User{
 		ID:          update.ID,
 		FullName:    update.FullName,
 		Email:       update.Email,
-		PhoneNumber: update.PhoneNumber,
+		PhoneNumber: phoneNumber,
 		IsAdmin:     update.IsAdmin,
 	}, nil
 }

@@ -6,7 +6,6 @@ import (
 	"log"
 
 	"github.com/daniiiiiiiiiiil/finance-microservices/users-service/internal/core/domain"
-	"github.com/daniiiiiiiiiiil/finance-microservices/users-service/internal/core/kafka"
 	"golang.org/x/net/context"
 )
 
@@ -35,7 +34,7 @@ func (s *UsersService) CreateProfile(ctx context.Context, req *CreateProfileRequ
 		return domain.User{}, err
 	}
 
-	go s.sendUserEvent(context.Background(), kafka.EventTypeUserCreated, created.ID, created.Email, created.FullName, created.IsAdmin, created.Status)
+	go s.publishUserEvent(context.Background(), "user.created", created.ID, created.Email, created.FullName, created.IsAdmin, created.Status)
 
 	return created, nil
 }

@@ -21,6 +21,7 @@ import (
 	redisCache "github.com/daniiiiiiiiiiil/finance-microservices/currency-service/internal/features/currency/repository/redis"
 	service_currency "github.com/daniiiiiiiiiiil/finance-microservices/currency-service/internal/features/currency/service"
 	currency_grpc "github.com/daniiiiiiiiiiil/finance-microservices/currency-service/internal/features/currency/transport/grpc"
+	transportkafka "github.com/daniiiiiiiiiiil/finance-microservices/currency-service/internal/features/currency/transport/kafka"
 	"github.com/daniiiiiiiiiiil/finance-microservices/currency-service/pkg/grpcutil/interceptors"
 	"github.com/daniiiiiiiiiiil/finance-microservices/currency-service/pkg/logger"
 )
@@ -54,10 +55,16 @@ func main() {
 
 	jwtManager := jwt.NewJWTManager(cfg.JWTSecret, cfg.JWTDuration)
 
-	logger.Debug("initializing kafka producer")
+	logger.Debug("initializing kafka")
 	kafkaConfig := kafka.NewConfig()
+	kafkaConfig.ConsumerGroup = "currency-group"
 	kafkaProducer := kafka.NewProducer(kafkaConfig, *logger)
+	kafkaConsumer := kafka.NewConsumer(kafkaConfig, *logger)
 	defer kafkaProducer.Close()
+	defer kafkaConsumer.Close()
+
+	eventPublisher := transportkafka.NewCurrencyEventPublisher(kafkaProducer)
+	eventConsumer := transportkafka.NewCurrencyEventConsumer(kafkaConsumer)
 
 	serviceName := "currency"
 	shutdown, err := telemetry.InitTracer(serviceName)
@@ -79,7 +86,8 @@ func main() {
 		currencyClient,
 		logger,
 		redisClient,
-		kafkaProducer,
+		eventPublisher,
+		eventConsumer,
 	)
 
 	go currencyService.StartConsumer(ctx)

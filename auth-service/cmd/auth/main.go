@@ -15,6 +15,7 @@ import (
 	"github.com/daniiiiiiiiiiil/finance-microservices/auth-service/internal/core/cache"
 	usersclient "github.com/daniiiiiiiiiiil/finance-microservices/auth-service/internal/core/clients/users"
 	grpcclient "github.com/daniiiiiiiiiiil/finance-microservices/auth-service/internal/core/grpc"
+	"github.com/daniiiiiiiiiiil/finance-microservices/auth-service/internal/core/ports"
 	"github.com/daniiiiiiiiiiil/finance-microservices/auth-service/internal/core/repository/postgres/pool/pgx"
 	"github.com/daniiiiiiiiiiil/finance-microservices/auth-service/internal/core/telemetry"
 	postgres_auth "github.com/daniiiiiiiiiiil/finance-microservices/auth-service/internal/features/auth/repository/postgres"
@@ -56,7 +57,7 @@ func main() {
 	logger.Debug("initializing redis")
 	redisAddr := os.Getenv("REDIS_ADDR")
 	if redisAddr == "" {
-		redisAddr = "localhost:6379"
+		redisAddr = "finance-redis:6379"
 	}
 	redisClient := cache.NewRedisClient(redisAddr)
 	defer redisClient.Close()
@@ -156,7 +157,7 @@ func main() {
 }
 
 func createFirstAdmin(ctx context.Context, authService *service_auth.AuthService, log *logger.Logger) {
-	req := service_auth.RegisterRequest{
+	req := ports.RegisterRequest{
 		FullName:    "Admin",
 		Email:       "admin@finance.com",
 		Password:    "admin123",

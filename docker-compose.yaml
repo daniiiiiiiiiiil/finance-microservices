@@ -1,8 +1,6 @@
 version: '3.8'
 
 services:
-  # ==================== POSTGRES ====================
-
   finance-postgres:
     image: postgres:15-alpine
     container_name: finance-env-postgres
@@ -74,7 +72,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # ==================== KAFKA ====================
 
   kafka:
     image: confluentinc/cp-kafka:latest
@@ -101,7 +98,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # ==================== MICROSERVICES ====================
 
   auth:
     build:
@@ -317,7 +313,6 @@ services:
       - admin
       - currency
 
-  # ==================== OBSERVABILITY ====================
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest

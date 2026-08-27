@@ -6,9 +6,8 @@ import (
 	"time"
 
 	"github.com/daniiiiiiiiiiil/finance-microservices/admin-service/internal/core/cache"
+	"github.com/daniiiiiiiiiiil/finance-microservices/admin-service/internal/core/domain"
 )
-
-var _ UserCacheInterface = (*UserCache)(nil)
 
 type UserCache struct {
 	client *cache.RedisClient

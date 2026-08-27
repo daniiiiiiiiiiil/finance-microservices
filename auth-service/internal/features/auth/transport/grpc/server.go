@@ -1,20 +1,20 @@
 package grpc
 
 import (
+	"github.com/daniiiiiiiiiiil/finance-microservices/auth-service/internal/core/ports"
 	"google.golang.org/grpc"
 
-	service_auth "github.com/daniiiiiiiiiiil/finance-microservices/auth-service/internal/features/auth/service"
 	"github.com/daniiiiiiiiiiil/finance-microservices/auth-service/pkg/logger"
 	"github.com/daniiiiiiiiiiil/finance-microservices/auth-service/proto/auth/gen"
 )
 
 type AuthServer struct {
 	gen.UnimplementedAuthServiceServer
-	service service_auth.AuthServiceInterface
+	service ports.AuthServiceInterface
 	logger  *logger.Logger
 }
 
-func NewAuthServer(service service_auth.AuthServiceInterface, logger *logger.Logger) *AuthServer {
+func NewAuthServer(service ports.AuthServiceInterface, logger *logger.Logger) *AuthServer {
 	return &AuthServer{
 		service: service,
 		logger:  logger,

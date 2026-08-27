@@ -22,6 +22,7 @@ import (
 	"github.com/daniiiiiiiiiiil/finance-microservices/admin-service/internal/core/telemetry"
 	admin_service "github.com/daniiiiiiiiiiil/finance-microservices/admin-service/internal/features/admin/service"
 	admingrpc "github.com/daniiiiiiiiiiil/finance-microservices/admin-service/internal/features/admin/transport/grpc"
+	transportkafka "github.com/daniiiiiiiiiiil/finance-microservices/admin-service/internal/features/admin/transport/kafka"
 	"github.com/daniiiiiiiiiiil/finance-microservices/admin-service/pkg/grpcutil/interceptors"
 	"github.com/daniiiiiiiiiiil/finance-microservices/admin-service/pkg/logger"
 )
@@ -57,6 +58,8 @@ func main() {
 	kafkaProducer := kafka.NewProducer(kafkaConfig, *logger)
 	defer kafkaProducer.Close()
 
+	eventPublisher := transportkafka.NewAdminEventPublisher(kafkaProducer)
+
 	jwtManager := jwt.NewJWTManager(cfg.JWTSecret, cfg.JWTDuration)
 
 	serviceName := "admin"
@@ -83,7 +86,7 @@ func main() {
 	logger.Debug("initializing admin service")
 	adminService := admin_service.NewAdminService(
 		redisClient,
-		kafkaProducer,
+		eventPublisher,
 		usersClient,
 		financeClient,
 		logger)
