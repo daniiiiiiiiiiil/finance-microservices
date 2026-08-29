@@ -1,11 +1,11 @@
 package request
 
 import (
-	errors_core "backend/pkg/errors"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
+	errors_core "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/pkg/errors"
 	"github.com/go-playground/validator/v10"
 )
 

@@ -19,6 +19,7 @@ var (
 
 type Logger struct {
 	*zap.Logger
+
 	file *os.File
 }
 
@@ -50,7 +51,7 @@ func NewLogger(config LoggerConfig) (*Logger, error) {
 
 func (l *Logger) Close() {
 	if err := l.file.Close(); err != nil {
-		fmt.Printf("close log file:%w", err)
+		fmt.Printf("close log file:%v", err)
 	}
 }
 

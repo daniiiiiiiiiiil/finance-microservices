@@ -3,10 +3,12 @@ package service_admin
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
 	financeClient "github.com/daniiiiiiiiiiil/finance-microservices/admin-service/internal/core/clients/finance"
+	"github.com/daniiiiiiiiiiil/finance-microservices/admin-service/internal/core/clients/users"
 	"github.com/daniiiiiiiiiiil/finance-microservices/admin-service/internal/core/domain"
 	"github.com/daniiiiiiiiiiil/finance-microservices/admin-service/pkg/logger"
 	"github.com/stretchr/testify/assert"
@@ -62,20 +64,20 @@ func (m *MockUsersClient) GetUser(ctx context.Context, req *userpb.GetUserReques
 	return args.Get(0).(*userpb.UserResponse), args.Error(1)
 }
 
-func (m *MockUsersClient) ListUsers(ctx context.Context, req *userpb.ListUsersRequest) (*userpb.ListUsersResponse, error) {
+func (m *MockUsersClient) ListUsers(ctx context.Context, req *userpb.ListUsersRequest) (*users.ListUsersResponse, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*userpb.ListUsersResponse), args.Error(1)
+	return args.Get(0).(*users.ListUsersResponse), args.Error(1)
 }
 
-func (m *MockUsersClient) UpdateRole(ctx context.Context, req *userpb.UpdateRoleRequest) (*userpb.UserResponse, error) {
+func (m *MockUsersClient) UpdateRole(ctx context.Context, req *userpb.UpdateRoleRequest) (*users.UserProfile, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*userpb.UserResponse), args.Error(1)
+	return args.Get(0).(*users.UserProfile), args.Error(1)
 }
 
 func (m *MockUsersClient) MarkDeleting(ctx context.Context, id int) error {
@@ -93,12 +95,12 @@ func (m *MockUsersClient) FinalizeDelete(ctx context.Context, id int) error {
 	return args.Error(0)
 }
 
-func (m *MockUsersClient) GetMetrics(ctx context.Context) (*userpb.MetricsResponse, error) {
+func (m *MockUsersClient) GetMetrics(ctx context.Context) (*users.UserMetrics, error) {
 	args := m.Called(ctx)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*userpb.MetricsResponse), args.Error(1)
+	return args.Get(0).(*users.UserMetrics), args.Error(1)
 }
 
 func (m *MockUsersClient) Close() error {
@@ -220,21 +222,25 @@ func TestGetUsers_Success(t *testing.T) {
 	s := setup()
 	ctx := context.Background()
 
-	s.mockUsers.On("ListUsers", ctx, &userpb.ListUsersRequest{Limit: 10, Offset: 0}).Return(&userpb.ListUsersResponse{
-		Users: []*userpb.UserResponse{
+	s.mockUsers.On("ListUsers", ctx, &userpb.ListUsersRequest{Limit: 10, Offset: 0}).Return(&users.ListUsersResponse{
+		Users: []users.UserProfile{
 			{
-				Id:       1,
+				ID:       1,
 				FullName: "John Doe",
 				Email:    "john@example.com",
 				IsAdmin:  false,
+				IsActive: true,
 			},
 			{
-				Id:       2,
+				ID:       2,
 				FullName: "Jane Smith",
 				Email:    "jane@example.com",
 				IsAdmin:  true,
+				IsActive: true,
 			},
 		},
+		Limit:  10,
+		Offset: 0,
 	}, nil)
 
 	users, err := s.service.GetUsers(ctx, 10, 0)
@@ -303,10 +309,11 @@ func TestUpdateUserRole_Success(t *testing.T) {
 	id := 1
 	isAdmin := true
 
-	s.mockUsers.On("UpdateRole", ctx, &userpb.UpdateRoleRequest{Id: 1, IsAdmin: true}).Return(&userpb.UserResponse{
-		Id:      1,
-		Email:   "john@example.com",
-		IsAdmin: true,
+	s.mockUsers.On("UpdateRole", ctx, &userpb.UpdateRoleRequest{Id: 1, IsAdmin: true}).Return(&users.UserProfile{
+		ID:       1,
+		Email:    "john@example.com",
+		IsAdmin:  true,
+		IsActive: true,
 	}, nil)
 
 	user, err := s.service.UpdateUserRole(ctx, id, isAdmin)
@@ -327,12 +334,25 @@ func TestUpdateUserRole_InvalidID(t *testing.T) {
 	assert.Contains(t, err.Error(), "Id must be greater than 0")
 }
 
+func (s *AdminService) invalidateCache(ctx context.Context, userID int) {
+	if err := s.redis.Delete(ctx, fmt.Sprintf("user:%d", userID)); err != nil {
+		s.logger.Warn("failed to invalidate user cache", zap.Int("user_id", userID), zap.Error(err))
+	}
+	if err := s.redis.Delete(ctx, "admin:metrics"); err != nil {
+		s.logger.Warn("failed to invalidate metrics cache", zap.Error(err))
+	}
+	if err := s.redis.Delete(ctx, "admin:dashboard"); err != nil {
+		s.logger.Warn("failed to invalidate dashboard cache", zap.Error(err))
+	}
+}
+
 func TestInvalidateCache(t *testing.T) {
 	s := setup()
 	ctx := context.Background()
 
 	s.mockRedis.On("Delete", ctx, "user:1").Return(nil)
 	s.mockRedis.On("Delete", ctx, "admin:metrics").Return(nil)
+	s.mockRedis.On("Delete", ctx, "admin:dashboard").Return(nil)
 
 	s.service.invalidateCache(ctx, 1)
 

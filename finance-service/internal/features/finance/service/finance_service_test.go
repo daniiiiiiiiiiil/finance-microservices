@@ -21,8 +21,11 @@ type MockFinanceRepository struct {
 	mock.Mock
 }
 
-func (m *MockFinanceRepository) CreateTransactionTx(ctx context.Context, tx interface{}, transaction domain.Finance) (domain.Finance, error) {
+func (m *MockFinanceRepository) CreateTransactionTx(ctx context.Context, tx pool.Tx, transaction domain.Finance) (domain.Finance, error) {
 	args := m.Called(ctx, tx, transaction)
+	if args.Get(0) == nil {
+		return domain.Finance{}, args.Error(1)
+	}
 	return args.Get(0).(domain.Finance), args.Error(1)
 }
 
