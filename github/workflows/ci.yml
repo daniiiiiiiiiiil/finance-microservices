@@ -3,12 +3,12 @@ name: CI
 
 # События, которые запускают workflow
 on:
-  # При пуше в ветку main
+  # При пуше в ветку master
   push:
-    branches: [main]
-  # При создании или обновлении Pull Request в main
+    branches: [master]
+  # При создании или обновлении Pull Request в master
   pull_request:
-    branches: [main]
+    branches: [master]
 
 # Настройка конкурентности (одновременных запусков)
 concurrency:
