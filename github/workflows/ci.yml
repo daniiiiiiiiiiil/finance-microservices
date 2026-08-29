@@ -1,0 +1,161 @@
+# Имя workflow (отображается в GitHub Actions)
+name: CI
+
+# События, которые запускают workflow
+on:
+  # При пуше в ветку main
+  push:
+    branches: [main]
+  # При создании или обновлении Pull Request в main
+  pull_request:
+    branches: [main]
+
+# Настройка конкурентности (одновременных запусков)
+concurrency:
+  # Группа = имя workflow + ссылка на ветку/коммит
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # Отменять предыдущий запуск, если начался новый
+  cancel-in-progress: true
+
+# Список задач (jobs)
+jobs:
+
+  # Первая задача: найти все сервисы в репозитории
+  detect-services:
+    # Запускается на свежей Ubuntu
+    runs-on: ubuntu-latest
+    # Задача будет возвращать переменные для других задач
+    outputs:
+      services: ${{ steps.set.outputs.services }}
+    steps:
+      # Клонируем репозиторий
+      - uses: actions/checkout@v4
+      # Шаг с id=set, где выполняются команды
+      - id: set
+        # Ищем все папки с go.mod (максимум 2 уровня вложенности)
+        # Убираем './' из начала пути
+        # Формируем JSON-массив из списка (с помощью jq)
+        # Сохраняем результат в переменную GitHub Actions
+        run: |
+          services=$(find . -maxdepth 2 -name "go.mod" -exec dirname {} \; | sed 's|^\./||' | jq -R -s -c 'split("\n")[:-1]')
+          echo "services=$services" >> "$GITHUB_OUTPUT"
+          echo "Найдены сервисы: $services"
+
+  # Вторая задача: линтинг, тестирование и сборка
+  lint-and-test:
+    # Зависит от первой задачи (ждем, пока найдутся сервисы)
+    needs: detect-services
+    runs-on: ubuntu-latest
+    # Стратегия параллельного выполнения
+    strategy:
+      # Не останавливать все задачи при падении одной
+      fail-fast: false
+      # Запускаем матрицу по сервисам из обнаруженного списка
+      matrix:
+        service: ${{ fromJson(needs.detect-services.outputs.services) }}
+    steps:
+      # Клонируем код (для каждого сервиса отдельно)
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Устанавливаем Go
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          # Версию Go берем из go.mod сервиса
+          go-version-file: ${{ matrix.service }}/go.mod
+          # Кешируем зависимости по go.sum
+          cache-dependency-path: ${{ matrix.service }}/go.sum
+
+      # Скачиваем зависимости модуля
+      - name: Download dependencies
+        working-directory: ${{ matrix.service }}
+        run: go mod download
+
+      # Запускаем встроенный анализатор Go (vet)
+      - name: go vet
+        working-directory: ${{ matrix.service }}
+        run: go vet ./...
+
+      # Запускаем golangci-lint (мощный линтер)
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          # Рабочая папка - директория сервиса
+          working-directory: ${{ matrix.service }}
+          # Последняя версия линтера
+          version: latest
+          # Таймаут 5 минут
+          args: --timeout=5m
+
+      # Запускаем тесты с покрытием
+      - name: Run tests with coverage
+        working-directory: ${{ matrix.service }}
+        run: go test ./... -race -coverprofile=coverage.out -covermode=atomic
+
+      # Выводим итоговый процент покрытия
+      - name: Show coverage summary
+        working-directory: ${{ matrix.service }}
+        run: go tool cover -func=coverage.out | tail -1
+
+      # Собираем бинарники
+      - name: Build
+        working-directory: ${{ matrix.service }}
+        # Создаем папку bin
+        # Проходим по всем подпапкам cmd/*/
+        # Имя сервиса = имя папки
+        # Собираем бинарник в bin/
+        run: |
+          mkdir -p bin
+          for d in cmd/*/; do
+            name=$(basename "$d")
+            go build -v -o "bin/${name}" "./cmd/${name}"
+          done
+
+      # Сохраняем coverage как артефакт (даже если предыдущие шаги упали)
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          # Имя артефакта с именем сервиса
+          name: coverage-${{ matrix.service }}
+          # Путь к файлу покрытия
+          path: ${{ matrix.service }}/coverage.out
+          # Хранить 7 дней
+          retention-days: 7
+
+  # Третья задача: smoke-тест через Docker Compose
+  compose-smoke-test:
+    # Запускается только после успешного lint-and-test
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    steps:
+      # Клонируем код
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Копируем пример env-файла в настоящий .env
+      - name: Prepare env file
+        run: cp env.example .env
+
+      # Собираем и запускаем все контейнеры в фоне
+      - name: Build and start stack
+        run: docker compose up -d --build
+
+      # Ждем 60 секунд, чтобы сервисы успели запуститься
+      - name: Wait for services to become healthy
+        run: sleep 60
+
+      # Проверяем статус контейнеров
+      - name: Check running containers
+        run: docker compose ps
+
+      # Если что-то упало - показываем логи
+      - name: Dump logs on failure
+        if: failure()
+        run: docker compose logs
+
+      # В конце всегда останавливаем и удаляем контейнеры
+      - name: Tear down
+        if: always()
+        run: docker compose down -v

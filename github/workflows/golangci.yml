@@ -1,0 +1,38 @@
+version: "2"
+
+linters:
+  default: standard
+  enable:
+    - govet
+    - errcheck
+    - staticcheck
+    - unused
+    - ineffassign
+    - bodyclose      # незакрытые http.Response.Body — частая утечка в gRPC-gateway коде
+    - sqlclosecheck  # незакрытые sql.Rows/Stmt
+    - contextcheck   # правильная передача context.Context
+    - gosec          # базовые проверки безопасности
+
+  exclusions:
+    rules:
+      # сгенерированный код (proto/**/gen/*.pb.go, *_grpc.pb.go, *.pb.gw.go) не линтуем
+      - path: '/gen/'
+        linters:
+          - all
+      - path: '\.pb\.go$'
+        linters:
+          - all
+      - path: '_grpc\.pb\.go$'
+        linters:
+          - all
+      - path: '\.pb\.gw\.go$'
+        linters:
+          - all
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
+run:
+  timeout: 5m
