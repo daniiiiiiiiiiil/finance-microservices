@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/daniiiiiiiiiiil/finance-microservices/users-service/internal/core/kafka"
+	"go.uber.org/zap"
 )
 
 func (s *UsersService) DeleteUser(ctx context.Context, id int) error {
@@ -12,7 +13,11 @@ func (s *UsersService) DeleteUser(ctx context.Context, id int) error {
 	if err != nil {
 		return fmt.Errorf("begin transaction: %w", err)
 	}
-	defer tx.Rollback(ctx)
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil && err != context.Canceled {
+			s.logger.Error("failed to rollback transaction", zap.Error(err))
+		}
+	}()
 
 	if err := s.userRepository.DeleteUserTx(ctx, tx, id); err != nil {
 		return fmt.Errorf("DeleteUser: %w", err)
@@ -38,7 +43,11 @@ func (s *UsersService) MarkDeleting(ctx context.Context, id int) error {
 	if err != nil {
 		return fmt.Errorf("begin transaction: %w", err)
 	}
-	defer tx.Rollback(ctx)
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil && err != context.Canceled {
+			s.logger.Error("failed to rollback transaction", zap.Error(err))
+		}
+	}()
 
 	err = s.userRepository.UpdateStatusTx(ctx, tx, id, "deleting")
 	if err != nil {
@@ -58,7 +67,11 @@ func (s *UsersService) FinalizeDelete(ctx context.Context, id int) error {
 	if err != nil {
 		return fmt.Errorf("begin transaction: %w", err)
 	}
-	defer tx.Rollback(ctx)
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil && err != context.Canceled {
+			s.logger.Error("failed to rollback transaction", zap.Error(err))
+		}
+	}()
 
 	user, err := s.userRepository.GetUser(ctx, id)
 	if err != nil {
@@ -91,7 +104,11 @@ func (s *UsersService) RestoreUser(ctx context.Context, id int) error {
 	if err != nil {
 		return fmt.Errorf("begin transaction: %w", err)
 	}
-	defer tx.Rollback(ctx)
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil && err != context.Canceled {
+			s.logger.Error("failed to rollback transaction", zap.Error(err))
+		}
+	}()
 
 	err = s.userRepository.UpdateStatusTx(ctx, tx, id, "active")
 	if err != nil {

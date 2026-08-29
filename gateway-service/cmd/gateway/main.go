@@ -131,7 +131,11 @@ func main() {
 
 	httpMux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("ok"))
+		_, err := w.Write([]byte("ok"))
+		if err != nil {
+			logger.Error("failed to write response", zap.Error(err))
+			return
+		}
 	})
 
 	httpMux.Handle("/api/", otelMux)

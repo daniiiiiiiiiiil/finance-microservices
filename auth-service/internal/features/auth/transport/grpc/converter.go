@@ -22,21 +22,21 @@ func convertUserToProto(user domain.User) *gen.UserResponse {
 	}
 }
 
-func convertRegisterRequestToDomain(req *gen.RegisterRequest) domain.User {
-	var phoneNumber *string
-	if req.PhoneNumber != "" {
-		phoneNumber = &req.PhoneNumber
-	}
-	return domain.NewUserUninitialized(
-		req.FullName,
-		req.Email,
-		"",
-		phoneNumber,
-		req.IsAdmin,
-		"pending",
-	)
-}
-
-func convertLoginRequestToDomain(req *gen.LoginRequest) (string, string) {
-	return req.Email, req.Password
-}
+//func convertRegisterRequestToDomain(req *gen.RegisterRequest) domain.User {
+//	var phoneNumber *string
+//	if req.PhoneNumber != "" {
+//		phoneNumber = &req.PhoneNumber
+//	}
+//	return domain.NewUserUninitialized(
+//		req.FullName,
+//		req.Email,
+//		"",
+//		phoneNumber,
+//		req.IsAdmin,
+//		"pending",
+//	)
+//}
+//
+//func convertLoginRequestToDomain(req *gen.LoginRequest) (string, string) {
+//	return req.Email, req.Password
+//}

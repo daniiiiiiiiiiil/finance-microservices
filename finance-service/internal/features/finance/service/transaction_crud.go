@@ -4,8 +4,10 @@ import (
 	"fmt"
 
 	"context"
+
 	"github.com/daniiiiiiiiiiil/finance-microservices/finance-service/internal/core/domain"
 	"github.com/daniiiiiiiiiiil/finance-microservices/finance-service/internal/core/kafka"
+	"go.uber.org/zap"
 )
 
 func (s *FinanceService) CreateTransaction(ctx context.Context, transaction domain.Finance) (domain.Finance, error) {
@@ -13,7 +15,11 @@ func (s *FinanceService) CreateTransaction(ctx context.Context, transaction doma
 	if err != nil {
 		return domain.Finance{}, fmt.Errorf("begin transaction: %w", err)
 	}
-	defer tx.Rollback(ctx)
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil && err != context.Canceled {
+			s.logger.Error("failed to rollback transaction", zap.Error(err))
+		}
+	}()
 	if err := transaction.Validate(); err != nil {
 		return domain.Finance{}, fmt.Errorf("validation failed: %w", err)
 	}

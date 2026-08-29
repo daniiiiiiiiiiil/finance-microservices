@@ -32,7 +32,7 @@ func (r *Rate) Validate() error {
 	if r.Base == "" || len(r.Base) <= 0 {
 		return fmt.Errorf("invalid base len <= 0 or len = ''")
 	}
-	if r.Rates == nil || len(r.Rates) <= 0 {
+	if len(r.Rates) <= 0 {
 		return fmt.Errorf("invalid rates len <= 0 or len = ''")
 	}
 	return nil
