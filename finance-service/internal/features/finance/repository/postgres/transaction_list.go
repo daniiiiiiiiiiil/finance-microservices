@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"context"
+
 	"github.com/daniiiiiiiiiiil/finance-microservices/finance-service/internal/core/domain"
 )
 
@@ -153,6 +154,6 @@ func (r *FinanceRepository) GetTransactionsCount(
 	if err != nil {
 		return 0, fmt.Errorf("count transactions: %w", err)
 	}
-
+	_ = argIndex
 	return total, nil
 }

@@ -28,18 +28,18 @@ func financeDomainFromModel(model FinanceModel) domain.Finance {
 	}
 }
 
-func financeModelsFromDomains(transactions []domain.Finance) []FinanceModel {
-	models := make([]FinanceModel, len(transactions))
-	for i, t := range transactions {
-		models[i] = FinanceModel{
-			ID:              t.ID,
-			Version:         t.Version,
-			TypeTransaction: t.TypeTransaction,
-			Amount:          t.Amount,
-			Category:        t.Category,
-			CreatedAt:       t.CreatedAt,
-			UserID:          t.UserID,
-		}
-	}
-	return models
-}
+//func financeModelsFromDomains(transactions []domain.Finance) []FinanceModel {
+//	models := make([]FinanceModel, len(transactions))
+//	for i, t := range transactions {
+//		models[i] = FinanceModel{
+//			ID:              t.ID,
+//			Version:         t.Version,
+//			TypeTransaction: t.TypeTransaction,
+//			Amount:          t.Amount,
+//			Category:        t.Category,
+//			CreatedAt:       t.CreatedAt,
+//			UserID:          t.UserID,
+//		}
+//	}
+//	return models
+//}
