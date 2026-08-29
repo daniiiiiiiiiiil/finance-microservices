@@ -13,11 +13,11 @@ services:
     volumes:
       - ./out/pgdata/finance:/var/lib/postgresql/data:rw
     restart: always
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${FINANCE_POSTGRES_USER} -d ${FINANCE_POSTGRES_DB}" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    # healthcheck:
+    #   test: [ "CMD-SHELL", "pg_isready -U ${FINANCE_POSTGRES_USER} -d ${FINANCE_POSTGRES_DB}" ]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 5
 
   auth-postgres:
     image: postgres:15-alpine
@@ -31,11 +31,11 @@ services:
     volumes:
       - ./out/pgdata/auth:/var/lib/postgresql/data:rw
     restart: always
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${AUTH_POSTGRES_USER} -d ${AUTH_POSTGRES_DB}" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+   # healthcheck:
+   #   test: [ "CMD-SHELL", "pg_isready -U ${AUTH_POSTGRES_USER} -d ${AUTH_POSTGRES_DB}" ]
+   #   interval: 10s
+   #   timeout: 5s
+   #   retries: 5
 
   users-postgres:
     image: postgres:15-alpine
@@ -49,11 +49,11 @@ services:
     volumes:
       - ./out/pgdata/users:/var/lib/postgresql/data:rw
     restart: always
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${USERS_POSTGRES_USER} -d ${USERS_POSTGRES_DB}" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+   # healthcheck:
+   #   test: [ "CMD-SHELL", "pg_isready -U ${USERS_POSTGRES_USER} -d ${USERS_POSTGRES_DB}" ]
+   #   interval: 10s
+   #   timeout: 5s
+   #   retries: 5
 
 
   finance-redis:
@@ -66,11 +66,11 @@ services:
     volumes:
       - ./out/redisdata:/data
     restart: always
-    healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+   # healthcheck:
+   #   test: [ "CMD", "redis-cli", "ping" ]
+   #   interval: 5s
+   #   timeout: 5s
+  #    retries: 5
 
 
   kafka:
@@ -92,11 +92,11 @@ services:
     ports:
       - "9092:9092"
     restart: always
-    healthcheck:
-      test: [ "CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+   # healthcheck:
+   #   test: [ "CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092" ]
+   #   interval: 10s
+   #   timeout: 5s
+   #   retries: 5
 
 
   auth:
@@ -132,12 +132,9 @@ services:
       - "9091:9091"
     restart: always
     depends_on:
-      auth-postgres:
-        condition: service_healthy
-      finance-redis:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
+      - auth-postgres
+      - finance-redis
+      - kafka
 
   users:
     build:
@@ -172,12 +169,9 @@ services:
       - "9096:9092"
     restart: always
     depends_on:
-      users-postgres:
-        condition: service_healthy
-      finance-redis:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
+      - users-postgres
+      - finance-redis
+      - kafka
 
   finance:
     build:
@@ -212,12 +206,9 @@ services:
       - "9093:9093"
     restart: always
     depends_on:
-      finance-postgres:
-        condition: service_healthy
-      finance-redis:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
+      - finance-postgres
+      - finance-redis
+      - kafka
 
   admin:
     build:
@@ -246,10 +237,8 @@ services:
       - "9094:9094"
     restart: always
     depends_on:
-      finance-redis:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
+      - finance-redis
+      - kafka
 
   currency:
     build:
@@ -279,10 +268,8 @@ services:
       - "9095:9095"
     restart: always
     depends_on:
-      finance-redis:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
+      - finance-redis
+      - kafka
 
   gateway:
     build:
