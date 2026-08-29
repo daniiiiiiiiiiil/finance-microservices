@@ -3,7 +3,7 @@ package ports
 import (
 	"time"
 
-	"golang.org/x/net/context"
+	"context"
 )
 
 type RedisClientInterface interface {

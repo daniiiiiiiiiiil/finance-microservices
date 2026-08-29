@@ -3,9 +3,9 @@ package service
 import (
 	"fmt"
 
+	"context"
 	"github.com/daniiiiiiiiiiil/finance-microservices/finance-service/internal/core/domain"
 	"github.com/daniiiiiiiiiiil/finance-microservices/finance-service/internal/core/kafka"
-	"golang.org/x/net/context"
 )
 
 func (s *FinanceService) CreateTransaction(ctx context.Context, transaction domain.Finance) (domain.Finance, error) {

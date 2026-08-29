@@ -4,8 +4,8 @@ import (
 	"strings"
 	"time"
 
+	"context"
 	"github.com/daniiiiiiiiiiil/finance-microservices/finance-service/internal/core/metrics"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
 )

@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"time"
 
+	"context"
 	"github.com/daniiiiiiiiiiil/finance-microservices/currency-service/internal/core/domain"
 	"go.uber.org/zap"
-	"golang.org/x/net/context"
 )
 
 func (s *CurrencyService) GetRates(ctx context.Context, base string) (*domain.Rate, error) {

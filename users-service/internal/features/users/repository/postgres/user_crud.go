@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 
+	"context"
 	"github.com/daniiiiiiiiiiil/finance-microservices/users-service/internal/core/domain"
 	"github.com/daniiiiiiiiiiil/finance-microservices/users-service/internal/core/repository/postgres/pool"
 	errors_core "github.com/daniiiiiiiiiiil/finance-microservices/users-service/pkg/errors"
-	"golang.org/x/net/context"
 )
 
 func (r *UserRepository) CreateUser(ctx context.Context, user domain.User) (int, error) {

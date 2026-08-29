@@ -3,9 +3,9 @@ package service_currency
 import (
 	"fmt"
 
+	"context"
 	"github.com/daniiiiiiiiiiil/finance-microservices/currency-service/internal/core/domain"
 	"go.uber.org/zap"
-	"golang.org/x/net/context"
 )
 
 func (s *CurrencyService) GetTransactionUSD(ctx context.Context, txID int) (domain.TransactionUSD, error) {

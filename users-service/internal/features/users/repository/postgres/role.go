@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 
+	"context"
 	"github.com/daniiiiiiiiiiil/finance-microservices/users-service/internal/core/domain"
 	"github.com/daniiiiiiiiiiil/finance-microservices/users-service/internal/core/repository/postgres/pool"
 	errors_core "github.com/daniiiiiiiiiiil/finance-microservices/users-service/pkg/errors"
-	"golang.org/x/net/context"
 )
 
 func (r *UserRepository) UpdateRole(ctx context.Context, id int, isAdmin bool) (domain.User, error) {

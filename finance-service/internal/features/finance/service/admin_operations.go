@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
+	"context"
 	"github.com/daniiiiiiiiiiil/finance-microservices/finance-service/internal/features/finance/repository/postgres"
 	"go.uber.org/zap"
-	"golang.org/x/net/context"
 )
 
 func (s *FinanceService) DeleteUserTransactions(ctx context.Context, userID int) (int, error) {

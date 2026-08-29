@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"time"
 
+	"context"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.10.0"
-	"golang.org/x/net/context"
 )
 
 func InitTracer(serviceName string) (func(), error) {

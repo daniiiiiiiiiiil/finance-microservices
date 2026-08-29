@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"context"
 	"go.uber.org/zap"
-	"golang.org/x/net/context"
 )
 
 func (s *UsersService) AdminExists(ctx context.Context) (bool, error) {

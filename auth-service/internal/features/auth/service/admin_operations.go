@@ -3,7 +3,7 @@ package service_auth
 import (
 	"time"
 
-	"golang.org/x/net/context"
+	"context"
 )
 
 func (s *AuthService) GenerateToken(userID int, email string, isAdmin bool) (string, error) {

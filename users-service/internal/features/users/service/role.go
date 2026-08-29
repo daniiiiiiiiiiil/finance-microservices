@@ -3,8 +3,8 @@ package service_user
 import (
 	"fmt"
 
+	"context"
 	"github.com/daniiiiiiiiiiil/finance-microservices/users-service/internal/core/domain"
-	"golang.org/x/net/context"
 )
 
 func (s *UsersService) UpdateRole(ctx context.Context, id int, isAdmin bool) (domain.User, error) {

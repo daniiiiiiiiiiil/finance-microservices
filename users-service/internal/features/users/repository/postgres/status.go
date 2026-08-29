@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 
+	"context"
 	"github.com/daniiiiiiiiiiil/finance-microservices/users-service/internal/core/repository/postgres/pool"
-	"golang.org/x/net/context"
 )
 
 func (r *UserRepository) UpdateStatusTx(ctx context.Context, tx pool.Tx, id int, status string) error {

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
+	"context"
 	"github.com/daniiiiiiiiiiil/finance-microservices/currency-service/internal/core/domain"
 	"go.uber.org/zap"
-	"golang.org/x/net/context"
 )
 
 func (s *CurrencyService) Convert(ctx context.Context, convert *domain.Conversion) (*domain.Conversion, error) {

@@ -1,10 +1,10 @@
 package postgres_auth
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/daniiiiiiiiiiil/finance-microservices/auth-service/internal/core/domain"
-	"golang.org/x/net/context"
 )
 
 func (r *AuthRepository) Create(ctx context.Context, email, passwordHash string) (int, error) {

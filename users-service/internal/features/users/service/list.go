@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"log"
 
+	"context"
 	"github.com/daniiiiiiiiiiil/finance-microservices/users-service/internal/core/domain"
 	"github.com/daniiiiiiiiiiil/finance-microservices/users-service/pkg/pagination"
-	"golang.org/x/net/context"
 )
 
 func (s *UsersService) ListUsers(ctx context.Context, limit, offset int) ([]domain.User, int, error) {

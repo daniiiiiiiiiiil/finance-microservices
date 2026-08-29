@@ -3,8 +3,8 @@ package ports
 import (
 	"time"
 
+	"context"
 	"github.com/daniiiiiiiiiiil/finance-microservices/users-service/internal/core/repository/postgres/pool"
-	"golang.org/x/net/context"
 )
 
 type PoolInterface interface {

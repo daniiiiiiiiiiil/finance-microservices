@@ -3,8 +3,8 @@ package postgres
 import (
 	"fmt"
 
+	"context"
 	"github.com/daniiiiiiiiiiil/finance-microservices/users-service/internal/core/domain"
-	"golang.org/x/net/context"
 )
 
 func (r *UserRepository) ListUsers(ctx context.Context, limit, offset int) ([]domain.User, int, error) {

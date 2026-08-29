@@ -1,11 +1,10 @@
 package ports
 
 import (
-	"time"
-
+	"context"
 	usersclient "github.com/daniiiiiiiiiiil/finance-microservices/auth-service/internal/core/clients/users"
 	"github.com/daniiiiiiiiiiil/finance-microservices/auth-service/internal/core/domain"
-	"golang.org/x/net/context"
+	"time"
 )
 
 type RegisterRequest struct {

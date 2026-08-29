@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
+	"context"
 	"github.com/daniiiiiiiiiiil/finance-microservices/currency-service/internal/core/cache"
 	"github.com/daniiiiiiiiiiil/finance-microservices/currency-service/internal/core/domain"
-	"golang.org/x/net/context"
 )
 
 type RateCache struct {

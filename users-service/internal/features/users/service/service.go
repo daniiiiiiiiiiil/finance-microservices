@@ -1,11 +1,11 @@
 package service_user
 
 import (
+	"context"
 	"github.com/daniiiiiiiiiiil/finance-microservices/users-service/internal/core/domain"
 	"github.com/daniiiiiiiiiiil/finance-microservices/users-service/internal/core/ports"
 	"github.com/daniiiiiiiiiiil/finance-microservices/users-service/pkg/logger"
 	"go.uber.org/zap"
-	"golang.org/x/net/context"
 )
 
 type UsersService struct {

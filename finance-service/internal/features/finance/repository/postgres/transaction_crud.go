@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 
+	"context"
 	"github.com/daniiiiiiiiiiil/finance-microservices/finance-service/internal/core/domain"
 	"github.com/daniiiiiiiiiiil/finance-microservices/finance-service/internal/core/repository/postgres/pool"
 	errors_my "github.com/daniiiiiiiiiiil/finance-microservices/finance-service/pkg/errors"
-	"golang.org/x/net/context"
 )
 
 func (r *FinanceRepository) CreateTransactionTx(ctx context.Context, tx pool.Tx, transaction domain.Finance) (domain.Finance, error) {

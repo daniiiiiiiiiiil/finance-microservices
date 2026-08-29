@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
+	"context"
 	"github.com/daniiiiiiiiiiil/finance-microservices/users-service/internal/core/domain"
-	"golang.org/x/net/context"
 )
 
 func (s *UsersService) CreateProfile(ctx context.Context, req *CreateProfileRequest) (domain.User, error) {

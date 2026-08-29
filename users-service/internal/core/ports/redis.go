@@ -3,8 +3,8 @@ package ports
 import (
 	"time"
 
+	"context"
 	"github.com/daniiiiiiiiiiil/finance-microservices/users-service/internal/core/domain"
-	"golang.org/x/net/context"
 )
 
 type RedisInterface interface {

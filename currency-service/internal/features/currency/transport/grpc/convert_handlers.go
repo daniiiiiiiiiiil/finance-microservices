@@ -3,10 +3,10 @@ package grpc
 import (
 	"time"
 
+	"context"
 	"github.com/daniiiiiiiiiiil/finance-microservices/currency-service/pkg/grpcutil/interceptors"
 	"github.com/daniiiiiiiiiiil/finance-microservices/currency-service/proto/currency/gen"
 	"go.uber.org/zap"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"

@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"context"
 	"github.com/daniiiiiiiiiiil/finance-microservices/currency-service/internal/core/kafka"
 	service_currency "github.com/daniiiiiiiiiiil/finance-microservices/currency-service/internal/features/currency/service"
 	"github.com/daniiiiiiiiiiil/finance-microservices/currency-service/pkg/logger"
-	"golang.org/x/net/context"
 )
 
 type CurrencyKafkaConsumer struct {

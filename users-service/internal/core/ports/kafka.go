@@ -1,6 +1,6 @@
 package ports
 
-import "golang.org/x/net/context"
+import "context"
 
 type KafkaProducerInterface interface {
 	SendEvent(ctx context.Context, eventType string, data interface{}) error

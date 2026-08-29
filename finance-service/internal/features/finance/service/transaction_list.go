@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
+	"context"
 	"github.com/daniiiiiiiiiiil/finance-microservices/finance-service/internal/core/domain"
 	"github.com/daniiiiiiiiiiil/finance-microservices/finance-service/pkg/pagination"
-	"golang.org/x/net/context"
 )
 
 func (s *FinanceService) GetTransactions(

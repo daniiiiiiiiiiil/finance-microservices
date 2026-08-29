@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"context"
 	"github.com/daniiiiiiiiiiil/finance-microservices/finance-service/internal/core/domain"
-	"golang.org/x/net/context"
 )
 
 func (r *FinanceRepository) GetDashboard(ctx context.Context, userID int) (domain.Dashboard, error) {

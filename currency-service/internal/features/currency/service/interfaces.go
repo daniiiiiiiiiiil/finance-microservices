@@ -1,9 +1,9 @@
 package service_currency
 
 import (
+	"context"
 	"github.com/daniiiiiiiiiiil/finance-microservices/currency-service/internal/core/domain"
 	"github.com/daniiiiiiiiiiil/finance-microservices/currency-service/internal/core/kafka"
-	"golang.org/x/net/context"
 )
 
 type CurrencyServiceInterface interface {
