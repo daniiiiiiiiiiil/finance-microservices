@@ -30,7 +30,6 @@ tmp/
 .DS_Store
 Thumbs.db
 
-go.sum
 *.test
 *.out
 
