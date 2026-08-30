@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/daniiiiiiiiiiil/finance-microservices/finance-service/internal/core/s3"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 
@@ -79,7 +80,23 @@ func main() {
 
 	logger.Debug("initializing finance service")
 	financeRepository := finance_repo.NewFinanceRepository(pool)
-	financeService := finance_service.NewFinanceService(financeRepository, pool, redisClient, eventPublisher, logger)
+
+	logger.Debug("initializing S3 client")
+	s3Client, err := s3.NewClient()
+	if err != nil {
+		logger.Fatal("failed to create S3 client", zap.Error(err))
+	}
+	logger.Debug("initializing export service")
+	exportService := finance_service.NewExportService(financeRepository, s3Client)
+
+	financeService := finance_service.NewFinanceService(
+		financeRepository,
+		pool,
+		redisClient,
+		eventPublisher,
+		exportService,
+		logger,
+	)
 
 	logger.Debug("initializing finance grpc server")
 	grpcServer := grpcclient.NewGRPCServer(
