@@ -1,22 +1,9 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "proto/auth/auth.proto",
+    "title": "proto/auth/v1/auth.proto",
     "version": "version not set"
   },
-  "securityDefinitions": {
-    "BearerAuth": {
-      "type": "apiKey",
-      "in": "header",
-      "name": "Authorization",
-      "description": "Введите: Bearer <токен>"
-    }
-  },
-  "security": [
-    {
-      "BearerAuth": []
-    }
-  ],
   "tags": [
     {
       "name": "AuthService"
@@ -438,6 +425,124 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/financeDashboardResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "FinanceService"
+        ]
+      }
+    },
+    "/api/v1/finance/export/csv": {
+      "get": {
+        "operationId": "FinanceService_ExportCSV",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/financeExportResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "FinanceService"
+        ]
+      }
+    },
+    "/api/v1/finance/export/download/{key}": {
+      "get": {
+        "operationId": "FinanceService_DownloadExport",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/financeDownloadExportResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "FinanceService"
+        ]
+      }
+    },
+    "/api/v1/finance/export/json": {
+      "get": {
+        "operationId": "FinanceService_ExportJSON",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/financeExportResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "FinanceService"
+        ]
+      }
+    },
+    "/api/v1/finance/export/pdf": {
+      "get": {
+        "operationId": "FinanceService_ExportPDF",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/financeExportResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "FinanceService"
+        ]
+      }
+    },
+    "/api/v1/finance/export/txt": {
+      "get": {
+        "operationId": "FinanceService_ExportTXT",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/financeExportResponse"
             }
           },
           "default": {
@@ -1440,6 +1545,32 @@
         "deletedCount": {
           "type": "integer",
           "format": "int32"
+        }
+      }
+    },
+    "financeDownloadExportResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "string",
+          "format": "byte"
+        },
+        "filename": {
+          "type": "string"
+        },
+        "contentType": {
+          "type": "string"
+        }
+      }
+    },
+    "financeExportResponse": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
         }
       }
     },
