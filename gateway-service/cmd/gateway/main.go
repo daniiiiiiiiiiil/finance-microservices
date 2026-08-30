@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -136,6 +137,17 @@ func main() {
 			logger.Error("failed to write response", zap.Error(err))
 			return
 		}
+	})
+
+	httpMux.HandleFunc("/api/v1/finance/export/download/", func(w http.ResponseWriter, r *http.Request) {
+		key := strings.TrimPrefix(r.URL.Path, "/api/v1/finance/export/download/")
+
+		if key == "" {
+			http.Error(w, "key is required", http.StatusBadRequest)
+			return
+		}
+
+		otelMux.ServeHTTP(w, r)
 	})
 
 	httpMux.Handle("/api/", otelMux)
