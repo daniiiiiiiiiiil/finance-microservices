@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
@@ -139,14 +138,13 @@ func main() {
 		}
 	})
 
-	httpMux.HandleFunc("/api/v1/finance/export/download/", func(w http.ResponseWriter, r *http.Request) {
-		key := strings.TrimPrefix(r.URL.Path, "/api/v1/finance/export/download/")
-
+	httpMux.HandleFunc("/api/v1/finance/export/download", func(w http.ResponseWriter, r *http.Request) {
+		key := r.URL.Query().Get("key")
 		if key == "" {
 			http.Error(w, "key is required", http.StatusBadRequest)
 			return
 		}
-
+		r.URL.Path = "/api/v1/finance/export/download/" + key
 		otelMux.ServeHTTP(w, r)
 	})
 
