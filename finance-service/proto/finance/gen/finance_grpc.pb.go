@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.2
 // - protoc             v7.35.1
-// source: proto/finance/finance.proto
+// source: proto/finance/v1/finance.proto
 
 package gen
 
@@ -30,6 +30,11 @@ const (
 	FinanceService_DeleteTransaction_FullMethodName     = "/finance.FinanceService/DeleteTransaction"
 	FinanceService_DeleteUserTransaction_FullMethodName = "/finance.FinanceService/DeleteUserTransaction"
 	FinanceService_GetMetrics_FullMethodName            = "/finance.FinanceService/GetMetrics"
+	FinanceService_ExportJSON_FullMethodName            = "/finance.FinanceService/ExportJSON"
+	FinanceService_ExportCSV_FullMethodName             = "/finance.FinanceService/ExportCSV"
+	FinanceService_ExportTXT_FullMethodName             = "/finance.FinanceService/ExportTXT"
+	FinanceService_ExportPDF_FullMethodName             = "/finance.FinanceService/ExportPDF"
+	FinanceService_DownloadExport_FullMethodName        = "/finance.FinanceService/DownloadExport"
 )
 
 // FinanceServiceClient is the client API for FinanceService service.
@@ -45,6 +50,11 @@ type FinanceServiceClient interface {
 	DeleteTransaction(ctx context.Context, in *DeleteTransactionRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	DeleteUserTransaction(ctx context.Context, in *DeleteUserTransactionsRequest, opts ...grpc.CallOption) (*DeleteUserTransactionsResponse, error)
 	GetMetrics(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*MetricsResponse, error)
+	ExportJSON(ctx context.Context, in *ExportRequest, opts ...grpc.CallOption) (*ExportResponse, error)
+	ExportCSV(ctx context.Context, in *ExportRequest, opts ...grpc.CallOption) (*ExportResponse, error)
+	ExportTXT(ctx context.Context, in *ExportRequest, opts ...grpc.CallOption) (*ExportResponse, error)
+	ExportPDF(ctx context.Context, in *ExportRequest, opts ...grpc.CallOption) (*ExportResponse, error)
+	DownloadExport(ctx context.Context, in *DownloadExportRequest, opts ...grpc.CallOption) (*DownloadExportResponse, error)
 }
 
 type financeServiceClient struct {
@@ -145,6 +155,56 @@ func (c *financeServiceClient) GetMetrics(ctx context.Context, in *emptypb.Empty
 	return out, nil
 }
 
+func (c *financeServiceClient) ExportJSON(ctx context.Context, in *ExportRequest, opts ...grpc.CallOption) (*ExportResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ExportResponse)
+	err := c.cc.Invoke(ctx, FinanceService_ExportJSON_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *financeServiceClient) ExportCSV(ctx context.Context, in *ExportRequest, opts ...grpc.CallOption) (*ExportResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ExportResponse)
+	err := c.cc.Invoke(ctx, FinanceService_ExportCSV_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *financeServiceClient) ExportTXT(ctx context.Context, in *ExportRequest, opts ...grpc.CallOption) (*ExportResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ExportResponse)
+	err := c.cc.Invoke(ctx, FinanceService_ExportTXT_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *financeServiceClient) ExportPDF(ctx context.Context, in *ExportRequest, opts ...grpc.CallOption) (*ExportResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ExportResponse)
+	err := c.cc.Invoke(ctx, FinanceService_ExportPDF_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *financeServiceClient) DownloadExport(ctx context.Context, in *DownloadExportRequest, opts ...grpc.CallOption) (*DownloadExportResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DownloadExportResponse)
+	err := c.cc.Invoke(ctx, FinanceService_DownloadExport_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FinanceServiceServer is the server API for FinanceService service.
 // All implementations must embed UnimplementedFinanceServiceServer
 // for forward compatibility.
@@ -158,6 +218,11 @@ type FinanceServiceServer interface {
 	DeleteTransaction(context.Context, *DeleteTransactionRequest) (*emptypb.Empty, error)
 	DeleteUserTransaction(context.Context, *DeleteUserTransactionsRequest) (*DeleteUserTransactionsResponse, error)
 	GetMetrics(context.Context, *emptypb.Empty) (*MetricsResponse, error)
+	ExportJSON(context.Context, *ExportRequest) (*ExportResponse, error)
+	ExportCSV(context.Context, *ExportRequest) (*ExportResponse, error)
+	ExportTXT(context.Context, *ExportRequest) (*ExportResponse, error)
+	ExportPDF(context.Context, *ExportRequest) (*ExportResponse, error)
+	DownloadExport(context.Context, *DownloadExportRequest) (*DownloadExportResponse, error)
 	mustEmbedUnimplementedFinanceServiceServer()
 }
 
@@ -194,6 +259,21 @@ func (UnimplementedFinanceServiceServer) DeleteUserTransaction(context.Context, 
 }
 func (UnimplementedFinanceServiceServer) GetMetrics(context.Context, *emptypb.Empty) (*MetricsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetMetrics not implemented")
+}
+func (UnimplementedFinanceServiceServer) ExportJSON(context.Context, *ExportRequest) (*ExportResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ExportJSON not implemented")
+}
+func (UnimplementedFinanceServiceServer) ExportCSV(context.Context, *ExportRequest) (*ExportResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ExportCSV not implemented")
+}
+func (UnimplementedFinanceServiceServer) ExportTXT(context.Context, *ExportRequest) (*ExportResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ExportTXT not implemented")
+}
+func (UnimplementedFinanceServiceServer) ExportPDF(context.Context, *ExportRequest) (*ExportResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ExportPDF not implemented")
+}
+func (UnimplementedFinanceServiceServer) DownloadExport(context.Context, *DownloadExportRequest) (*DownloadExportResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DownloadExport not implemented")
 }
 func (UnimplementedFinanceServiceServer) mustEmbedUnimplementedFinanceServiceServer() {}
 func (UnimplementedFinanceServiceServer) testEmbeddedByValue()                        {}
@@ -378,6 +458,96 @@ func _FinanceService_GetMetrics_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FinanceService_ExportJSON_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ExportRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FinanceServiceServer).ExportJSON(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FinanceService_ExportJSON_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FinanceServiceServer).ExportJSON(ctx, req.(*ExportRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FinanceService_ExportCSV_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ExportRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FinanceServiceServer).ExportCSV(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FinanceService_ExportCSV_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FinanceServiceServer).ExportCSV(ctx, req.(*ExportRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FinanceService_ExportTXT_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ExportRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FinanceServiceServer).ExportTXT(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FinanceService_ExportTXT_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FinanceServiceServer).ExportTXT(ctx, req.(*ExportRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FinanceService_ExportPDF_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ExportRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FinanceServiceServer).ExportPDF(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FinanceService_ExportPDF_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FinanceServiceServer).ExportPDF(ctx, req.(*ExportRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FinanceService_DownloadExport_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DownloadExportRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FinanceServiceServer).DownloadExport(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FinanceService_DownloadExport_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FinanceServiceServer).DownloadExport(ctx, req.(*DownloadExportRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // FinanceService_ServiceDesc is the grpc.ServiceDesc for FinanceService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -421,7 +591,27 @@ var FinanceService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "GetMetrics",
 			Handler:    _FinanceService_GetMetrics_Handler,
 		},
+		{
+			MethodName: "ExportJSON",
+			Handler:    _FinanceService_ExportJSON_Handler,
+		},
+		{
+			MethodName: "ExportCSV",
+			Handler:    _FinanceService_ExportCSV_Handler,
+		},
+		{
+			MethodName: "ExportTXT",
+			Handler:    _FinanceService_ExportTXT_Handler,
+		},
+		{
+			MethodName: "ExportPDF",
+			Handler:    _FinanceService_ExportPDF_Handler,
+		},
+		{
+			MethodName: "DownloadExport",
+			Handler:    _FinanceService_DownloadExport_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/finance/finance.proto",
+	Metadata: "proto/finance/v1/finance.proto",
 }

@@ -98,6 +98,22 @@ services:
    #   timeout: 5s
    #   retries: 5
 
+  minio:
+    image: minio/minio:latest
+    container_name: finance-minio
+    networks:
+      - finance-net
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-minioadmin}
+    command: server /data --console-address ":9001"
+    volumes:
+      - ./minio-data:/data
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # Web Console
+    restart: always
+
 
   auth:
     build:
@@ -184,16 +200,21 @@ services:
       - POSTGRES_USER=${FINANCE_POSTGRES_USER}
       - POSTGRES_PASSWORD=${FINANCE_POSTGRES_PASSWORD}
       - POSTGRES_DB=${FINANCE_POSTGRES_DB}
-      - POSTGRES_HOST=finance-postgres
-      - POSTGRES_PORT=5432
+      - POSTGRES_HOST=${FINANCE_POSTGRES_HOST}
+      - POSTGRES_PORT=${FINANCE_POSTGRES_PORT}
       - POSTGRES_TIMEOUT=${POSTGRES_TIMEOUT}
       - LOGGER_LEVEL=${LOGGER_LEVEL}
       - LOGGER_FOLDER=${LOGGER_FOLDER}
       - TIME_ZONE=${TIME_ZONE}
       - JWT_SECRET=${JWT_SECRET}
       - JWT_DURATION=${JWT_DURATION}
-      - REDIS_ADDR=finance-redis:6379
-      - KAFKA_BROKERS=kafka:9092
+      - REDIS_ADDR=${REDIS_ADDR}
+      - KAFKA_BROKERS=${KAFKA_BROKERS}
+      - S3_ENDPOINT_URL=${S3_ENDPOINT_URL}
+      - S3_REGION=${S3_REGION}
+      - S3_BUCKET=${S3_BUCKET}
+      - S3_ACCESS_KEY=${S3_ACCESS_KEY}
+      - S3_SECRET_KEY=${S3_SECRET_KEY}
       - TLS_ENABLED=${TLS_ENABLED}
       - TLS_CERT_FILE=${TLS_CERT_FILE}
       - TLS_KEY_FILE=${TLS_KEY_FILE}
@@ -209,6 +230,7 @@ services:
       - finance-postgres
       - finance-redis
       - kafka
+      - minio
 
   admin:
     build:

@@ -56,6 +56,31 @@ service FinanceService {
       get: "/api/v1/metrics"
     };
   }
+  rpc ExportJSON(ExportRequest) returns (ExportResponse){
+    option (google.api.http) = {
+      get: "/api/v1/finance/export/json"
+    };
+  }
+  rpc ExportCSV(ExportRequest) returns (ExportResponse){
+    option (google.api.http) = {
+      get: "/api/v1/finance/export/csv"
+    };
+  }
+  rpc ExportTXT(ExportRequest) returns (ExportResponse){
+    option (google.api.http) = {
+      get: "/api/v1/finance/export/txt"
+    };
+  }
+  rpc ExportPDF(ExportRequest) returns (ExportResponse){
+    option (google.api.http) = {
+      get: "/api/v1/finance/export/pdf"
+    };
+  }
+  rpc DownloadExport(DownloadExportRequest) returns (DownloadExportResponse){
+    option (google.api.http) = {
+      get: "/api/v1/finance/export/download/{key}"
+    };
+  }
 }
 
 message GetDashboardRequest {
@@ -159,4 +184,22 @@ message DeleteUserTransactionsResponse{
 message MetricsResponse {
   int32 total_transactions = 1;
   double total_balance = 2;
+}
+
+message ExportRequest {
+}
+
+message ExportResponse {
+  string key = 1;
+  string url = 2;
+}
+
+message DownloadExportRequest {
+  string key = 1;
+}
+
+message DownloadExportResponse {
+  bytes data = 1;
+  string filename = 2;
+  string content_type = 3;
 }

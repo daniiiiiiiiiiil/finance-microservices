@@ -6,7 +6,7 @@ Package finance is a reverse proxy.
 
 It translates gRPC into RESTful JSON APIs.
 */
-package gen
+package finance
 
 import (
 	"context"

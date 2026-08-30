@@ -1,9 +1,13 @@
 FROM golang:1.26.4-alpine AS builder
 
+RUN apk add --no-cache ttf-dejavu
+
 WORKDIR /app
 
-COPY finance-service/go.mod finance-service/go.sum ./
+ENV GOPROXY=direct
+ENV GOSUMDB=off
 
+COPY finance-service/go.mod finance-service/go.sum ./
 RUN go mod download
 
 COPY finance-service/ ./finance-service/
@@ -14,7 +18,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o finance ./cmd/fin
 
 FROM alpine:latest
 
-RUN apk --no-cache add ca-certificates
+RUN apk add --no-cache ttf-dejavu ca-certificates
 
 WORKDIR /root/
 
