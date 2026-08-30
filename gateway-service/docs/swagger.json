@@ -1,9 +1,22 @@
 {
-  "swagger": "2.0",
   "info": {
-    "title": "proto/auth/v1/auth.proto",
-    "version": "version not set"
+    "title": "Finance Microservices API",
+    "version": "1.0.0",
+    "description": "API Gateway для микросервисов"
   },
+  "securityDefinitions": {
+    "BearerAuth": {
+      "type": "apiKey",
+      "in": "header",
+      "name": "Authorization",
+      "description": "JWT токен в формате: Bearer <token>"
+    }
+  },
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
   "tags": [
     {
       "name": "AuthService"
