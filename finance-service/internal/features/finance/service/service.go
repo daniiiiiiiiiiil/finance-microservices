@@ -1,10 +1,11 @@
 package service
 
 import (
+	"context"
+
 	"github.com/daniiiiiiiiiiil/finance-microservices/finance-service/internal/core/ports"
 	"github.com/daniiiiiiiiiiil/finance-microservices/finance-service/internal/core/repository/postgres/pool"
 	"github.com/daniiiiiiiiiiil/finance-microservices/finance-service/pkg/logger"
-	"golang.org/x/net/context"
 )
 
 var _ ports.FinanceServiceInterface = (*FinanceService)(nil)
