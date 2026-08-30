@@ -1,5 +1,5 @@
 name: CD
-#
+
 on:
   push:
     branches: [master]
@@ -19,7 +19,7 @@ jobs:
         with:
           host: ${{ secrets.TIMEWEB_HOST }}
           username: ${{ secrets.TIMEWEB_USER }}
-          key: ${{ secrets.TIMEWEB_SSH_KEY }}
+          password: ${{ secrets.TIMEWEB_PASSWORD }}
           source: "."
           target: "/opt/finance-microservices"
 
@@ -28,11 +28,11 @@ jobs:
         with:
           host: ${{ secrets.TIMEWEB_HOST }}
           username: ${{ secrets.TIMEWEB_USER }}
-          key: ${{ secrets.TIMEWEB_SSH_KEY }}
+          password: ${{ secrets.TIMEWEB_PASSWORD }}
           script: |
             cd /opt/finance-microservices
             docker compose down
-            docker compose pull || true
+            docker compose pull
             nohup docker compose up -d --build > build.log 2>&1 &
             docker image prune -f
             echo "Деплой запущен в фоне. Логи: /opt/finance-microservices/build.log"
