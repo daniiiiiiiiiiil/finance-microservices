@@ -123,26 +123,24 @@ func (s *ExportService) ExportPDF(ctx context.Context, userID int) (string, erro
 	pdf := gofpdf.New("P", "mm", "A4", "")
 	pdf.AddPage()
 
-	pdf.AddUTF8Font("DejaVu", "", "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")
-
-	pdf.SetFont("DejaVu", "", 16)
-	pdf.Cell(40, 10, "Финансовый отчет")
+	pdf.SetFont("Helvetica", "", 16)
+	pdf.Cell(40, 10, "Financial Report")
 	pdf.Ln(10)
 
-	pdf.SetFont("DejaVu", "", 12)
-	pdf.Cell(40, 10, fmt.Sprintf("Пользователь: %d", userID))
+	pdf.SetFont("Helvetica", "", 12)
+	pdf.Cell(40, 10, fmt.Sprintf("User: %d", userID))
 	pdf.Ln(5)
-	pdf.Cell(40, 10, fmt.Sprintf("Дата: %s", time.Now().Format("2006-01-02")))
+	pdf.Cell(40, 10, fmt.Sprintf("Date: %s", time.Now().Format("2006-01-02")))
 	pdf.Ln(10)
 
-	pdf.SetFont("DejaVu", "B", 12)
-	pdf.Cell(40, 10, "Транзакции:")
+	pdf.SetFont("Helvetica", "B", 12)
+	pdf.Cell(40, 10, "Transactions:")
 	pdf.Ln(5)
 
 	for _, tx := range transactions {
-		pdf.SetFont("DejaVu", "", 10)
+		pdf.SetFont("Helvetica", "", 10)
 		pdf.Cell(40, 10, fmt.Sprintf(
-			"%s | %s | %.2f ₽ | %s",
+			"%s | %s | %.2f | %s",
 			tx.CreatedAt.Format("2006-01-02"),
 			tx.TypeTransaction,
 			tx.Amount,
