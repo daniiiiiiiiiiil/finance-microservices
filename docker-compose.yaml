@@ -293,6 +293,59 @@ services:
       - finance-redis
       - kafka
 
+  auth-postgres-migrate:
+    image: migrate/migrate:latest
+    networks:
+      - finance-net
+    volumes:
+      - ./auth-service/migrations:/migrations
+    environment:
+      - AUTH_POSTGRES_USER=${AUTH_POSTGRES_USER}
+      - AUTH_POSTGRES_PASSWORD=${AUTH_POSTGRES_PASSWORD}
+      - AUTH_POSTGRES_DB=${AUTH_POSTGRES_DB}
+    depends_on:
+      - auth-postgres
+    entrypoint: |
+      sh -c "
+        echo 'Applying auth migrations...' &&
+        migrate -path /migrations -database postgres://${AUTH_POSTGRES_USER}:${AUTH_POSTGRES_PASSWORD}@auth-postgres:5432/${AUTH_POSTGRES_DB}?sslmode=disable up
+      "
+
+  users-postgres-migrate:
+      image: migrate/migrate:latest
+      networks:
+        - finance-net
+      volumes:
+        - ./users-service/migrations:/migrations
+      environment:
+        - USERS_POSTGRES_USER=${USERS_POSTGRES_USER}
+        - USERS_POSTGRES_PASSWORD=${USERS_POSTGRES_PASSWORD}
+        - USERS_POSTGRES_DB=${USERS_POSTGRES_DB}
+      depends_on:
+        - users-postgres
+      entrypoint: |
+        sh -c "
+          echo 'Applying users migrations...' &&
+          migrate -path /migrations -database postgres://${USERS_POSTGRES_USER}:${USERS_POSTGRES_PASSWORD}@users-postgres:5432/${USERS_POSTGRES_DB}?sslmode=disable up
+        "
+
+  finance-postgres-migrate:
+      image: migrate/migrate:latest
+      networks:
+        - finance-net
+      volumes:
+        - ./finance-service/migrations:/migrations
+      environment:
+        - FINANCE_POSTGRES_USER=${FINANCE_POSTGRES_USER}
+        - FINANCE_POSTGRES_PASSWORD=${FINANCE_POSTGRES_PASSWORD}
+        - FINANCE_POSTGRES_DB=${FINANCE_POSTGRES_DB}
+      depends_on:
+        - finance-postgres
+      entrypoint: |
+        sh -c "
+          echo 'Applying finance migrations...' &&
+          migrate -path /migrations -database postgres://${FINANCE_POSTGRES_USER}:${FINANCE_POSTGRES_PASSWORD}@finance-postgres:5432/${FINANCE_POSTGRES_DB}?sslmode=disable up
+        "
   gateway:
     build:
       context: .
