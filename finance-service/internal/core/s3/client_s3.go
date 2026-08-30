@@ -23,6 +23,7 @@ func NewClient() (*Client, error) {
 	if bucket == "" {
 		return nil, errors.New("S3_BUCKET environment variable not set")
 	}
+
 	cfg := aws.Config{
 		Region: os.Getenv("S3_REGION"),
 		Credentials: credentials.NewStaticCredentialsProvider(
@@ -30,12 +31,11 @@ func NewClient() (*Client, error) {
 			os.Getenv("S3_SECRET_KEY"),
 			"",
 		),
-		EndpointResolver: aws.EndpointResolverFunc(func(service, region string) (aws.Endpoint, error) {
-			return aws.Endpoint{URL: os.Getenv("S3_ENDPOINT_URL"), SigningRegion: os.Getenv("S3_REGION")}, nil
-		}),
 	}
+
 	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
 		o.UsePathStyle = true
+		o.BaseEndpoint = aws.String(os.Getenv("S3_ENDPOINT_URL"))
 	})
 
 	return &Client{

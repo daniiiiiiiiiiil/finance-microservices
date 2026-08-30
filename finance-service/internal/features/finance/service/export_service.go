@@ -2,6 +2,7 @@ package service
 
 import (
 	"bytes"
+	"context"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -9,7 +10,6 @@ import (
 
 	"github.com/daniiiiiiiiiiil/finance-microservices/finance-service/internal/core/ports"
 	"github.com/jung-kurt/gofpdf"
-	"golang.org/x/net/context"
 )
 
 type ExportService struct {
@@ -54,16 +54,21 @@ func (s *ExportService) ExportCSV(ctx context.Context, userID int) (string, erro
 	var buf bytes.Buffer
 	writer := csv.NewWriter(&buf)
 
-	writer.Write([]string{"ID", "Type", "Amount", "Category", "Date"})
+	if err := writer.Write([]string{"ID", "Type", "Amount", "Category", "Date"}); err != nil {
+		return "", fmt.Errorf("failed to write CSV header: %w", err)
+	}
 
 	for _, tx := range transactions {
-		writer.Write([]string{
+		err = writer.Write([]string{
 			fmt.Sprintf("%d", tx.ID),
 			tx.TypeTransaction,
 			fmt.Sprintf("%f", tx.Amount),
 			tx.Category,
 			tx.CreatedAt.Format("2006-01-02 15:04:05"),
 		})
+		if err != nil {
+			return "", fmt.Errorf("failed to write CSV row: %w", err)
+		}
 	}
 	writer.Flush()
 
