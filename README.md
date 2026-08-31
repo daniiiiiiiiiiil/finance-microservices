@@ -287,4 +287,14 @@ TIME_ZONE — таймзона процессов.
 
 Основные команды из Makefile: make up поднимает всю систему, make down останавливает, make migrate-up-all прогоняет миграции для auth/users/finance, make services-logs показывает логи доменных сервисов, make kafka-ui открывает Kafka UI, make proto-gen-all перегенерирует protobuf/gRPC код из .proto, make swagger-gen перегенерирует Swagger из аннотаций.
 
-После запуска: REST API и Swagger на http://localhost:8081/swagger/, Kafka UI на http://localhost:8080, MinIO Console на http://localhost:9001, Jaeger на http://localhost:16686, Prometheus на http://localhost:9090.
+После запуска: 
+
+REST API и Swagger на http://localhost:8081/swagger/
+
+Kafka UI на http://localhost:8080
+
+MinIO Console на http://localhost:9001
+
+Jaeger на http://localhost:16686
+
+Prometheus на http://localhost:9090
