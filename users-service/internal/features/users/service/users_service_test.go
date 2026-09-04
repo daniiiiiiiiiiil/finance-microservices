@@ -497,18 +497,25 @@ func TestFinalizeDelete_Success(t *testing.T) {
 	s.mockPool.On("Begin", ctx).Return(mockTx, nil)
 	mockTx.On("Rollback", ctx).Return(nil)
 	mockTx.On("Commit", ctx).Return(nil)
+
 	s.mockRepo.On("GetUser", ctx, 1).Return(domain.User{
 		ID:     1,
 		Email:  "john@example.com",
 		Status: "deleting",
 	}, nil)
 	s.mockRepo.On("DeleteUserTx", ctx, mockTx, 1).Return(nil)
+
+	s.mockOutbox.On("SaveTx", ctx, mockTx, mock.Anything).Return(nil)
+
 	s.mockPublisher.On("Publish", ctx, "user.deleted", mock.Anything).Return(nil)
 
 	err := s.service.FinalizeDelete(ctx, 1)
 
 	assert.NoError(t, err)
 	s.mockRepo.AssertExpectations(t)
+	s.mockPool.AssertExpectations(t)
+	s.mockOutbox.AssertExpectations(t)
+	mockTx.AssertExpectations(t)
 }
 
 func TestRestoreUser_Success(t *testing.T) {

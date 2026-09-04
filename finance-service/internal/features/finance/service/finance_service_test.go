@@ -405,9 +405,11 @@ func TestUpdateTransaction_Success(t *testing.T) {
 		UserID:          1,
 		CreatedAt:       existing.CreatedAt,
 	}, nil)
+
+	s.mockOutbox.On("Save", ctx, mock.Anything).Return(nil)
+
 	s.mockRedis.On("Delete", ctx, "dashboard:1").Return(nil)
 	s.mockRedis.On("Delete", ctx, "categories:1").Return(nil)
-	s.mockPublisher.On("Publish", ctx, "transaction.updated", mock.Anything).Return(nil)
 
 	result, err := s.service.UpdateTransaction(ctx, updated)
 
@@ -415,6 +417,7 @@ func TestUpdateTransaction_Success(t *testing.T) {
 	assert.Equal(t, 2, result.Version)
 	assert.Equal(t, 200.00, result.Amount)
 	s.mockRepo.AssertExpectations(t)
+	s.mockOutbox.AssertExpectations(t)
 }
 
 func TestUpdateTransaction_NotFound(t *testing.T) {
@@ -441,15 +444,20 @@ func TestDeleteTransaction_Success(t *testing.T) {
 	}
 
 	s.mockRepo.On("GetTransaction", ctx, 1).Return(existing, nil)
+
 	s.mockRepo.On("DeleteTransaction", ctx, 1).Return(nil)
+
+	s.mockOutbox.On("Save", ctx, mock.Anything).Return(nil)
+
 	s.mockRedis.On("Delete", ctx, "dashboard:1").Return(nil)
 	s.mockRedis.On("Delete", ctx, "categories:1").Return(nil)
-	s.mockPublisher.On("Publish", ctx, "transaction.deleted", mock.Anything).Return(nil)
 
 	err := s.service.DeleteTransaction(ctx, 1)
 
 	assert.NoError(t, err)
 	s.mockRepo.AssertExpectations(t)
+	s.mockOutbox.AssertExpectations(t)
+	s.mockRedis.AssertExpectations(t)
 }
 
 func TestDeleteTransaction_NotFound(t *testing.T) {
@@ -672,6 +680,9 @@ func TestCreateTransaction_TableDriven(t *testing.T) {
 			if !tt.expectError {
 				mockTx.On("Commit", ctx).Return(nil)
 				s.mockRepo.On("CreateTransactionTx", ctx, mockTx, tt.transaction).Return(domain.Finance{ID: 1}, nil)
+
+				s.mockOutbox.On("SaveTx", ctx, mockTx, mock.Anything).Return(nil)
+
 				s.mockRedis.On("Delete", mock.Anything, mock.Anything).Return(nil)
 				s.mockPublisher.On("Publish", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			}
