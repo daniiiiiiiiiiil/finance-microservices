@@ -302,9 +302,11 @@ func TestCreateTransaction_Success(t *testing.T) {
 	mockTx.On("Rollback", ctx).Return(nil)
 	mockTx.On("Commit", ctx).Return(nil)
 	s.mockRepo.On("CreateTransactionTx", ctx, mockTx, transaction).Return(expected, nil)
+
+	s.mockOutbox.On("SaveTx", ctx, mockTx, mock.Anything).Return(nil)
+
 	s.mockRedis.On("Delete", ctx, "dashboard:1").Return(nil)
 	s.mockRedis.On("Delete", ctx, "categories:1").Return(nil)
-	s.mockPublisher.On("Publish", ctx, "transaction.created", mock.Anything).Return(nil)
 
 	result, err := s.service.CreateTransaction(ctx, transaction)
 

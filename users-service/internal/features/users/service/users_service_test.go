@@ -298,6 +298,11 @@ func TestCreateProfile_Success(t *testing.T) {
 		PasswordHash: "hashed_password",
 	}
 
+	mockTx := new(MockTx)
+	s.mockPool.On("Begin", ctx).Return(mockTx, nil)
+	mockTx.On("Rollback", ctx).Return(nil)
+	mockTx.On("Commit", ctx).Return(nil)
+
 	s.mockRepo.On("GetUserByEmail", ctx, req.Email).Return(domain.User{}, errors.New("not found"))
 	s.mockRepo.On("CreateUser", ctx, mock.Anything).Return(1, nil)
 	s.mockRepo.On("GetUser", ctx, 1).Return(domain.User{
@@ -308,6 +313,9 @@ func TestCreateProfile_Success(t *testing.T) {
 		IsAdmin:      false,
 		Status:       "active",
 	}, nil)
+
+	s.mockOutbox.On("SaveTx", ctx, mockTx, mock.Anything).Return(nil)
+
 	s.mockPublisher.On("Publish", ctx, "user.created", mock.Anything).Return(nil)
 
 	user, err := s.service.CreateProfile(ctx, req)
@@ -316,7 +324,9 @@ func TestCreateProfile_Success(t *testing.T) {
 	assert.Equal(t, 1, user.ID)
 	assert.Equal(t, "john@example.com", user.Email)
 	s.mockRepo.AssertExpectations(t)
+	s.mockPool.AssertExpectations(t)
 	s.mockOutbox.AssertExpectations(t)
+	mockTx.AssertExpectations(t)
 }
 
 func TestCreateProfile_AlreadyExists(t *testing.T) {
