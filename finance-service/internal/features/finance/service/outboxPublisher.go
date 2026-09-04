@@ -3,10 +3,11 @@ package service
 import (
 	"time"
 
+	"context"
+
 	"github.com/daniiiiiiiiiiil/finance-microservices/finance-service/internal/core/ports"
 	"github.com/daniiiiiiiiiiil/finance-microservices/finance-service/pkg/logger"
 	"go.uber.org/zap"
-	"golang.org/x/net/context"
 )
 
 type OutboxPublisher struct {

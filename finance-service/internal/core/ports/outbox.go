@@ -1,9 +1,10 @@
 package ports
 
 import (
+	"context"
+
 	"github.com/daniiiiiiiiiiil/finance-microservices/finance-service/internal/core/domain"
 	"github.com/daniiiiiiiiiiil/finance-microservices/finance-service/internal/core/repository/postgres/pool"
-	"golang.org/x/net/context"
 )
 
 type OutboxRepositoryInterface interface {
