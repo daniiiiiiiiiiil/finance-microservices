@@ -28,13 +28,28 @@ func (s *FinanceService) CreateTransaction(ctx context.Context, transaction doma
 	if err != nil {
 		return domain.Finance{}, fmt.Errorf("create transaction: %w", err)
 	}
+
+	event, err := domain.NewOutboxEvent(
+		int64(created.ID),
+		"transaction",
+		kafka.EventTypeTransactionCreated,
+		created,
+	)
+	if err != nil {
+		return domain.Finance{}, fmt.Errorf("create outbox event: %w", err)
+	}
+
+	if err := s.outboxRepo.SaveTx(ctx, tx, event); err != nil {
+		return domain.Finance{}, fmt.Errorf("save outbox event: %w", err)
+	}
+
 	if err := tx.Commit(ctx); err != nil {
 		return domain.Finance{}, fmt.Errorf("commit transaction: %w", err)
 	}
 
 	go s.invalidateCache(context.Background(), transaction.UserID)
 
-	go s.sendTransactionEvent(context.Background(), kafka.EventTypeTransactionCreated, created)
+	//go s.sendTransactionEvent(context.Background(), kafka.EventTypeTransactionCreated, created)
 
 	return created, nil
 }
@@ -67,9 +82,23 @@ func (s *FinanceService) UpdateTransaction(ctx context.Context, transaction doma
 		return domain.Finance{}, fmt.Errorf("update transaction: %w", err)
 	}
 
+	event, err := domain.NewOutboxEvent(
+		int64(updated.ID),
+		"transaction",
+		kafka.EventTypeTransactionUpdated,
+		updated,
+	)
+	if err != nil {
+		return domain.Finance{}, fmt.Errorf("create outbox event: %w", err)
+	}
+
+	if err := s.outboxRepo.Save(ctx, event); err != nil {
+		return domain.Finance{}, fmt.Errorf("save outbox event: %w", err)
+	}
+
 	go s.invalidateCache(context.Background(), transaction.UserID)
 
-	go s.sendTransactionEvent(context.Background(), kafka.EventTypeTransactionUpdated, updated)
+	//go s.sendTransactionEvent(context.Background(), kafka.EventTypeTransactionUpdated, updated)
 
 	return updated, nil
 }
@@ -84,9 +113,23 @@ func (s *FinanceService) DeleteTransaction(ctx context.Context, id int) error {
 		return fmt.Errorf("delete transaction: %w", err)
 	}
 
+	event, err := domain.NewOutboxEvent(
+		int64(tx.ID),
+		"transaction",
+		kafka.EventTypeTransactionDeleted,
+		tx,
+	)
+	if err != nil {
+		return fmt.Errorf("create outbox event: %w", err)
+	}
+
+	if err := s.outboxRepo.Save(ctx, event); err != nil {
+		return fmt.Errorf("save outbox event: %w", err)
+	}
+
 	go s.invalidateCache(context.Background(), tx.UserID)
 
-	go s.sendTransactionEvent(context.Background(), kafka.EventTypeTransactionDeleted, tx)
+	//go s.sendTransactionEvent(context.Background(), kafka.EventTypeTransactionDeleted, tx)
 
 	return nil
 }

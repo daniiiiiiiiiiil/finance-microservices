@@ -101,11 +101,13 @@ migrate-version:
 		version
 
 migrate-create:
-	@docker compose run --rm finance-postgres-migrate \
-		create \
-		-ext sql \
-		-dir /migrations \
-		-seq $(seq)
+	@echo "Creating migration: $(seq)"
+	@docker run --rm \
+		-v ./migrations:/migrations \
+		--entrypoint sh \
+		migrate/migrate:latest \
+		-c "migrate create -ext sql -dir /migrations -seq $(seq)"
+	@echo "Migration created in ./migrations/"
 
 
 s3-up:

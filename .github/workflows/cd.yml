@@ -1,9 +1,9 @@
 name: CD
-#
-on:
-  push:
-    branches: [master]
-  workflow_dispatch:
+
+  #on: // баланс на хостинге закончился
+  #push:
+  #branches: [master]
+#workflow_dispatch:
 
 jobs:
   deploy:

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/daniiiiiiiiiiil/finance-microservices/users-service/internal/core/kafka"
+	"github.com/daniiiiiiiiiiil/finance-microservices/users-service/internal/core/domain"
 	"go.uber.org/zap"
 )
 
@@ -86,11 +86,31 @@ func (s *UsersService) FinalizeDelete(ctx context.Context, id int) error {
 		return fmt.Errorf("delete user: %w", err)
 	}
 
+	event, err := domain.NewOutboxEvent(
+		int64(id),
+		"user",
+		"user.deleted",
+		domain.UserEvent{
+			UserID:   id,
+			Email:    user.Email,
+			FullName: user.FullName,
+			IsAdmin:  user.IsAdmin,
+			Status:   "deleted",
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("create outbox event: %w", err)
+	}
+
+	if err := s.outboxRepo.SaveTx(ctx, tx, event); err != nil {
+		return fmt.Errorf("save outbox event: %w", err)
+	}
+
 	if err := tx.Commit(ctx); err != nil {
 		return fmt.Errorf("commit transaction: %w", err)
 	}
 
-	go s.publishUserEvent(context.Background(), kafka.EventTypeUserDeleted, user.ID, user.Email, user.FullName, user.IsAdmin, user.Status)
+	go s.publishUserEvent(context.Background(), "user.deleted", user.ID, user.Email, user.FullName, user.IsAdmin, user.Status)
 
 	return nil
 }

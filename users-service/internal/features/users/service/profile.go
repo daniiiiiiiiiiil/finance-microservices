@@ -6,7 +6,9 @@ import (
 	"log"
 
 	"context"
+
 	"github.com/daniiiiiiiiiiil/finance-microservices/users-service/internal/core/domain"
+	"go.uber.org/zap"
 )
 
 func (s *UsersService) CreateProfile(ctx context.Context, req *CreateProfileRequest) (domain.User, error) {
@@ -14,6 +16,16 @@ func (s *UsersService) CreateProfile(ctx context.Context, req *CreateProfileRequ
 	if existing.ID != 0 {
 		return domain.User{}, errors.New("user already exists")
 	}
+
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return domain.User{}, fmt.Errorf("begin transaction: %w", err)
+	}
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil && err != context.Canceled {
+			s.logger.Error("failed to rollback transaction", zap.Error(err))
+		}
+	}()
 
 	user := domain.NewUserUninitialized(
 		req.FullName,
@@ -32,6 +44,30 @@ func (s *UsersService) CreateProfile(ctx context.Context, req *CreateProfileRequ
 	created, err := s.userRepository.GetUser(ctx, userID)
 	if err != nil {
 		return domain.User{}, err
+	}
+
+	event, err := domain.NewOutboxEvent(
+		int64(created.ID),
+		"user",
+		"user.created",
+		domain.UserEvent{
+			UserID:   created.ID,
+			Email:    created.Email,
+			FullName: created.FullName,
+			IsAdmin:  created.IsAdmin,
+			Status:   created.Status,
+		},
+	)
+	if err != nil {
+		return domain.User{}, fmt.Errorf("create outbox event: %w", err)
+	}
+
+	if err := s.outboxRepo.SaveTx(ctx, tx, event); err != nil {
+		return domain.User{}, fmt.Errorf("save outbox event: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return domain.User{}, fmt.Errorf("commit transaction: %w", err)
 	}
 
 	go s.publishUserEvent(context.Background(), "user.created", created.ID, created.Email, created.FullName, created.IsAdmin, created.Status)

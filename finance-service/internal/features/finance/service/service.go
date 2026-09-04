@@ -15,6 +15,7 @@ type FinanceService struct {
 	pool           pool.Pool
 	redis          ports.RedisInterface
 	eventPublisher ports.EventPublisherInterface
+	outboxRepo     ports.OutboxRepositoryInterface
 	exportService  *ExportService
 	logger         *logger.Logger
 }
@@ -24,6 +25,7 @@ func NewFinanceService(
 	pool pool.Pool,
 	redis ports.RedisInterface,
 	eventPublisher ports.EventPublisherInterface,
+	outboxRepo ports.OutboxRepositoryInterface,
 	exportService *ExportService,
 	logger *logger.Logger,
 ) *FinanceService {
@@ -32,6 +34,7 @@ func NewFinanceService(
 		pool:           pool,
 		redis:          redis,
 		eventPublisher: eventPublisher,
+		outboxRepo:     outboxRepo,
 		exportService:  exportService,
 		logger:         logger,
 	}

@@ -89,14 +89,21 @@ func main() {
 	logger.Debug("initializing export service")
 	exportService := finance_service.NewExportService(financeRepository, s3Client)
 
+	logger.Debug("initializing outbox")
+	outboxRepository := finance_repo.NewOutboxRepository(pool)
+
 	financeService := finance_service.NewFinanceService(
 		financeRepository,
 		pool,
 		redisClient,
 		eventPublisher,
+		outboxRepository,
 		exportService,
 		logger,
 	)
+
+	outboxPublisher := finance_service.NewOutboxPublisher(outboxRepository, kafkaProducer, logger)
+	outboxPublisher.Start(ctx)
 
 	logger.Debug("initializing finance grpc server")
 	grpcServer := grpcclient.NewGRPCServer(

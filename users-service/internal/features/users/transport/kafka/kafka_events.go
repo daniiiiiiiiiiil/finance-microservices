@@ -1,4 +1,3 @@
-// users-service/internal/features/users/transport/kafka/kafka_events.go
 package kafka
 
 import (

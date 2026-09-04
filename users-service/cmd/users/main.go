@@ -84,6 +84,11 @@ func main() {
 	userCache := redis_cache.NewUserCache(redisClient)
 	usersListCache := redis_cache.NewUsersListCache(redisClient)
 
+	logger.Debug("initializing outbox")
+	outboxRepository := postgres_users.NewOutboxRepository(pool)
+	outboxPublisher := service_user.NewOutboxPublisher(outboxRepository, kafkaProducer, logger)
+	outboxPublisher.Start(ctx)
+
 	logger.Debug("initializing users service")
 	usersService := service_user.NewUsersService(
 		usersRepository,
@@ -91,6 +96,7 @@ func main() {
 		userCache,
 		usersListCache,
 		eventPublisher,
+		outboxRepository,
 		logger,
 		redisClient,
 	)
