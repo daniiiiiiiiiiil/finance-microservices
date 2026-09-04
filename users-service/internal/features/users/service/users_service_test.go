@@ -209,6 +209,38 @@ func (m *MockRedis) Exists(ctx context.Context, key string) (int64, error) {
 	return args.Get(0).(int64), args.Error(1)
 }
 
+type MockOutboxRepo struct {
+	mock.Mock
+}
+
+func (m *MockOutboxRepo) SaveTx(ctx context.Context, tx pool.Tx, event domain.OutboxEvent) error {
+	args := m.Called(ctx, tx, event)
+	return args.Error(0)
+}
+
+func (m *MockOutboxRepo) Save(ctx context.Context, event domain.OutboxEvent) error {
+	args := m.Called(ctx, event)
+	return args.Error(0)
+}
+
+func (m *MockOutboxRepo) GetPending(ctx context.Context, limit int) ([]domain.OutboxEvent, error) {
+	args := m.Called(ctx, limit)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.OutboxEvent), args.Error(1)
+}
+
+func (m *MockOutboxRepo) MarkProcessed(ctx context.Context, id string) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockOutboxRepo) MarkFailed(ctx context.Context, id string, errMsg string) error {
+	args := m.Called(ctx, id, errMsg)
+	return args.Error(0)
+}
+
 type testSuite struct {
 	service       *UsersService
 	mockRepo      *MockUsersRepository
@@ -217,6 +249,7 @@ type testSuite struct {
 	mockListCache *MockUsersListCache
 	mockPublisher *MockPublisher
 	mockRedis     *MockRedis
+	mockOutbox    *MockOutboxRepo
 }
 
 func setup() *testSuite {
@@ -226,6 +259,7 @@ func setup() *testSuite {
 	mockListCache := new(MockUsersListCache)
 	mockPublisher := new(MockPublisher)
 	mockRedis := new(MockRedis)
+	mockOutbox := new(MockOutboxRepo)
 
 	loggerInstance := &logger.Logger{Logger: zap.NewNop()}
 
@@ -235,6 +269,7 @@ func setup() *testSuite {
 		userCache:      mockUserCache,
 		usersListCache: mockListCache,
 		eventPublisher: mockPublisher,
+		outboxRepo:     mockOutbox,
 		logger:         loggerInstance,
 		redis:          mockRedis,
 	}
@@ -247,6 +282,7 @@ func setup() *testSuite {
 		mockListCache: mockListCache,
 		mockPublisher: mockPublisher,
 		mockRedis:     mockRedis,
+		mockOutbox:    mockOutbox,
 	}
 }
 
@@ -280,6 +316,7 @@ func TestCreateProfile_Success(t *testing.T) {
 	assert.Equal(t, 1, user.ID)
 	assert.Equal(t, "john@example.com", user.Email)
 	s.mockRepo.AssertExpectations(t)
+	s.mockOutbox.AssertExpectations(t)
 }
 
 func TestCreateProfile_AlreadyExists(t *testing.T) {

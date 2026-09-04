@@ -168,12 +168,45 @@ func (m *MockPool) OpTimeout() time.Duration {
 	return callArgs.Get(0).(time.Duration)
 }
 
+type MockOutboxRepo struct {
+	mock.Mock
+}
+
+func (m *MockOutboxRepo) SaveTx(ctx context.Context, tx pool.Tx, event domain.OutboxEvent) error {
+	args := m.Called(ctx, tx, event)
+	return args.Error(0)
+}
+
+func (m *MockOutboxRepo) Save(ctx context.Context, event domain.OutboxEvent) error {
+	args := m.Called(ctx, event)
+	return args.Error(0)
+}
+
+func (m *MockOutboxRepo) GetPending(ctx context.Context, limit int) ([]domain.OutboxEvent, error) {
+	args := m.Called(ctx, limit)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.OutboxEvent), args.Error(1)
+}
+
+func (m *MockOutboxRepo) MarkProcessed(ctx context.Context, id string) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockOutboxRepo) MarkFailed(ctx context.Context, id string, errMsg string) error {
+	args := m.Called(ctx, id, errMsg)
+	return args.Error(0)
+}
+
 type testSuite struct {
 	service       *FinanceService
 	mockRepo      *MockFinanceRepository
 	mockPool      *MockPool
 	mockRedis     *MockRedis
 	mockPublisher *MockPublisher
+	mockOutbox    *MockOutboxRepo
 }
 
 func setup() *testSuite {
@@ -181,6 +214,7 @@ func setup() *testSuite {
 	mockPool := new(MockPool)
 	mockRedis := new(MockRedis)
 	mockPublisher := new(MockPublisher)
+	mockOutbox := new(MockOutboxRepo)
 
 	loggerInstance := &logger.Logger{Logger: zap.NewNop()}
 
@@ -189,6 +223,7 @@ func setup() *testSuite {
 		pool:           mockPool,
 		redis:          mockRedis,
 		eventPublisher: mockPublisher,
+		outboxRepo:     mockOutbox,
 		logger:         loggerInstance,
 	}
 
@@ -198,6 +233,7 @@ func setup() *testSuite {
 		mockPool:      mockPool,
 		mockRedis:     mockRedis,
 		mockPublisher: mockPublisher,
+		mockOutbox:    mockOutbox,
 	}
 }
 
@@ -277,6 +313,7 @@ func TestCreateTransaction_Success(t *testing.T) {
 	assert.Equal(t, 1000.00, result.Amount)
 	s.mockRepo.AssertExpectations(t)
 	s.mockPool.AssertExpectations(t)
+	s.mockOutbox.AssertExpectations(t)
 	mockTx.AssertExpectations(t)
 }
 
