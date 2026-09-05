@@ -82,7 +82,7 @@ func (r *FinanceRepository) UpdateTransaction(ctx context.Context, transaction d
 			type_transaction = $1,
 			amount = $2,
 			category = $3,
-			version = version + 1
+				version = version + 1
 		WHERE id = $4 AND version = $5
 		RETURNING id, version, type_transaction, amount, category, created_at, user_id
 	`

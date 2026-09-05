@@ -24,6 +24,7 @@ import (
 	authpb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/auth/gen"
 	currencypb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/currency/gen"
 	financepb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/finance/gen"
+	shoppingpb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/shopping/gen"
 	userpb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/users/gen"
 )
 
@@ -75,6 +76,12 @@ func main() {
 	}
 	defer currencyConn.Close()
 
+	shoppingConn, err := grpcclient.NewGRPCClient("shopping:50060", cfg)
+	if err != nil {
+		logger.Fatal("fail to dial shopping", zap.Error(err))
+	}
+	defer shoppingConn.Close()
+
 	mux := runtime.NewServeMux(
 		runtime.WithMetadata(func(ctx context.Context, r *http.Request) metadata.MD {
 			md := metadata.MD{}
@@ -102,6 +109,10 @@ func main() {
 
 	if err := currencypb.RegisterCurrencyServiceHandler(ctx, mux, currencyConn); err != nil {
 		logger.Fatal("fail to register currency service", zap.Error(err))
+	}
+
+	if err := shoppingpb.RegisterShoppingServiceHandler(ctx, mux, shoppingConn); err != nil {
+		logger.Fatal("fail to register shopping service", zap.Error(err))
 	}
 
 	otelMux := otelhttp.NewHandler(mux, "gateway-http")

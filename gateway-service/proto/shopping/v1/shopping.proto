@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package shopping;
+option go_package = "./shopping";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+service ShoppingService{
+  rpc CreateShopping (CreateShoppingRequest) returns (CreateShoppingResponse){
+    option (google.api.http) = {
+      post: "/api/v1/shopping"
+    };
+  }
+}
+
+message CreateShoppingRequest{
+  string title = 1;
+  optional string description = 2;
+  float amount_now = 3;
+  float amount_finish = 4;
+  optional string image_key = 5;
+  bool completed = 6;
+  google.protobuf.Timestamp completion_date = 7;
+}
+
+message CreateShoppingResponse{
+  int32 id = 1;
+  int32 version = 2;
+  string title = 3;
+  optional string description = 4;
+  float amount_now = 5;
+  float amount_finish = 6;
+  optional string image_key = 7;
+  bool completed = 8;
+  google.protobuf.Timestamp created_at = 9;
+  optional google.protobuf.Timestamp updated_at = 10;
+  optional google.protobuf.Timestamp completed_at = 11;
+  optional google.protobuf.Timestamp completion_date = 12;
+}
