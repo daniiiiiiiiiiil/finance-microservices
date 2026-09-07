@@ -11,7 +11,7 @@ import (
 )
 
 func (r *ShoppingRepository) CreateShopping(ctx context.Context, tx pool.Tx, shopping domain.Shopping) (domain.Shopping, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.pool.OpTimeout())
+	ctx, cancel := context.WithTimeout(ctx, r.pool.OpTimeout())
 	defer cancel()
 
 	query := `

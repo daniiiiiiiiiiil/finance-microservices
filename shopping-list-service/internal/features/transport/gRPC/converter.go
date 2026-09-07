@@ -33,9 +33,9 @@ func convertTimestampToTime(ts *timestamppb.Timestamp) *time.Time {
 	return &t
 }
 
-func convertTimeToTimestamp(t *time.Time) *timestamppb.Timestamp {
-	if t == nil || t.IsZero() {
-		return nil
-	}
-	return timestamppb.New(*t)
-}
+//func convertTimeToTimestamp(t *time.Time) *timestamppb.Timestamp {
+//	if t == nil || t.IsZero() {
+//		return nil
+//	}
+//	return timestamppb.New(*t)
+//}

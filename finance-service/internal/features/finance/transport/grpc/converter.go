@@ -19,13 +19,13 @@ func convertFinanceToProto(finance domain.Finance) *gen.TransactionResponse {
 	}
 }
 
-func ConvertFinanceToProto(finance []domain.Finance) []*gen.TransactionResponse {
-	result := make([]*gen.TransactionResponse, len(finance))
-	for i, fin := range finance {
-		result[i] = convertFinanceToProto(fin)
-	}
-	return result
-}
+//func ConvertFinanceToProto(finance []domain.Finance) []*gen.TransactionResponse {
+//	result := make([]*gen.TransactionResponse, len(finance))
+//	for i, fin := range finance {
+//		result[i] = convertFinanceToProto(fin)
+//	}
+//	return result
+//}
 
 func convertDashboardToProto(dashboard domain.Dashboard) *gen.DashboardResponse {
 	dailyStats := make([]*gen.DailyStat, len(dashboard.DailyStats))

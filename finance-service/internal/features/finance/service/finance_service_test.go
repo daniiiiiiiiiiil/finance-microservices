@@ -444,7 +444,6 @@ func TestDeleteTransaction_Success(t *testing.T) {
 	}
 
 	s.mockRepo.On("GetTransaction", ctx, 1).Return(existing, nil)
-
 	s.mockRepo.On("DeleteTransaction", ctx, 1).Return(nil)
 
 	s.mockOutbox.On("Save", ctx, mock.Anything).Return(nil)
