@@ -1,4 +1,4 @@
-package shopping
+package main
 
 import (
 	"context"
