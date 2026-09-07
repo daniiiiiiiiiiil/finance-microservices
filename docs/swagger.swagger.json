@@ -3,14 +3,14 @@
   "info": {
     "title": "Finance Microservices API",
     "version": "1.0.0",
-    "description": "API Gateway для микросервисов"
+    "description": "API for Finance Microservices with JWT authentication"
   },
   "securityDefinitions": {
     "BearerAuth": {
       "type": "apiKey",
-      "in": "header",
       "name": "Authorization",
-      "description": "JWT токен в формате: Bearer <token>"
+      "in": "header",
+      "description": "JWT Bearer token. Example: 'Bearer your-token-here'"
     }
   },
   "security": [
@@ -33,6 +33,9 @@
     },
     {
       "name": "CurrencyService"
+    },
+    {
+      "name": "ShoppingService"
     }
   ],
   "consumes": [
@@ -189,6 +192,7 @@
     "/api/v1/auth/login": {
       "post": {
         "operationId": "AuthService_Login",
+        "security": [],
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -255,6 +259,7 @@
     "/api/v1/auth/register": {
       "post": {
         "operationId": "AuthService_Register",
+        "security": [],
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -475,21 +480,15 @@
         ]
       }
     },
-    "/api/v1/finance/export/download": {
+    "/api/v1/finance/export/download/{key}": {
       "get": {
         "operationId": "FinanceService_DownloadExport",
-        "parameters": [
-          {
-            "name": "key",
-            "in": "query",
-            "required": true,
-            "type": "string",
-            "description": "Ключ файла, полученный при экспорте (например: exports/user_1/export_2026-08-30.json)"
-          }
-        ],
         "responses": {
           "200": {
-            "description": "A successful response."
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/financeDownloadExportResponse"
+            }
           },
           "default": {
             "description": "An unexpected error response.",
@@ -498,6 +497,14 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
         "tags": [
           "FinanceService"
         ]
@@ -811,6 +818,248 @@
         },
         "tags": [
           "FinanceService"
+        ]
+      }
+    },
+    "/api/v1/shopping": {
+      "get": {
+        "operationId": "ShoppingService_ListShopping",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/shoppingListShoppingResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "ShoppingService"
+        ]
+      },
+      "post": {
+        "operationId": "ShoppingService_CreateShopping",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/shoppingCreateShoppingResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/shoppingCreateShoppingRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ShoppingService"
+        ]
+      }
+    },
+    "/api/v1/shopping/total/{id}": {
+      "get": {
+        "operationId": "ShoppingService_GetTotalShopping",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/shoppingGetTotalResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "ShoppingService"
+        ]
+      }
+    },
+    "/api/v1/shopping/{id}": {
+      "get": {
+        "operationId": "ShoppingService_GetShopping",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/shoppingGetShoppingResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "ShoppingService"
+        ]
+      },
+      "delete": {
+        "operationId": "ShoppingService_DeleteShopping",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "ShoppingService"
+        ]
+      },
+      "put": {
+        "operationId": "ShoppingService_UpdateShopping",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/shoppingUpdateShoppingResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ShoppingServiceUpdateShoppingBody"
+            }
+          }
+        ],
+        "tags": [
+          "ShoppingService"
+        ]
+      },
+      "patch": {
+        "operationId": "ShoppingService_CompletedShopping",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ShoppingServiceCompletedShoppingBody"
+            }
+          }
+        ],
+        "tags": [
+          "ShoppingService"
         ]
       }
     },
@@ -1215,6 +1464,59 @@
         },
         "category": {
           "type": "string"
+        }
+      }
+    },
+    "ShoppingServiceCompletedShoppingBody": {
+      "type": "object",
+      "properties": {
+        "completed": {
+          "type": "boolean"
+        }
+      }
+    },
+    "ShoppingServiceUpdateShoppingBody": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "amountNow": {
+          "type": "number",
+          "format": "float"
+        },
+        "amountFinish": {
+          "type": "number",
+          "format": "float"
+        },
+        "imageKey": {
+          "type": "string"
+        },
+        "completed": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completionDate": {
+          "type": "string",
+          "format": "date-time"
         }
       }
     },
@@ -1713,6 +2015,207 @@
             "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
+        }
+      }
+    },
+    "shoppingCreateShoppingRequest": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "amountNow": {
+          "type": "number",
+          "format": "float"
+        },
+        "amountFinish": {
+          "type": "number",
+          "format": "float"
+        },
+        "imageKey": {
+          "type": "string"
+        },
+        "completed": {
+          "type": "boolean"
+        },
+        "completionDate": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "shoppingCreateShoppingResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "version": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "amountNow": {
+          "type": "number",
+          "format": "float"
+        },
+        "amountFinish": {
+          "type": "number",
+          "format": "float"
+        },
+        "imageKey": {
+          "type": "string"
+        },
+        "completed": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completionDate": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "shoppingGetShoppingResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "version": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "amountNow": {
+          "type": "number",
+          "format": "float"
+        },
+        "amountFinish": {
+          "type": "number",
+          "format": "float"
+        },
+        "imageKey": {
+          "type": "string"
+        },
+        "completed": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completionDate": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "shoppingGetTotalResponse": {
+      "type": "object",
+      "properties": {
+        "total": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "shoppingListShoppingResponse": {
+      "type": "object",
+      "properties": {
+        "list": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/shoppingGetShoppingResponse"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "shoppingUpdateShoppingResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "version": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "amountNow": {
+          "type": "number",
+          "format": "float"
+        },
+        "amountFinish": {
+          "type": "number",
+          "format": "float"
+        },
+        "imageKey": {
+          "type": "string"
+        },
+        "completed": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completionDate": {
+          "type": "string",
+          "format": "date-time"
         }
       }
     },

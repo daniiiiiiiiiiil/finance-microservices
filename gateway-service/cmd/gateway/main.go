@@ -76,7 +76,7 @@ func main() {
 	}
 	defer currencyConn.Close()
 
-	shoppingConn, err := grpcclient.NewGRPCClient("shopping:50060", cfg)
+	shoppingConn, err := grpcclient.NewGRPCClient("shopping-list:50060", cfg)
 	if err != nil {
 		logger.Fatal("fail to dial shopping", zap.Error(err))
 	}

@@ -11,10 +11,12 @@ import (
 
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/config"
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/core/auth/jwt"
+	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/core/cache"
 	grpcclient "github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/core/grpc"
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/core/repository/postgres/pool/pgx"
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/core/telemetry"
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/features/repository/postgres"
+	redis_cache "github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/features/repository/redis"
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/features/service"
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/features/transport/gRPC"
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/pkg/grpcutil/interceptors"
@@ -46,6 +48,17 @@ func main() {
 	}
 	defer pool.Close()
 
+	logger.Debug("initializing redis")
+	redisAddr := os.Getenv("REDIS_ADDR")
+	if redisAddr == "" {
+		redisAddr = "localhost:6379"
+	}
+	redisClient := cache.NewRedisClient(redisAddr)
+	defer redisClient.Close()
+
+	shoppingCache := redis_cache.NewShoppingCache(redisClient)
+	shoppingListCache := redis_cache.NewShoppingListCache(redisClient)
+
 	logger.Debug("initializing jwt shopping service")
 	jwtManager := jwt.NewJWTManager(cfg.JWTSecret, cfg.JWTDuration)
 	serviceName := "shopping-list"
@@ -61,6 +74,9 @@ func main() {
 	shoppingService := service.NewShoppingService(
 		shoppingRepository,
 		pool,
+		shoppingCache,
+		shoppingListCache,
+		redisClient,
 		logger,
 	)
 
@@ -83,7 +99,7 @@ func main() {
 	}
 	go func() {
 		logger.Info("starting metrics server", zap.String("port", metricsPort))
-		if err := metricsServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := metricsServer.ListenAndServe(); err != nil {
 			logger.Fatal("metrics server error", zap.Error(err))
 		}
 	}()
@@ -93,7 +109,7 @@ func main() {
 		logger.Fatal("failed to listen", zap.Error(err))
 	}
 
-	logger.Warn("starting grpc server", zap.String("port", metricsPort))
+	logger.Warn("starting grpc server", zap.String("port", "50060"))
 	go func() {
 		if err := grpcServer.Serve(lis); err != nil {
 			logger.Error("grpc server error", zap.Error(err))

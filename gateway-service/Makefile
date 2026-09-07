@@ -99,7 +99,8 @@ swagger-gen:
 		proto/users/v1/users.proto \
 		proto/finance/v1/finance.proto \
 		proto/admin/v1/admin.proto \
-		proto/currency/v1/currency.proto
+		proto/currency/v1/currency.proto \
+		proto/shopping/v1/shopping.proto
 	@echo "Swagger merged into docs/swagger.json"
 
 swagger-gen-auth:

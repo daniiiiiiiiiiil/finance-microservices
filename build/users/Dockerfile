@@ -1,10 +1,16 @@
 FROM golang:1.26.4-alpine AS builder
 
+ENV GOPROXY=https://proxy.golang.org|https://goproxy.io|direct
+ENV GOSUMDB=off
+
 WORKDIR /app
 
 COPY users-service/go.mod users-service/go.sum ./
 
-RUN go mod download
+RUN for i in 1 2 3 4 5; do \
+        echo "Attempt $i to download dependencies..."; \
+        go mod download && break || sleep 15; \
+    done
 
 COPY users-service/ ./users-service/
 

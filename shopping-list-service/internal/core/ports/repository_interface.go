@@ -8,10 +8,11 @@ import (
 )
 
 type ShoppingListRepository interface {
-	CreateShopping(ctx context.Context, tx pool.Tx, shopping domain.Shopping) (domain.Shopping, error)
-	ListShopping(ctx context.Context, limit, offset int) ([]domain.Shopping, int, error)
-	GetShopping(ctx context.Context, id int) (domain.Shopping, error)
-	UpdateShopping(ctx context.Context, shopping *domain.Shopping) (domain.Shopping, error)
-	DeleteShopping(ctx context.Context, id int) error
-	CompletedShopping(ctx context.Context, id int, completed bool) error
+	CreateShopping(ctx context.Context, tx pool.Tx, shopping domain.Shopping, userID int) (domain.Shopping, error)
+	ListShopping(ctx context.Context, userID, limit, offset int) ([]domain.Shopping, int, error)
+	GetShopping(ctx context.Context, id int, userID int) (domain.Shopping, error)
+	UpdateShopping(ctx context.Context, shopping *domain.Shopping, userID int) (domain.Shopping, error)
+	DeleteShopping(ctx context.Context, id int, userID int) error
+	CompletedShopping(ctx context.Context, id int, userID int, completed bool) error
+	GetTotalShopping(ctx context.Context, userID int) (int, error)
 }

@@ -5,11 +5,45 @@ option go_package = "./shopping";
 
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
 
 service ShoppingService{
   rpc CreateShopping (CreateShoppingRequest) returns (CreateShoppingResponse){
     option (google.api.http) = {
       post: "/api/v1/shopping"
+      body: "*"
+    };
+  }
+  rpc GetShopping(GetShoppingRequest) returns (GetShoppingResponse){
+    option (google.api.http) = {
+      get: "/api/v1/shopping/{id}"
+    };
+  }
+  rpc ListShopping(ListShoppingRequest) returns (ListShoppingResponse){
+    option (google.api.http) = {
+      get: "/api/v1/shopping"
+    };
+  }
+  rpc GetTotalShopping(GetTotalShoppingRequest) returns (GetTotalResponse){
+    option (google.api.http) = {
+      get: "/api/v1/shopping/total/{id}"
+    };
+  }
+  rpc CompletedShopping(CompletedShoppingRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      patch: "/api/v1/shopping/{id}"
+      body: "*"
+    };
+  }
+  rpc DeleteShopping(DeleteShoppingRequest) returns (google.protobuf.Empty){
+    option (google.api.http) = {
+      delete: "/api/v1/shopping/{id}"
+    };
+  }
+  rpc UpdateShopping(UpdateShoppingRequest) returns (UpdateShoppingResponse){
+    option (google.api.http) = {
+      put: "/api/v1/shopping/{id}"
+      body: "*"
     };
   }
 }
@@ -21,7 +55,7 @@ message CreateShoppingRequest{
   float amount_finish = 4;
   optional string image_key = 5;
   bool completed = 6;
-  google.protobuf.Timestamp completion_date = 7;
+  optional google.protobuf.Timestamp completion_date = 7;
 }
 
 message CreateShoppingResponse{
@@ -37,4 +71,82 @@ message CreateShoppingResponse{
   optional google.protobuf.Timestamp updated_at = 10;
   optional google.protobuf.Timestamp completed_at = 11;
   optional google.protobuf.Timestamp completion_date = 12;
+}
+
+message GetShoppingRequest{
+  int32 id = 1;
+}
+
+message GetShoppingResponse{
+  int32 id = 1;
+  int32 version = 2;
+  string title = 3;
+  optional string description = 4;
+  float amount_now = 5;
+  float amount_finish = 6;
+  optional string image_key = 7;
+  bool completed = 8;
+  google.protobuf.Timestamp created_at = 9;
+  optional google.protobuf.Timestamp updated_at = 10;
+  optional google.protobuf.Timestamp completed_at = 11;
+  optional google.protobuf.Timestamp completion_date = 12;
+}
+
+
+message CompletedShoppingRequest{
+  int32 id = 1;
+  bool completed = 2;
+}
+
+message ListShoppingRequest{
+  int32 id = 1;
+  int32 limit = 2;
+  int32 offset = 3;
+}
+
+message ListShoppingResponse{
+    repeated GetShoppingResponse list = 1;
+    int32 total = 2;
+}
+
+message DeleteShoppingRequest{
+  int32 id = 1;
+}
+
+message UpdateShoppingRequest{
+  int32 id = 1;
+  int32 version = 2;
+  string title = 3;
+  optional string description = 4;
+  float amount_now = 5;
+  float amount_finish = 6;
+  optional string image_key = 7;
+  bool completed = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp updated_at = 10;
+  optional google.protobuf.Timestamp completed_at = 11;
+  optional google.protobuf.Timestamp completion_date = 12;
+}
+
+message UpdateShoppingResponse{
+  int32 id = 1;
+  int32 version = 2;
+  string title = 3;
+  optional string description = 4;
+  float amount_now = 5;
+  float amount_finish = 6;
+  optional string image_key = 7;
+  bool completed = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp updated_at = 10;
+  optional google.protobuf.Timestamp completed_at = 11;
+  optional google.protobuf.Timestamp completion_date = 12;
+}
+
+message GetTotalShoppingRequest{
+  int32 id = 1;
+}
+
+message GetTotalResponse{
+  int32 total = 1;
 }

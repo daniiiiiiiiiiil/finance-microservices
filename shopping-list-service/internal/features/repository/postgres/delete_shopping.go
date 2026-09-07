@@ -2,22 +2,20 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 )
 
-func (r *ShoppingRepository) DeleteShopping(ctx context.Context, id int) error {
+func (r *ShoppingRepository) DeleteShopping(ctx context.Context, id int, userID int) error {
 	ctx, cancel := context.WithTimeout(ctx, r.pool.OpTimeout())
 	defer cancel()
 
-	sqlQuery := `DELETE FROM shopping.shopping WHERE id = $1;`
-	err := r.pool.QueryRow(ctx, sqlQuery, id).Scan(&id)
+	sqlQuery := `DELETE FROM shopping.shopping WHERE id = $1 AND user_id = $2;`
+	result, err := r.pool.Exec(ctx, sqlQuery, id, userID)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return fmt.Errorf("shopping with id %d not found", id)
-		}
-		return fmt.Errorf("shopping with id %d:%w", id, err)
+		return fmt.Errorf("delete shopping: %w", err)
+	}
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("shopping with id %d not found", id)
 	}
 	return nil
 }

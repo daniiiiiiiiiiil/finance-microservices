@@ -7,8 +7,9 @@ import (
 )
 
 type ShoppingModel struct {
-	ID             uint       `json:"id"`
-	Version        uint       `json:"version"`
+	ID             int        `json:"id"`
+	Version        int        `json:"version"`
+	UserID         int        `json:"user_id"`
 	Title          string     `json:"title"`
 	Description    *string    `json:"description"`
 	AmountNow      float64    `json:"amount_now"`
@@ -25,6 +26,7 @@ func shoppingDomainFromModel(model ShoppingModel) domain.Shopping {
 	return domain.Shopping{
 		ID:             model.ID,
 		Version:        model.Version,
+		UserID:         model.UserID,
 		Title:          model.Title,
 		Description:    model.Description,
 		AmountNow:      model.AmountNow,

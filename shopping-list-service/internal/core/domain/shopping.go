@@ -6,8 +6,9 @@ import (
 )
 
 type Shopping struct {
-	ID             uint
-	Version        uint
+	ID             int
+	Version        int
+	UserID         int
 	Title          string
 	Description    *string
 	AmountNow      float64
@@ -21,8 +22,8 @@ type Shopping struct {
 }
 
 func NewShopping(
-	id uint,
-	version uint,
+	id int,
+	version int,
 	title string,
 	description *string,
 	amountNow float64,

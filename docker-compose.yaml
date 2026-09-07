@@ -11,11 +11,11 @@ services:
     volumes:
       - ./out/pgdata/finance:/var/lib/postgresql/data:rw
     restart: always
-    # healthcheck:
-    #   test: [ "CMD-SHELL", "pg_isready -U ${FINANCE_POSTGRES_USER} -d ${FINANCE_POSTGRES_DB}" ]
-    #   interval: 10s
-    #   timeout: 5s
-    #   retries: 5
+    healthcheck:
+       test: [ "CMD-SHELL", "pg_isready -U ${FINANCE_POSTGRES_USER} -d ${FINANCE_POSTGRES_DB}" ]
+       interval: 10s
+       timeout: 5s
+       retries: 5
 
   auth-postgres:
     image: postgres:15-alpine
@@ -29,11 +29,11 @@ services:
     volumes:
       - ./out/pgdata/auth:/var/lib/postgresql/data:rw
     restart: always
-   # healthcheck:
-   #   test: [ "CMD-SHELL", "pg_isready -U ${AUTH_POSTGRES_USER} -d ${AUTH_POSTGRES_DB}" ]
-   #   interval: 10s
-   #   timeout: 5s
-   #   retries: 5
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${AUTH_POSTGRES_USER} -d ${AUTH_POSTGRES_DB}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   users-postgres:
     image: postgres:15-alpine
@@ -47,11 +47,11 @@ services:
     volumes:
       - ./out/pgdata/users:/var/lib/postgresql/data:rw
     restart: always
-   # healthcheck:
-   #   test: [ "CMD-SHELL", "pg_isready -U ${USERS_POSTGRES_USER} -d ${USERS_POSTGRES_DB}" ]
-   #   interval: 10s
-   #   timeout: 5s
-   #   retries: 5
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${USERS_POSTGRES_USER} -d ${USERS_POSTGRES_DB}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   shopping-postgres:
     image: postgres:15-alpine
@@ -65,6 +65,11 @@ services:
     volumes:
       - ./out/pgdata/shopping:/var/lib/postgresql/data:rw
     restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${SHOPPING_POSTGRES_USER} -d ${SHOPPING_POSTGRES_DB}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   finance-redis:
     image: redis:7-alpine
@@ -76,11 +81,11 @@ services:
     volumes:
       - ./out/redisdata:/data
     restart: always
-   # healthcheck:
-   #   test: [ "CMD", "redis-cli", "ping" ]
-   #   interval: 5s
-   #   timeout: 5s
-  #    retries: 5
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 
   kafka:
@@ -102,11 +107,11 @@ services:
     ports:
       - "9092:9092"
     restart: always
-   # healthcheck:
-   #   test: [ "CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092" ]
-   #   interval: 10s
-   #   timeout: 5s
-   #   retries: 5
+    healthcheck:
+      test: [ "CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   minio:
     image: minio/minio:latest
@@ -333,6 +338,8 @@ services:
       - TLS_CERT_FILE=${TLS_CERT_FILE}
       - TLS_KEY_FILE=${TLS_KEY_FILE}
       - TLS_CA_FILE=${TLS_CA_FILE}
+      - SHOPPING_GRPC_PORT=${SHOPPING_GRPC_PORT}
+      - SHOPPING_METRICS_PORT=${SHOPPING_METRICS_PORT}
     volumes:
       - ./logs:/out/logs
       - ./certs:/certs:ro
@@ -438,6 +445,7 @@ services:
       - TLS_CA_FILE=${TLS_CA_FILE}
     volumes:
       - ./certs:/certs:ro
+      - ./docs:/root/docs:ro
     ports:
       - "8081:8081"
     restart: always
@@ -447,6 +455,7 @@ services:
       - finance
       - admin
       - currency
+      - shopping-list
 
 
   kafka-ui:

@@ -10,7 +10,7 @@ import (
 	errors_my "github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/pkg/errors"
 )
 
-func (r *ShoppingRepository) GetShopping(ctx context.Context, id int) (domain.Shopping, error) {
+func (r *ShoppingRepository) GetShopping(ctx context.Context, id, userID int) (domain.Shopping, error) {
 	ctx, cancel := context.WithTimeout(ctx, r.pool.OpTimeout())
 	defer cancel()
 	sqlQuery := `
@@ -28,10 +28,10 @@ func (r *ShoppingRepository) GetShopping(ctx context.Context, id int) (domain.Sh
 		completed_at,
 		completion_date
 	FROM shopping.shopping
-	WHERE id = $1
+	WHERE id = $1 AND user_id = $2
 `
 	var shopping ShoppingModel
-	err := r.pool.QueryRow(ctx, sqlQuery, id).Scan(
+	err := r.pool.QueryRow(ctx, sqlQuery, id, userID).Scan(
 		&shopping.ID,
 		&shopping.Version,
 		&shopping.Title,

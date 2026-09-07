@@ -12,6 +12,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -20,7 +21,13 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ShoppingService_CreateShopping_FullMethodName = "/shopping.ShoppingService/CreateShopping"
+	ShoppingService_CreateShopping_FullMethodName    = "/shopping.ShoppingService/CreateShopping"
+	ShoppingService_GetShopping_FullMethodName       = "/shopping.ShoppingService/GetShopping"
+	ShoppingService_ListShopping_FullMethodName      = "/shopping.ShoppingService/ListShopping"
+	ShoppingService_GetTotalShopping_FullMethodName  = "/shopping.ShoppingService/GetTotalShopping"
+	ShoppingService_CompletedShopping_FullMethodName = "/shopping.ShoppingService/CompletedShopping"
+	ShoppingService_DeleteShopping_FullMethodName    = "/shopping.ShoppingService/DeleteShopping"
+	ShoppingService_UpdateShopping_FullMethodName    = "/shopping.ShoppingService/UpdateShopping"
 )
 
 // ShoppingServiceClient is the client API for ShoppingService service.
@@ -28,6 +35,12 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ShoppingServiceClient interface {
 	CreateShopping(ctx context.Context, in *CreateShoppingRequest, opts ...grpc.CallOption) (*CreateShoppingResponse, error)
+	GetShopping(ctx context.Context, in *GetShoppingRequest, opts ...grpc.CallOption) (*GetShoppingResponse, error)
+	ListShopping(ctx context.Context, in *ListShoppingRequest, opts ...grpc.CallOption) (*ListShoppingResponse, error)
+	GetTotalShopping(ctx context.Context, in *GetTotalShoppingRequest, opts ...grpc.CallOption) (*GetTotalResponse, error)
+	CompletedShopping(ctx context.Context, in *CompletedShoppingRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	DeleteShopping(ctx context.Context, in *DeleteShoppingRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	UpdateShopping(ctx context.Context, in *UpdateShoppingRequest, opts ...grpc.CallOption) (*UpdateShoppingResponse, error)
 }
 
 type shoppingServiceClient struct {
@@ -48,11 +61,77 @@ func (c *shoppingServiceClient) CreateShopping(ctx context.Context, in *CreateSh
 	return out, nil
 }
 
+func (c *shoppingServiceClient) GetShopping(ctx context.Context, in *GetShoppingRequest, opts ...grpc.CallOption) (*GetShoppingResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetShoppingResponse)
+	err := c.cc.Invoke(ctx, ShoppingService_GetShopping_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *shoppingServiceClient) ListShopping(ctx context.Context, in *ListShoppingRequest, opts ...grpc.CallOption) (*ListShoppingResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListShoppingResponse)
+	err := c.cc.Invoke(ctx, ShoppingService_ListShopping_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *shoppingServiceClient) GetTotalShopping(ctx context.Context, in *GetTotalShoppingRequest, opts ...grpc.CallOption) (*GetTotalResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetTotalResponse)
+	err := c.cc.Invoke(ctx, ShoppingService_GetTotalShopping_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *shoppingServiceClient) CompletedShopping(ctx context.Context, in *CompletedShoppingRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, ShoppingService_CompletedShopping_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *shoppingServiceClient) DeleteShopping(ctx context.Context, in *DeleteShoppingRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, ShoppingService_DeleteShopping_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *shoppingServiceClient) UpdateShopping(ctx context.Context, in *UpdateShoppingRequest, opts ...grpc.CallOption) (*UpdateShoppingResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateShoppingResponse)
+	err := c.cc.Invoke(ctx, ShoppingService_UpdateShopping_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ShoppingServiceServer is the server API for ShoppingService service.
 // All implementations must embed UnimplementedShoppingServiceServer
 // for forward compatibility.
 type ShoppingServiceServer interface {
 	CreateShopping(context.Context, *CreateShoppingRequest) (*CreateShoppingResponse, error)
+	GetShopping(context.Context, *GetShoppingRequest) (*GetShoppingResponse, error)
+	ListShopping(context.Context, *ListShoppingRequest) (*ListShoppingResponse, error)
+	GetTotalShopping(context.Context, *GetTotalShoppingRequest) (*GetTotalResponse, error)
+	CompletedShopping(context.Context, *CompletedShoppingRequest) (*emptypb.Empty, error)
+	DeleteShopping(context.Context, *DeleteShoppingRequest) (*emptypb.Empty, error)
+	UpdateShopping(context.Context, *UpdateShoppingRequest) (*UpdateShoppingResponse, error)
 	mustEmbedUnimplementedShoppingServiceServer()
 }
 
@@ -65,6 +144,24 @@ type UnimplementedShoppingServiceServer struct{}
 
 func (UnimplementedShoppingServiceServer) CreateShopping(context.Context, *CreateShoppingRequest) (*CreateShoppingResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateShopping not implemented")
+}
+func (UnimplementedShoppingServiceServer) GetShopping(context.Context, *GetShoppingRequest) (*GetShoppingResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetShopping not implemented")
+}
+func (UnimplementedShoppingServiceServer) ListShopping(context.Context, *ListShoppingRequest) (*ListShoppingResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListShopping not implemented")
+}
+func (UnimplementedShoppingServiceServer) GetTotalShopping(context.Context, *GetTotalShoppingRequest) (*GetTotalResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetTotalShopping not implemented")
+}
+func (UnimplementedShoppingServiceServer) CompletedShopping(context.Context, *CompletedShoppingRequest) (*emptypb.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method CompletedShopping not implemented")
+}
+func (UnimplementedShoppingServiceServer) DeleteShopping(context.Context, *DeleteShoppingRequest) (*emptypb.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteShopping not implemented")
+}
+func (UnimplementedShoppingServiceServer) UpdateShopping(context.Context, *UpdateShoppingRequest) (*UpdateShoppingResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateShopping not implemented")
 }
 func (UnimplementedShoppingServiceServer) mustEmbedUnimplementedShoppingServiceServer() {}
 func (UnimplementedShoppingServiceServer) testEmbeddedByValue()                         {}
@@ -105,6 +202,114 @@ func _ShoppingService_CreateShopping_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ShoppingService_GetShopping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetShoppingRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ShoppingServiceServer).GetShopping(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ShoppingService_GetShopping_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ShoppingServiceServer).GetShopping(ctx, req.(*GetShoppingRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ShoppingService_ListShopping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListShoppingRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ShoppingServiceServer).ListShopping(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ShoppingService_ListShopping_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ShoppingServiceServer).ListShopping(ctx, req.(*ListShoppingRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ShoppingService_GetTotalShopping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTotalShoppingRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ShoppingServiceServer).GetTotalShopping(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ShoppingService_GetTotalShopping_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ShoppingServiceServer).GetTotalShopping(ctx, req.(*GetTotalShoppingRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ShoppingService_CompletedShopping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CompletedShoppingRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ShoppingServiceServer).CompletedShopping(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ShoppingService_CompletedShopping_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ShoppingServiceServer).CompletedShopping(ctx, req.(*CompletedShoppingRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ShoppingService_DeleteShopping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteShoppingRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ShoppingServiceServer).DeleteShopping(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ShoppingService_DeleteShopping_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ShoppingServiceServer).DeleteShopping(ctx, req.(*DeleteShoppingRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ShoppingService_UpdateShopping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateShoppingRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ShoppingServiceServer).UpdateShopping(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ShoppingService_UpdateShopping_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ShoppingServiceServer).UpdateShopping(ctx, req.(*UpdateShoppingRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ShoppingService_ServiceDesc is the grpc.ServiceDesc for ShoppingService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -115,6 +320,30 @@ var ShoppingService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateShopping",
 			Handler:    _ShoppingService_CreateShopping_Handler,
+		},
+		{
+			MethodName: "GetShopping",
+			Handler:    _ShoppingService_GetShopping_Handler,
+		},
+		{
+			MethodName: "ListShopping",
+			Handler:    _ShoppingService_ListShopping_Handler,
+		},
+		{
+			MethodName: "GetTotalShopping",
+			Handler:    _ShoppingService_GetTotalShopping_Handler,
+		},
+		{
+			MethodName: "CompletedShopping",
+			Handler:    _ShoppingService_CompletedShopping_Handler,
+		},
+		{
+			MethodName: "DeleteShopping",
+			Handler:    _ShoppingService_DeleteShopping_Handler,
+		},
+		{
+			MethodName: "UpdateShopping",
+			Handler:    _ShoppingService_UpdateShopping_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

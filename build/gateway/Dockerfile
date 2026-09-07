@@ -1,12 +1,14 @@
 FROM golang:1.26.4-alpine AS builder
 
-ENV GOPROXY=https://goproxy.io,https://proxy.golang.org,direct
+ENV GOPROXY=https://proxy.golang.org|https://goproxy.io|direct
 ENV GO111MODULE=on
+ENV GOSUMDB=off
 
 WORKDIR /app
 
 COPY gateway-service/go.mod gateway-service/go.sum ./
-RUN go mod download
+
+RUN go mod download -x || go mod download -x || go mod download -x
 
 COPY gateway-service/ ./gateway-service/
 COPY docs/ ./docs/

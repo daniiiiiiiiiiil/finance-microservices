@@ -10,7 +10,7 @@ import (
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/core/domain"
 )
 
-func (r *ShoppingRepository) UpdateShopping(ctx context.Context, shopping *domain.Shopping) (domain.Shopping, error) {
+func (r *ShoppingRepository) UpdateShopping(ctx context.Context, shopping *domain.Shopping, userID int) (domain.Shopping, error) {
 	ctx, cancel := context.WithTimeout(ctx, r.pool.OpTimeout())
 	defer cancel()
 
@@ -25,9 +25,9 @@ func (r *ShoppingRepository) UpdateShopping(ctx context.Context, shopping *domai
 				completed = $6,
 				updated_at = $7,
 				completion_date = $8
-	WHERE id = $9 AND version = $10
-	RETURNING id, version, title, description, amount_now, anount_finish,
-	image_key,completed,created_at, update_at,completion_date
+	WHERE id = $9 AND version = $10 AND user_id = $11
+	RETURNING id, version, title, description, amount_now, amount_finish,
+	image_key, completed, created_at, updated_at, completed_at, completion_date
 `
 	var model ShoppingModel
 	err := r.pool.QueryRow(ctx, sqlQuery,
@@ -40,7 +40,8 @@ func (r *ShoppingRepository) UpdateShopping(ctx context.Context, shopping *domai
 		time.Now(),
 		shopping.CompletionDate,
 		shopping.ID,
-		shopping.Version).Scan(
+		shopping.Version,
+		userID).Scan(
 		&model.ID,
 		&model.Version,
 		&model.Title,
@@ -51,6 +52,7 @@ func (r *ShoppingRepository) UpdateShopping(ctx context.Context, shopping *domai
 		&model.Completed,
 		&model.CreatedAt,
 		&model.UpdatedAt,
+		&model.CompletedAt,
 		&model.CompletionDate,
 	)
 	if err != nil {
