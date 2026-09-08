@@ -6,9 +6,11 @@ import (
 	"fmt"
 
 	"context"
+
+	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/core/repository/postgres/pool"
 )
 
-func (r *ShoppingRepository) CompletedShopping(ctx context.Context, id, userID int, completed bool) error {
+func (r *ShoppingRepository) CompletedShopping(ctx context.Context, tx pool.Tx, id, userID int, completed bool) error {
 	ctx, cancel := context.WithTimeout(ctx, r.pool.OpTimeout())
 	defer cancel()
 
@@ -20,7 +22,7 @@ func (r *ShoppingRepository) CompletedShopping(ctx context.Context, id, userID i
 `
 	var returnedID int
 	var returnedCompleted bool
-	err := r.pool.QueryRow(ctx, sqlQuery, completed, id, userID).Scan(&returnedID, &returnedCompleted)
+	err := tx.QueryRow(ctx, sqlQuery, completed, id, userID).Scan(&returnedID, &returnedCompleted)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return fmt.Errorf("shopping with id %d not found", id)

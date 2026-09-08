@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/core/domain"
 	"go.uber.org/zap"
@@ -20,8 +21,13 @@ func (s *ShoppingService) GetShopping(ctx context.Context, id int, userID int) (
 	}
 
 	go func() {
-		if err := s.shoppingCache.SetShopping(context.Background(), shopping); err != nil {
-			s.logger.Error("failed to cache shopping", zap.Int("id", id), zap.Error(err))
+		cacheCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		if err := s.shoppingCache.SetShopping(cacheCtx, shopping); err != nil {
+			s.logger.Error("failed to cache shopping",
+				zap.Int("id", id),
+				zap.Error(err))
 		}
 	}()
 

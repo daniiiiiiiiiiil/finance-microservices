@@ -1,11 +1,11 @@
 package service
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/core/ports"
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/pkg/logger"
-	"golang.org/x/net/context"
 )
 
 type ShoppingService struct {
@@ -14,6 +14,7 @@ type ShoppingService struct {
 	shoppingCache      ports.ShoppingCacheInterface
 	shoppingListCache  ports.ShoppingListCacheInterface
 	redis              ports.RedisInterface
+	storage            ports.StorageClient
 	logger             *logger.Logger
 }
 
@@ -23,6 +24,7 @@ func NewShoppingService(
 	shoppingCache ports.ShoppingCacheInterface,
 	shoppingListCache ports.ShoppingListCacheInterface,
 	redis ports.RedisInterface,
+	storage ports.StorageClient,
 	logger *logger.Logger,
 ) *ShoppingService {
 	return &ShoppingService{
@@ -31,6 +33,7 @@ func NewShoppingService(
 		shoppingCache:      shoppingCache,
 		shoppingListCache:  shoppingListCache,
 		redis:              redis,
+		storage:            storage,
 		logger:             logger,
 	}
 }

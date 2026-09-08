@@ -22,6 +22,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // Suppress "imported and not used" errors
@@ -138,18 +139,9 @@ func local_request_ShoppingService_ListShopping_0(ctx context.Context, marshaler
 
 func request_ShoppingService_GetTotalShopping_0(ctx context.Context, marshaler runtime.Marshaler, client ShoppingServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq GetTotalShoppingRequest
+		protoReq emptypb.Empty
 		metadata runtime.ServerMetadata
-		err      error
 	)
-	val, ok := pathParams["id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
-	}
-	protoReq.Id, err = runtime.Int32(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
-	}
 	if req.Body != nil {
 		_, _ = io.Copy(io.Discard, req.Body)
 	}
@@ -159,18 +151,9 @@ func request_ShoppingService_GetTotalShopping_0(ctx context.Context, marshaler r
 
 func local_request_ShoppingService_GetTotalShopping_0(ctx context.Context, marshaler runtime.Marshaler, server ShoppingServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq GetTotalShoppingRequest
+		protoReq emptypb.Empty
 		metadata runtime.ServerMetadata
-		err      error
 	)
-	val, ok := pathParams["id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
-	}
-	protoReq.Id, err = runtime.Int32(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
-	}
 	msg, err := server.GetTotalShopping(ctx, &protoReq)
 	return msg, metadata, err
 }
@@ -376,7 +359,7 @@ func RegisterShoppingServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/shopping.ShoppingService/GetTotalShopping", runtime.WithHTTPPathPattern("/api/v1/shopping/total/{id}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/shopping.ShoppingService/GetTotalShopping", runtime.WithHTTPPathPattern("/api/v1/shopping/total"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -545,7 +528,7 @@ func RegisterShoppingServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/shopping.ShoppingService/GetTotalShopping", runtime.WithHTTPPathPattern("/api/v1/shopping/total/{id}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/shopping.ShoppingService/GetTotalShopping", runtime.WithHTTPPathPattern("/api/v1/shopping/total"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -616,7 +599,7 @@ var (
 	pattern_ShoppingService_CreateShopping_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "shopping"}, ""))
 	pattern_ShoppingService_GetShopping_0       = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"api", "v1", "shopping", "id"}, ""))
 	pattern_ShoppingService_ListShopping_0      = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "shopping"}, ""))
-	pattern_ShoppingService_GetTotalShopping_0  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"api", "v1", "shopping", "total", "id"}, ""))
+	pattern_ShoppingService_GetTotalShopping_0  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "shopping", "total"}, ""))
 	pattern_ShoppingService_CompletedShopping_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"api", "v1", "shopping", "id"}, ""))
 	pattern_ShoppingService_DeleteShopping_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"api", "v1", "shopping", "id"}, ""))
 	pattern_ShoppingService_UpdateShopping_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"api", "v1", "shopping", "id"}, ""))

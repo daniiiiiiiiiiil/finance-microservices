@@ -13,7 +13,7 @@ func (s *ShoppingService) DeleteShoppingList(ctx context.Context, id int, userID
 		return fmt.Errorf("begin transaction: %w", err)
 	}
 	defer func() {
-		if err := tx.Rollback(ctx); err != nil {
+		if err := tx.Rollback(ctx); err != nil && err != context.Canceled {
 			s.logger.Error("rollback transaction", zap.Error(err))
 		}
 	}()
@@ -26,7 +26,7 @@ func (s *ShoppingService) DeleteShoppingList(ctx context.Context, id int, userID
 		return fmt.Errorf("shopping list id must be positive")
 	}
 
-	if err := s.shoppingRepository.DeleteShopping(ctx, id, userID); err != nil {
+	if err := s.shoppingRepository.DeleteShopping(ctx, tx, id, userID); err != nil {
 		s.logger.Error("shopping service delete shopping list failed", zap.Error(err))
 		return fmt.Errorf("shopping service delete: %w", err)
 	}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -14,6 +15,7 @@ import (
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/core/cache"
 	grpcclient "github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/core/grpc"
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/core/repository/postgres/pool/pgx"
+	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/core/s3"
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/core/telemetry"
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/features/repository/postgres"
 	redis_cache "github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/features/repository/redis"
@@ -59,6 +61,12 @@ func main() {
 	shoppingCache := redis_cache.NewShoppingCache(redisClient)
 	shoppingListCache := redis_cache.NewShoppingListCache(redisClient)
 
+	storageClient, err := s3.NewClient()
+	if err != nil {
+		log.Fatal("Failed to initialize S3 client:", err)
+	}
+	defer storageClient.Close()
+
 	logger.Debug("initializing jwt shopping service")
 	jwtManager := jwt.NewJWTManager(cfg.JWTSecret, cfg.JWTDuration)
 	serviceName := "shopping-list"
@@ -77,6 +85,7 @@ func main() {
 		shoppingCache,
 		shoppingListCache,
 		redisClient,
+		storageClient,
 		logger,
 	)
 

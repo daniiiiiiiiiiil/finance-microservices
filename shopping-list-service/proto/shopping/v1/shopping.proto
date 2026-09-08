@@ -24,9 +24,9 @@ service ShoppingService{
       get: "/api/v1/shopping"
     };
   }
-  rpc GetTotalShopping(GetTotalShoppingRequest) returns (GetTotalResponse){
+  rpc GetTotalShopping(google.protobuf.Empty) returns (GetTotalResponse){
     option (google.api.http) = {
-      get: "/api/v1/shopping/total/{id}"
+      get: "/api/v1/shopping/total"
     };
   }
   rpc CompletedShopping(CompletedShoppingRequest) returns (google.protobuf.Empty) {
@@ -99,7 +99,6 @@ message CompletedShoppingRequest{
 }
 
 message ListShoppingRequest{
-  int32 id = 1;
   int32 limit = 2;
   int32 offset = 3;
 }
@@ -143,9 +142,6 @@ message UpdateShoppingResponse{
   optional google.protobuf.Timestamp completion_date = 12;
 }
 
-message GetTotalShoppingRequest{
-  int32 id = 1;
-}
 
 message GetTotalResponse{
   int32 total = 1;

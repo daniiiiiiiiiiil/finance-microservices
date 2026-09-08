@@ -7,7 +7,7 @@ import (
 )
 
 type ShoppingServiceInterface interface {
-	CreateShopping(ctx context.Context, shopping domain.Shopping, userID int) (domain.Shopping, error)
+	CreateShopping(ctx context.Context, shopping domain.Shopping, userID int, fileData []byte, filename string) (domain.Shopping, error)
 	GetShopping(ctx context.Context, id int, userID int) (domain.Shopping, error)
 	GetTotal(ctx context.Context, userID int) (int, error)
 	ListShopping(ctx context.Context, limit, offset, userID int) ([]domain.Shopping, int, error)

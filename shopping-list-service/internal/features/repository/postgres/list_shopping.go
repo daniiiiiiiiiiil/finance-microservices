@@ -6,9 +6,10 @@ import (
 	"context"
 
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/core/domain"
+	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/core/repository/postgres/pool"
 )
 
-func (r *ShoppingRepository) ListShopping(ctx context.Context, userID, limit, offset int) ([]domain.Shopping, int, error) {
+func (r *ShoppingRepository) ListShopping(ctx context.Context, tx pool.Tx, userID, limit, offset int) ([]domain.Shopping, int, error) {
 	ctx, cancel := context.WithTimeout(ctx, r.pool.OpTimeout())
 	defer cancel()
 
@@ -17,7 +18,7 @@ func (r *ShoppingRepository) ListShopping(ctx context.Context, userID, limit, of
 	SELECT COUNT(*) FROM shopping.shopping
 	WHERE user_id = $1
 `
-	err := r.pool.QueryRow(ctx, queryTotal, userID).Scan(&total)
+	err := tx.QueryRow(ctx, queryTotal, userID).Scan(&total)
 	if err != nil {
 		return nil, 0, fmt.Errorf("GetShopping: could not get shopping list: %w", err)
 	}
@@ -40,7 +41,7 @@ func (r *ShoppingRepository) ListShopping(ctx context.Context, userID, limit, of
 	ORDER BY id
 	LIMIT $2 OFFSET $3
 `
-	rows, err := r.pool.Query(ctx, querySQL, userID, limit, offset)
+	rows, err := tx.Query(ctx, querySQL, userID, limit, offset)
 	if err != nil {
 		return nil, total, fmt.Errorf("GetShopping: could not get shopping list: %w", err)
 	}

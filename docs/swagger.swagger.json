@@ -1,9 +1,8 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "Finance Microservices API",
-    "version": "1.0.0",
-    "description": "API for Finance Microservices with JWT authentication"
+    "title": "proto/auth/v1/auth.proto",
+    "version": "version not set"
   },
   "securityDefinitions": {
     "BearerAuth": {
@@ -225,6 +224,7 @@
     "/api/v1/auth/logout": {
       "post": {
         "operationId": "AuthService_Logout",
+        "security": [],
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -259,7 +259,6 @@
     "/api/v1/auth/register": {
       "post": {
         "operationId": "AuthService_Register",
-        "security": [],
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -840,13 +839,6 @@
         },
         "parameters": [
           {
-            "name": "id",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
             "name": "limit",
             "in": "query",
             "required": false,
@@ -896,7 +888,7 @@
         ]
       }
     },
-    "/api/v1/shopping/total/{id}": {
+    "/api/v1/shopping/total": {
       "get": {
         "operationId": "ShoppingService_GetTotalShopping",
         "responses": {
@@ -913,15 +905,6 @@
             }
           }
         },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "format": "int32"
-          }
-        ],
         "tags": [
           "ShoppingService"
         ]

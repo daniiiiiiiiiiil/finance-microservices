@@ -26,7 +26,7 @@ func (s *ShoppingService) CompletedShopping(ctx context.Context, id int, complet
 		return fmt.Errorf("shopping list id must be positive")
 	}
 
-	err = s.shoppingRepository.CompletedShopping(ctx, id, userID, completed)
+	err = s.shoppingRepository.CompletedShopping(ctx, tx, id, userID, completed)
 	if err != nil {
 		return fmt.Errorf("shopping service completed: %w", err)
 	}

@@ -37,7 +37,7 @@ type ShoppingServiceClient interface {
 	CreateShopping(ctx context.Context, in *CreateShoppingRequest, opts ...grpc.CallOption) (*CreateShoppingResponse, error)
 	GetShopping(ctx context.Context, in *GetShoppingRequest, opts ...grpc.CallOption) (*GetShoppingResponse, error)
 	ListShopping(ctx context.Context, in *ListShoppingRequest, opts ...grpc.CallOption) (*ListShoppingResponse, error)
-	GetTotalShopping(ctx context.Context, in *GetTotalShoppingRequest, opts ...grpc.CallOption) (*GetTotalResponse, error)
+	GetTotalShopping(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetTotalResponse, error)
 	CompletedShopping(ctx context.Context, in *CompletedShoppingRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	DeleteShopping(ctx context.Context, in *DeleteShoppingRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	UpdateShopping(ctx context.Context, in *UpdateShoppingRequest, opts ...grpc.CallOption) (*UpdateShoppingResponse, error)
@@ -81,7 +81,7 @@ func (c *shoppingServiceClient) ListShopping(ctx context.Context, in *ListShoppi
 	return out, nil
 }
 
-func (c *shoppingServiceClient) GetTotalShopping(ctx context.Context, in *GetTotalShoppingRequest, opts ...grpc.CallOption) (*GetTotalResponse, error) {
+func (c *shoppingServiceClient) GetTotalShopping(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetTotalResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetTotalResponse)
 	err := c.cc.Invoke(ctx, ShoppingService_GetTotalShopping_FullMethodName, in, out, cOpts...)
@@ -128,7 +128,7 @@ type ShoppingServiceServer interface {
 	CreateShopping(context.Context, *CreateShoppingRequest) (*CreateShoppingResponse, error)
 	GetShopping(context.Context, *GetShoppingRequest) (*GetShoppingResponse, error)
 	ListShopping(context.Context, *ListShoppingRequest) (*ListShoppingResponse, error)
-	GetTotalShopping(context.Context, *GetTotalShoppingRequest) (*GetTotalResponse, error)
+	GetTotalShopping(context.Context, *emptypb.Empty) (*GetTotalResponse, error)
 	CompletedShopping(context.Context, *CompletedShoppingRequest) (*emptypb.Empty, error)
 	DeleteShopping(context.Context, *DeleteShoppingRequest) (*emptypb.Empty, error)
 	UpdateShopping(context.Context, *UpdateShoppingRequest) (*UpdateShoppingResponse, error)
@@ -151,7 +151,7 @@ func (UnimplementedShoppingServiceServer) GetShopping(context.Context, *GetShopp
 func (UnimplementedShoppingServiceServer) ListShopping(context.Context, *ListShoppingRequest) (*ListShoppingResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListShopping not implemented")
 }
-func (UnimplementedShoppingServiceServer) GetTotalShopping(context.Context, *GetTotalShoppingRequest) (*GetTotalResponse, error) {
+func (UnimplementedShoppingServiceServer) GetTotalShopping(context.Context, *emptypb.Empty) (*GetTotalResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetTotalShopping not implemented")
 }
 func (UnimplementedShoppingServiceServer) CompletedShopping(context.Context, *CompletedShoppingRequest) (*emptypb.Empty, error) {
@@ -239,7 +239,7 @@ func _ShoppingService_ListShopping_Handler(srv interface{}, ctx context.Context,
 }
 
 func _ShoppingService_GetTotalShopping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetTotalShoppingRequest)
+	in := new(emptypb.Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -251,7 +251,7 @@ func _ShoppingService_GetTotalShopping_Handler(srv interface{}, ctx context.Cont
 		FullMethod: ShoppingService_GetTotalShopping_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ShoppingServiceServer).GetTotalShopping(ctx, req.(*GetTotalShoppingRequest))
+		return srv.(ShoppingServiceServer).GetTotalShopping(ctx, req.(*emptypb.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }

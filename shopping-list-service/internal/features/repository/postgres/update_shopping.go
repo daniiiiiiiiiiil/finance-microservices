@@ -7,10 +7,12 @@ import (
 	"time"
 
 	"context"
+
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/core/domain"
+	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/core/repository/postgres/pool"
 )
 
-func (r *ShoppingRepository) UpdateShopping(ctx context.Context, shopping *domain.Shopping, userID int) (domain.Shopping, error) {
+func (r *ShoppingRepository) UpdateShopping(ctx context.Context, tx pool.Tx, shopping *domain.Shopping, userID int) (domain.Shopping, error) {
 	ctx, cancel := context.WithTimeout(ctx, r.pool.OpTimeout())
 	defer cancel()
 
@@ -30,7 +32,7 @@ func (r *ShoppingRepository) UpdateShopping(ctx context.Context, shopping *domai
 	image_key, completed, created_at, updated_at, completed_at, completion_date
 `
 	var model ShoppingModel
-	err := r.pool.QueryRow(ctx, sqlQuery,
+	err := tx.QueryRow(ctx, sqlQuery,
 		shopping.Title,
 		shopping.Description,
 		shopping.AmountNow,

@@ -14,7 +14,7 @@ func (s *ShoppingService) UpdateShopping(ctx context.Context, shopping *domain.S
 		return domain.Shopping{}, fmt.Errorf("begin transaction: %w", err)
 	}
 	defer func() {
-		if err := tx.Rollback(ctx); err != nil {
+		if err := tx.Rollback(ctx); err != nil && err != context.Canceled {
 			s.logger.Error("rollback transaction", zap.Error(err))
 		}
 	}()
@@ -30,7 +30,7 @@ func (s *ShoppingService) UpdateShopping(ctx context.Context, shopping *domain.S
 		return domain.Shopping{}, fmt.Errorf("error validating shopping with id %d: %w", shopping.ID, err)
 	}
 
-	updated, err := s.shoppingRepository.UpdateShopping(ctx, shopping, userID)
+	updated, err := s.shoppingRepository.UpdateShopping(ctx, tx, shopping, userID)
 	if err != nil {
 		return domain.Shopping{}, fmt.Errorf("error updating shopping with id %d: %w", shopping.ID, err)
 	}
@@ -39,7 +39,7 @@ func (s *ShoppingService) UpdateShopping(ctx context.Context, shopping *domain.S
 		return domain.Shopping{}, fmt.Errorf("commit transaction: %w", err)
 	}
 
-	go s.invalidateCache(ctx, shopping.ID)
+	go s.invalidateCache(ctx, userID)
 
 	return updated, nil
 }
