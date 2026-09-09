@@ -59,14 +59,14 @@ func (h *ShoppingListService) UpdateShopping(ctx context.Context, req *gen.Updat
 		Description:    req.Description,
 		AmountNow:      float64(req.AmountNow),
 		AmountFinish:   float64(req.AmountFinish),
-		ImageKey:       req.ImageKey,
+		ImageKey:       existing.ImageKey,
 		Completed:      req.Completed,
 		CreatedAt:      existing.CreatedAt,
 		UpdatedAt:      &now,
 		CompletedAt:    completedAt,
 		CompletionDate: convertTimestampToTimePtr(req.CompletionDate),
 	}
-	updated, err := h.service.UpdateShopping(ctx, &shopping, userID)
+	updated, err := h.service.UpdateShopping(ctx, &shopping, userID, req.ImageData, req.Filename)
 	if err != nil {
 		h.logger.Error("gRPC UpdateShopping error", zap.Error(err))
 		return nil, status.Error(codes.Internal, err.Error())

@@ -13,5 +13,7 @@ type ShoppingServiceInterface interface {
 	ListShopping(ctx context.Context, limit, offset, userID int) ([]domain.Shopping, int, error)
 	CompletedShopping(ctx context.Context, id int, completed bool, userID int) error
 	DeleteShoppingList(ctx context.Context, id int, userID int) error
-	UpdateShopping(ctx context.Context, shopping *domain.Shopping, userID int) (domain.Shopping, error)
+	UpdateShopping(ctx context.Context, shopping *domain.Shopping, userID int, fileData []byte, filename string) (domain.Shopping, error)
+	GetImage(ctx context.Context, imageKey string) ([]byte, error)
+	GetImageByShoppingID(ctx context.Context, shoppingID, userID int) ([]byte, string, error)
 }

@@ -18,12 +18,25 @@ func (s *ShoppingService) DeleteShoppingList(ctx context.Context, id int, userID
 		}
 	}()
 
-	_, err = s.shoppingRepository.GetShopping(ctx, id, userID)
+	shopping, err := s.shoppingRepository.GetShopping(ctx, id, userID)
 	if err != nil {
 		return fmt.Errorf("GetShoppingList: %w", err)
 	}
 	if id <= 0 {
 		return fmt.Errorf("shopping list id must be positive")
+	}
+
+	if shopping.ImageKey != nil && *shopping.ImageKey != "" {
+		if err := s.storage.Delete(ctx, *shopping.ImageKey); err != nil {
+			s.logger.Warn("failed to delete image from S3",
+				zap.Int("shopping_id", id),
+				zap.String("image_key", *shopping.ImageKey),
+				zap.Error(err))
+		} else {
+			s.logger.Debug("image deleted from S3",
+				zap.Int("shopping_id", id),
+				zap.String("image_key", *shopping.ImageKey))
+		}
 	}
 
 	if err := s.shoppingRepository.DeleteShopping(ctx, tx, id, userID); err != nil {
@@ -34,5 +47,6 @@ func (s *ShoppingService) DeleteShoppingList(ctx context.Context, id int, userID
 	if err := tx.Commit(ctx); err != nil {
 		return fmt.Errorf("commit transaction: %w", err)
 	}
+	go s.invalidateCache(ctx, userID)
 	return nil
 }

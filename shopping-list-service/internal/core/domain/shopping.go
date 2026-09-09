@@ -54,7 +54,6 @@ func NewShopping(
 func (s *Shopping) Validate() error {
 	titleRun := []rune(s.Title)
 	descRun := []rune(*s.Description)
-	imageKeyRun := []rune(*s.ImageKey)
 	if s.Title == " " || len(titleRun) >= 200 || len(titleRun) <= 0 {
 		return fmt.Errorf("title is required")
 	}
@@ -67,8 +66,12 @@ func (s *Shopping) Validate() error {
 	if s.AmountFinish < 0 {
 		return fmt.Errorf("amountFinish is required amount finish < 0")
 	}
-	if len(imageKeyRun) > 1000 {
-		return fmt.Errorf("imageKey is required len > 1000")
+	if s.ImageKey != nil {
+		imageKeyLen := len([]rune(*s.ImageKey))
+		if imageKeyLen > 1000 {
+			return fmt.Errorf("image_key must be less than 1000 characters")
+		}
 	}
+
 	return nil
 }

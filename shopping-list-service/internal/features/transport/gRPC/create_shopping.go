@@ -18,21 +18,32 @@ func (h *ShoppingListService) CreateShopping(ctx context.Context, req *gen.Creat
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "user not authenticated")
 	}
-	h.logger.Debug("gRPC CreateShopping", zap.String("Title", req.Title))
+	h.logger.Debug("gRPC CreateShopping",
+		zap.String("Title", req.Title),
+		zap.Int("image_size", len(req.ImageData)))
 
-	shopping, err := h.service.CreateShopping(ctx, domain.Shopping{
+	shopping := domain.Shopping{
 		Title:          req.Title,
 		Description:    req.Description,
 		AmountNow:      float64(req.AmountNow),
 		AmountFinish:   float64(req.AmountFinish),
-		ImageKey:       req.ImageKey,
+		ImageKey:       nil,
 		Completed:      false,
 		CreatedAt:      time.Now(),
 		CompletionDate: convertTimestampToTime(req.CompletionDate),
-	}, userID)
+	}
+
+	created, err := h.service.CreateShopping(
+		ctx,
+		shopping,
+		userID,
+		req.ImageData,
+		req.Filename,
+	)
 	if err != nil {
 		h.logger.Error("gRPC CreateShopping error", zap.Error(err))
 		return nil, fmt.Errorf("CreateShopping handler error: %w", err)
 	}
-	return convertShoppingToProto(shopping), nil
+
+	return convertShoppingToProto(created), nil
 }

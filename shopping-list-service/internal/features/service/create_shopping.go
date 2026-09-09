@@ -28,7 +28,7 @@ func (s *ShoppingService) CreateShopping(ctx context.Context, shopping domain.Sh
 		return domain.Shopping{}, fmt.Errorf("create shopping data: %w", err)
 	}
 
-	if fileData != nil && len(fileData) > 0 && filename == "" {
+	if fileData != nil && len(fileData) > 0 && filename != "" {
 		if err := validateImage(fileData, filename); err != nil {
 			return domain.Shopping{}, fmt.Errorf("validate image: %w", err)
 		}

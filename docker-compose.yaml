@@ -341,11 +341,13 @@ services:
       - SHOPPING_GRPC_PORT=${SHOPPING_GRPC_PORT}
       - SHOPPING_METRICS_PORT=${SHOPPING_METRICS_PORT}
     volumes:
+      - ./shopping-list-service/public:/root/public
       - ./logs:/out/logs
       - ./certs:/certs:ro
     ports:
       - "50060:50060"
       - "9097:9097"
+      - "8090:8090"
     restart: always
     depends_on:
       - shopping-postgres

@@ -224,7 +224,6 @@
     "/api/v1/auth/logout": {
       "post": {
         "operationId": "AuthService_Logout",
-        "security": [],
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -258,6 +257,7 @@
     },
     "/api/v1/auth/register": {
       "post": {
+        "security": [],
         "operationId": "AuthService_Register",
         "responses": {
           "200": {
@@ -1046,6 +1046,37 @@
         ]
       }
     },
+    "/api/v1/shopping/{shoppingId}/image": {
+      "get": {
+        "operationId": "ShoppingService_GetShoppingImage",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/shoppingGetShoppingImageResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "shoppingId",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "ShoppingService"
+        ]
+      }
+    },
     "/api/v1/user/by-email/{email}": {
       "get": {
         "operationId": "UserService_GetUserByEmail",
@@ -1479,7 +1510,11 @@
           "type": "number",
           "format": "float"
         },
-        "imageKey": {
+        "imageData": {
+          "type": "string",
+          "format": "byte"
+        },
+        "filename": {
           "type": "string"
         },
         "completed": {
@@ -2018,7 +2053,11 @@
           "type": "number",
           "format": "float"
         },
-        "imageKey": {
+        "imageData": {
+          "type": "string",
+          "format": "byte"
+        },
+        "filename": {
           "type": "string"
         },
         "completed": {
@@ -2076,6 +2115,18 @@
         "completionDate": {
           "type": "string",
           "format": "date-time"
+        }
+      }
+    },
+    "shoppingGetShoppingImageResponse": {
+      "type": "object",
+      "properties": {
+        "imageData": {
+          "type": "string",
+          "format": "byte"
+        },
+        "imageKey": {
+          "type": "string"
         }
       }
     },

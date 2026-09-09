@@ -21,6 +21,7 @@ import (
 	redis_cache "github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/features/repository/redis"
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/features/service"
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/features/transport/gRPC"
+	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/features/web"
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/pkg/grpcutil/interceptors"
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/pkg/logger"
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/proto/shopping/gen"
@@ -125,13 +126,35 @@ func main() {
 		}
 	}()
 
+	webRepo := web.NewWebRepository()
+	webService := web.NewWebService(webRepo)
+	webController := web.NewWebController(webService)
+
+	webMux := http.NewServeMux()
+	web.RegisterRoutes(webMux, webController)
+
+	webServer := &http.Server{
+		Addr:    ":8090",
+		Handler: webMux,
+	}
+
+	go func() {
+		logger.Info("starting web server", zap.String("port", ":8090"))
+		if err := webServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Error("web server error", zap.Error(err))
+		}
+	}()
+
+	// ===== Ждём сигнала завершения =====
 	<-ctx.Done()
 
-	logger.Warn("shutting down grpc server")
+	logger.Warn("shutting down all servers...")
 
+	// ===== Graceful Shutdown =====
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer shutdownCancel()
 
+	// Останавливаем gRPC
 	done := make(chan struct{})
 	go func() {
 		grpcServer.GracefulStop()
@@ -142,11 +165,21 @@ func main() {
 	case <-done:
 		logger.Info("grpc server gracefully stopped")
 	case <-shutdownCtx.Done():
-		logger.Warn("grpc server shutdown timed out stopped")
+		logger.Warn("grpc server shutdown timed out")
 		grpcServer.Stop()
 	}
+
+	// Останавливаем Web сервер
+	if err := webServer.Shutdown(shutdownCtx); err != nil {
+		logger.Error("web server shutdown error", zap.Error(err))
+	} else {
+		logger.Info("web server gracefully stopped")
+	}
+
+	// Останавливаем Metrics сервер
 	if err := metricsServer.Shutdown(shutdownCtx); err != nil {
 		logger.Error("metrics server error", zap.Error(err))
 	}
+
 	logger.Info("shutdown complete")
 }

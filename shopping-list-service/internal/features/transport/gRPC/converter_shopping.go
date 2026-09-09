@@ -16,9 +16,14 @@ func convertShoppingToProto(shopping domain.Shopping) *gen.CreateShoppingRespons
 		Description:  shopping.Description,
 		AmountNow:    float32(shopping.AmountNow),
 		AmountFinish: float32(shopping.AmountFinish),
-		ImageKey:     shopping.ImageKey,
-		Completed:    shopping.Completed,
-		CreatedAt:    timestamppb.New(shopping.CreatedAt),
+		ImageKey: func() *string {
+			if shopping.ImageKey != nil {
+				return shopping.ImageKey
+			}
+			return nil
+		}(),
+		Completed: shopping.Completed,
+		CreatedAt: timestamppb.New(shopping.CreatedAt),
 		UpdatedAt: func() *timestamppb.Timestamp {
 			if shopping.UpdatedAt != nil {
 				return timestamppb.New(*shopping.UpdatedAt)

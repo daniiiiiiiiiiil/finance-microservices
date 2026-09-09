@@ -31,9 +31,10 @@ type CreateShoppingRequest struct {
 	Description    *string                `protobuf:"bytes,2,opt,name=description,proto3,oneof" json:"description,omitempty"`
 	AmountNow      float32                `protobuf:"fixed32,3,opt,name=amount_now,json=amountNow,proto3" json:"amount_now,omitempty"`
 	AmountFinish   float32                `protobuf:"fixed32,4,opt,name=amount_finish,json=amountFinish,proto3" json:"amount_finish,omitempty"`
-	ImageKey       *string                `protobuf:"bytes,5,opt,name=image_key,json=imageKey,proto3,oneof" json:"image_key,omitempty"`
-	Completed      bool                   `protobuf:"varint,6,opt,name=completed,proto3" json:"completed,omitempty"`
-	CompletionDate *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=completion_date,json=completionDate,proto3,oneof" json:"completion_date,omitempty"`
+	ImageData      []byte                 `protobuf:"bytes,6,opt,name=image_data,json=imageData,proto3,oneof" json:"image_data,omitempty"`
+	Filename       string                 `protobuf:"bytes,7,opt,name=filename,proto3" json:"filename,omitempty"`
+	Completed      bool                   `protobuf:"varint,8,opt,name=completed,proto3" json:"completed,omitempty"`
+	CompletionDate *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=completion_date,json=completionDate,proto3,oneof" json:"completion_date,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -96,9 +97,16 @@ func (x *CreateShoppingRequest) GetAmountFinish() float32 {
 	return 0
 }
 
-func (x *CreateShoppingRequest) GetImageKey() string {
-	if x != nil && x.ImageKey != nil {
-		return *x.ImageKey
+func (x *CreateShoppingRequest) GetImageData() []byte {
+	if x != nil {
+		return x.ImageData
+	}
+	return nil
+}
+
+func (x *CreateShoppingRequest) GetFilename() string {
+	if x != nil {
+		return x.Filename
 	}
 	return ""
 }
@@ -581,6 +589,102 @@ func (x *ListShoppingResponse) GetTotal() int32 {
 	return 0
 }
 
+type GetShoppingImageRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ShoppingId    int32                  `protobuf:"varint,1,opt,name=shopping_id,json=shoppingId,proto3" json:"shopping_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetShoppingImageRequest) Reset() {
+	*x = GetShoppingImageRequest{}
+	mi := &file_proto_shopping_v1_shopping_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetShoppingImageRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetShoppingImageRequest) ProtoMessage() {}
+
+func (x *GetShoppingImageRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_shopping_v1_shopping_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetShoppingImageRequest.ProtoReflect.Descriptor instead.
+func (*GetShoppingImageRequest) Descriptor() ([]byte, []int) {
+	return file_proto_shopping_v1_shopping_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *GetShoppingImageRequest) GetShoppingId() int32 {
+	if x != nil {
+		return x.ShoppingId
+	}
+	return 0
+}
+
+type GetShoppingImageResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ImageData     []byte                 `protobuf:"bytes,1,opt,name=image_data,json=imageData,proto3" json:"image_data,omitempty"`
+	ImageKey      *string                `protobuf:"bytes,2,opt,name=image_key,json=imageKey,proto3,oneof" json:"image_key,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetShoppingImageResponse) Reset() {
+	*x = GetShoppingImageResponse{}
+	mi := &file_proto_shopping_v1_shopping_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetShoppingImageResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetShoppingImageResponse) ProtoMessage() {}
+
+func (x *GetShoppingImageResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_shopping_v1_shopping_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetShoppingImageResponse.ProtoReflect.Descriptor instead.
+func (*GetShoppingImageResponse) Descriptor() ([]byte, []int) {
+	return file_proto_shopping_v1_shopping_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *GetShoppingImageResponse) GetImageData() []byte {
+	if x != nil {
+		return x.ImageData
+	}
+	return nil
+}
+
+func (x *GetShoppingImageResponse) GetImageKey() string {
+	if x != nil && x.ImageKey != nil {
+		return *x.ImageKey
+	}
+	return ""
+}
+
 type DeleteShoppingRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -590,7 +694,7 @@ type DeleteShoppingRequest struct {
 
 func (x *DeleteShoppingRequest) Reset() {
 	*x = DeleteShoppingRequest{}
-	mi := &file_proto_shopping_v1_shopping_proto_msgTypes[7]
+	mi := &file_proto_shopping_v1_shopping_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -602,7 +706,7 @@ func (x *DeleteShoppingRequest) String() string {
 func (*DeleteShoppingRequest) ProtoMessage() {}
 
 func (x *DeleteShoppingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_shopping_v1_shopping_proto_msgTypes[7]
+	mi := &file_proto_shopping_v1_shopping_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -615,7 +719,7 @@ func (x *DeleteShoppingRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteShoppingRequest.ProtoReflect.Descriptor instead.
 func (*DeleteShoppingRequest) Descriptor() ([]byte, []int) {
-	return file_proto_shopping_v1_shopping_proto_rawDescGZIP(), []int{7}
+	return file_proto_shopping_v1_shopping_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *DeleteShoppingRequest) GetId() int32 {
@@ -633,19 +737,20 @@ type UpdateShoppingRequest struct {
 	Description    *string                `protobuf:"bytes,4,opt,name=description,proto3,oneof" json:"description,omitempty"`
 	AmountNow      float32                `protobuf:"fixed32,5,opt,name=amount_now,json=amountNow,proto3" json:"amount_now,omitempty"`
 	AmountFinish   float32                `protobuf:"fixed32,6,opt,name=amount_finish,json=amountFinish,proto3" json:"amount_finish,omitempty"`
-	ImageKey       *string                `protobuf:"bytes,7,opt,name=image_key,json=imageKey,proto3,oneof" json:"image_key,omitempty"`
-	Completed      bool                   `protobuf:"varint,8,opt,name=completed,proto3" json:"completed,omitempty"`
-	CreatedAt      *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt      *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	CompletedAt    *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=completed_at,json=completedAt,proto3,oneof" json:"completed_at,omitempty"`
-	CompletionDate *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=completion_date,json=completionDate,proto3,oneof" json:"completion_date,omitempty"`
+	ImageData      []byte                 `protobuf:"bytes,7,opt,name=image_data,json=imageData,proto3,oneof" json:"image_data,omitempty"`
+	Filename       string                 `protobuf:"bytes,8,opt,name=filename,proto3" json:"filename,omitempty"`
+	Completed      bool                   `protobuf:"varint,9,opt,name=completed,proto3" json:"completed,omitempty"`
+	CreatedAt      *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt      *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	CompletedAt    *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=completed_at,json=completedAt,proto3,oneof" json:"completed_at,omitempty"`
+	CompletionDate *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=completion_date,json=completionDate,proto3,oneof" json:"completion_date,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
 
 func (x *UpdateShoppingRequest) Reset() {
 	*x = UpdateShoppingRequest{}
-	mi := &file_proto_shopping_v1_shopping_proto_msgTypes[8]
+	mi := &file_proto_shopping_v1_shopping_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -657,7 +762,7 @@ func (x *UpdateShoppingRequest) String() string {
 func (*UpdateShoppingRequest) ProtoMessage() {}
 
 func (x *UpdateShoppingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_shopping_v1_shopping_proto_msgTypes[8]
+	mi := &file_proto_shopping_v1_shopping_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -670,7 +775,7 @@ func (x *UpdateShoppingRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateShoppingRequest.ProtoReflect.Descriptor instead.
 func (*UpdateShoppingRequest) Descriptor() ([]byte, []int) {
-	return file_proto_shopping_v1_shopping_proto_rawDescGZIP(), []int{8}
+	return file_proto_shopping_v1_shopping_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *UpdateShoppingRequest) GetId() int32 {
@@ -715,9 +820,16 @@ func (x *UpdateShoppingRequest) GetAmountFinish() float32 {
 	return 0
 }
 
-func (x *UpdateShoppingRequest) GetImageKey() string {
-	if x != nil && x.ImageKey != nil {
-		return *x.ImageKey
+func (x *UpdateShoppingRequest) GetImageData() []byte {
+	if x != nil {
+		return x.ImageData
+	}
+	return nil
+}
+
+func (x *UpdateShoppingRequest) GetFilename() string {
+	if x != nil {
+		return x.Filename
 	}
 	return ""
 }
@@ -777,7 +889,7 @@ type UpdateShoppingResponse struct {
 
 func (x *UpdateShoppingResponse) Reset() {
 	*x = UpdateShoppingResponse{}
-	mi := &file_proto_shopping_v1_shopping_proto_msgTypes[9]
+	mi := &file_proto_shopping_v1_shopping_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -789,7 +901,7 @@ func (x *UpdateShoppingResponse) String() string {
 func (*UpdateShoppingResponse) ProtoMessage() {}
 
 func (x *UpdateShoppingResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_shopping_v1_shopping_proto_msgTypes[9]
+	mi := &file_proto_shopping_v1_shopping_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -802,7 +914,7 @@ func (x *UpdateShoppingResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateShoppingResponse.ProtoReflect.Descriptor instead.
 func (*UpdateShoppingResponse) Descriptor() ([]byte, []int) {
-	return file_proto_shopping_v1_shopping_proto_rawDescGZIP(), []int{9}
+	return file_proto_shopping_v1_shopping_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *UpdateShoppingResponse) GetId() int32 {
@@ -898,7 +1010,7 @@ type GetTotalResponse struct {
 
 func (x *GetTotalResponse) Reset() {
 	*x = GetTotalResponse{}
-	mi := &file_proto_shopping_v1_shopping_proto_msgTypes[10]
+	mi := &file_proto_shopping_v1_shopping_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -910,7 +1022,7 @@ func (x *GetTotalResponse) String() string {
 func (*GetTotalResponse) ProtoMessage() {}
 
 func (x *GetTotalResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_shopping_v1_shopping_proto_msgTypes[10]
+	mi := &file_proto_shopping_v1_shopping_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -923,7 +1035,7 @@ func (x *GetTotalResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTotalResponse.ProtoReflect.Descriptor instead.
 func (*GetTotalResponse) Descriptor() ([]byte, []int) {
-	return file_proto_shopping_v1_shopping_proto_rawDescGZIP(), []int{10}
+	return file_proto_shopping_v1_shopping_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *GetTotalResponse) GetTotal() int32 {
@@ -937,19 +1049,20 @@ var File_proto_shopping_v1_shopping_proto protoreflect.FileDescriptor
 
 const file_proto_shopping_v1_shopping_proto_rawDesc = "" +
 	"\n" +
-	" proto/shopping/v1/shopping.proto\x12\bshopping\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\"\xd4\x02\n" +
+	" proto/shopping/v1/shopping.proto\x12\bshopping\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\"\xf3\x02\n" +
 	"\x15CreateShoppingRequest\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12%\n" +
 	"\vdescription\x18\x02 \x01(\tH\x00R\vdescription\x88\x01\x01\x12\x1d\n" +
 	"\n" +
 	"amount_now\x18\x03 \x01(\x02R\tamountNow\x12#\n" +
-	"\ramount_finish\x18\x04 \x01(\x02R\famountFinish\x12 \n" +
-	"\timage_key\x18\x05 \x01(\tH\x01R\bimageKey\x88\x01\x01\x12\x1c\n" +
-	"\tcompleted\x18\x06 \x01(\bR\tcompleted\x12H\n" +
-	"\x0fcompletion_date\x18\a \x01(\v2\x1a.google.protobuf.TimestampH\x02R\x0ecompletionDate\x88\x01\x01B\x0e\n" +
-	"\f_descriptionB\f\n" +
+	"\ramount_finish\x18\x04 \x01(\x02R\famountFinish\x12\"\n" +
 	"\n" +
-	"_image_keyB\x12\n" +
+	"image_data\x18\x06 \x01(\fH\x01R\timageData\x88\x01\x01\x12\x1a\n" +
+	"\bfilename\x18\a \x01(\tR\bfilename\x12\x1c\n" +
+	"\tcompleted\x18\b \x01(\bR\tcompleted\x12H\n" +
+	"\x0fcompletion_date\x18\t \x01(\v2\x1a.google.protobuf.TimestampH\x02R\x0ecompletionDate\x88\x01\x01B\x0e\n" +
+	"\f_descriptionB\r\n" +
+	"\v_image_dataB\x12\n" +
 	"\x10_completion_date\"\xde\x04\n" +
 	"\x16CreateShoppingResponse\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x18\n" +
@@ -1007,9 +1120,18 @@ const file_proto_shopping_v1_shopping_proto_rawDesc = "" +
 	"\x06offset\x18\x03 \x01(\x05R\x06offset\"_\n" +
 	"\x14ListShoppingResponse\x121\n" +
 	"\x04list\x18\x01 \x03(\v2\x1d.shopping.GetShoppingResponseR\x04list\x12\x14\n" +
-	"\x05total\x18\x02 \x01(\x05R\x05total\"'\n" +
+	"\x05total\x18\x02 \x01(\x05R\x05total\":\n" +
+	"\x17GetShoppingImageRequest\x12\x1f\n" +
+	"\vshopping_id\x18\x01 \x01(\x05R\n" +
+	"shoppingId\"i\n" +
+	"\x18GetShoppingImageResponse\x12\x1d\n" +
+	"\n" +
+	"image_data\x18\x01 \x01(\fR\timageData\x12 \n" +
+	"\timage_key\x18\x02 \x01(\tH\x00R\bimageKey\x88\x01\x01B\f\n" +
+	"\n" +
+	"_image_key\"'\n" +
 	"\x15DeleteShoppingRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x05R\x02id\"\xc9\x04\n" +
+	"\x02id\x18\x01 \x01(\x05R\x02id\"\xe8\x04\n" +
 	"\x15UpdateShoppingRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x18\n" +
 	"\aversion\x18\x02 \x01(\x05R\aversion\x12\x14\n" +
@@ -1017,19 +1139,20 @@ const file_proto_shopping_v1_shopping_proto_rawDesc = "" +
 	"\vdescription\x18\x04 \x01(\tH\x00R\vdescription\x88\x01\x01\x12\x1d\n" +
 	"\n" +
 	"amount_now\x18\x05 \x01(\x02R\tamountNow\x12#\n" +
-	"\ramount_finish\x18\x06 \x01(\x02R\famountFinish\x12 \n" +
-	"\timage_key\x18\a \x01(\tH\x01R\bimageKey\x88\x01\x01\x12\x1c\n" +
-	"\tcompleted\x18\b \x01(\bR\tcompleted\x129\n" +
+	"\ramount_finish\x18\x06 \x01(\x02R\famountFinish\x12\"\n" +
 	"\n" +
-	"created_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"image_data\x18\a \x01(\fH\x01R\timageData\x88\x01\x01\x12\x1a\n" +
+	"\bfilename\x18\b \x01(\tR\bfilename\x12\x1c\n" +
+	"\tcompleted\x18\t \x01(\bR\tcompleted\x129\n" +
 	"\n" +
-	"updated_at\x18\n" +
-	" \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12B\n" +
-	"\fcompleted_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampH\x02R\vcompletedAt\x88\x01\x01\x12H\n" +
-	"\x0fcompletion_date\x18\f \x01(\v2\x1a.google.protobuf.TimestampH\x03R\x0ecompletionDate\x88\x01\x01B\x0e\n" +
-	"\f_descriptionB\f\n" +
+	"created_at\x18\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"_image_keyB\x0f\n" +
+	"updated_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12B\n" +
+	"\fcompleted_at\x18\f \x01(\v2\x1a.google.protobuf.TimestampH\x02R\vcompletedAt\x88\x01\x01\x12H\n" +
+	"\x0fcompletion_date\x18\r \x01(\v2\x1a.google.protobuf.TimestampH\x03R\x0ecompletionDate\x88\x01\x01B\x0e\n" +
+	"\f_descriptionB\r\n" +
+	"\v_image_dataB\x0f\n" +
 	"\r_completed_atB\x12\n" +
 	"\x10_completion_date\"\xca\x04\n" +
 	"\x16UpdateShoppingResponse\x12\x0e\n" +
@@ -1055,12 +1178,13 @@ const file_proto_shopping_v1_shopping_proto_rawDesc = "" +
 	"\r_completed_atB\x12\n" +
 	"\x10_completion_date\"(\n" +
 	"\x10GetTotalResponse\x12\x14\n" +
-	"\x05total\x18\x01 \x01(\x05R\x05total2\x93\x06\n" +
+	"\x05total\x18\x01 \x01(\x05R\x05total2\x9d\a\n" +
 	"\x0fShoppingService\x12p\n" +
 	"\x0eCreateShopping\x12\x1f.shopping.CreateShoppingRequest\x1a .shopping.CreateShoppingResponse\"\x1b\x82\xd3\xe4\x93\x02\x15:\x01*\"\x10/api/v1/shopping\x12i\n" +
 	"\vGetShopping\x12\x1c.shopping.GetShoppingRequest\x1a\x1d.shopping.GetShoppingResponse\"\x1d\x82\xd3\xe4\x93\x02\x17\x12\x15/api/v1/shopping/{id}\x12g\n" +
 	"\fListShopping\x12\x1d.shopping.ListShoppingRequest\x1a\x1e.shopping.ListShoppingResponse\"\x18\x82\xd3\xe4\x93\x02\x12\x12\x10/api/v1/shopping\x12f\n" +
-	"\x10GetTotalShopping\x12\x16.google.protobuf.Empty\x1a\x1a.shopping.GetTotalResponse\"\x1e\x82\xd3\xe4\x93\x02\x18\x12\x16/api/v1/shopping/total\x12q\n" +
+	"\x10GetTotalShopping\x12\x16.google.protobuf.Empty\x1a\x1a.shopping.GetTotalResponse\"\x1e\x82\xd3\xe4\x93\x02\x18\x12\x16/api/v1/shopping/total\x12\x87\x01\n" +
+	"\x10GetShoppingImage\x12!.shopping.GetShoppingImageRequest\x1a\".shopping.GetShoppingImageResponse\",\x82\xd3\xe4\x93\x02&\x12$/api/v1/shopping/{shopping_id}/image\x12q\n" +
 	"\x11CompletedShopping\x12\".shopping.CompletedShoppingRequest\x1a\x16.google.protobuf.Empty\" \x82\xd3\xe4\x93\x02\x1a:\x01*2\x15/api/v1/shopping/{id}\x12h\n" +
 	"\x0eDeleteShopping\x12\x1f.shopping.DeleteShoppingRequest\x1a\x16.google.protobuf.Empty\"\x1d\x82\xd3\xe4\x93\x02\x17*\x15/api/v1/shopping/{id}\x12u\n" +
 	"\x0eUpdateShopping\x12\x1f.shopping.UpdateShoppingRequest\x1a .shopping.UpdateShoppingResponse\" \x82\xd3\xe4\x93\x02\x1a:\x01*\x1a\x15/api/v1/shopping/{id}B\fZ\n" +
@@ -1078,7 +1202,7 @@ func file_proto_shopping_v1_shopping_proto_rawDescGZIP() []byte {
 	return file_proto_shopping_v1_shopping_proto_rawDescData
 }
 
-var file_proto_shopping_v1_shopping_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_proto_shopping_v1_shopping_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_proto_shopping_v1_shopping_proto_goTypes = []any{
 	(*CreateShoppingRequest)(nil),    // 0: shopping.CreateShoppingRequest
 	(*CreateShoppingResponse)(nil),   // 1: shopping.CreateShoppingResponse
@@ -1087,48 +1211,52 @@ var file_proto_shopping_v1_shopping_proto_goTypes = []any{
 	(*CompletedShoppingRequest)(nil), // 4: shopping.CompletedShoppingRequest
 	(*ListShoppingRequest)(nil),      // 5: shopping.ListShoppingRequest
 	(*ListShoppingResponse)(nil),     // 6: shopping.ListShoppingResponse
-	(*DeleteShoppingRequest)(nil),    // 7: shopping.DeleteShoppingRequest
-	(*UpdateShoppingRequest)(nil),    // 8: shopping.UpdateShoppingRequest
-	(*UpdateShoppingResponse)(nil),   // 9: shopping.UpdateShoppingResponse
-	(*GetTotalResponse)(nil),         // 10: shopping.GetTotalResponse
-	(*timestamppb.Timestamp)(nil),    // 11: google.protobuf.Timestamp
-	(*emptypb.Empty)(nil),            // 12: google.protobuf.Empty
+	(*GetShoppingImageRequest)(nil),  // 7: shopping.GetShoppingImageRequest
+	(*GetShoppingImageResponse)(nil), // 8: shopping.GetShoppingImageResponse
+	(*DeleteShoppingRequest)(nil),    // 9: shopping.DeleteShoppingRequest
+	(*UpdateShoppingRequest)(nil),    // 10: shopping.UpdateShoppingRequest
+	(*UpdateShoppingResponse)(nil),   // 11: shopping.UpdateShoppingResponse
+	(*GetTotalResponse)(nil),         // 12: shopping.GetTotalResponse
+	(*timestamppb.Timestamp)(nil),    // 13: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),            // 14: google.protobuf.Empty
 }
 var file_proto_shopping_v1_shopping_proto_depIdxs = []int32{
-	11, // 0: shopping.CreateShoppingRequest.completion_date:type_name -> google.protobuf.Timestamp
-	11, // 1: shopping.CreateShoppingResponse.created_at:type_name -> google.protobuf.Timestamp
-	11, // 2: shopping.CreateShoppingResponse.updated_at:type_name -> google.protobuf.Timestamp
-	11, // 3: shopping.CreateShoppingResponse.completed_at:type_name -> google.protobuf.Timestamp
-	11, // 4: shopping.CreateShoppingResponse.completion_date:type_name -> google.protobuf.Timestamp
-	11, // 5: shopping.GetShoppingResponse.created_at:type_name -> google.protobuf.Timestamp
-	11, // 6: shopping.GetShoppingResponse.updated_at:type_name -> google.protobuf.Timestamp
-	11, // 7: shopping.GetShoppingResponse.completed_at:type_name -> google.protobuf.Timestamp
-	11, // 8: shopping.GetShoppingResponse.completion_date:type_name -> google.protobuf.Timestamp
+	13, // 0: shopping.CreateShoppingRequest.completion_date:type_name -> google.protobuf.Timestamp
+	13, // 1: shopping.CreateShoppingResponse.created_at:type_name -> google.protobuf.Timestamp
+	13, // 2: shopping.CreateShoppingResponse.updated_at:type_name -> google.protobuf.Timestamp
+	13, // 3: shopping.CreateShoppingResponse.completed_at:type_name -> google.protobuf.Timestamp
+	13, // 4: shopping.CreateShoppingResponse.completion_date:type_name -> google.protobuf.Timestamp
+	13, // 5: shopping.GetShoppingResponse.created_at:type_name -> google.protobuf.Timestamp
+	13, // 6: shopping.GetShoppingResponse.updated_at:type_name -> google.protobuf.Timestamp
+	13, // 7: shopping.GetShoppingResponse.completed_at:type_name -> google.protobuf.Timestamp
+	13, // 8: shopping.GetShoppingResponse.completion_date:type_name -> google.protobuf.Timestamp
 	3,  // 9: shopping.ListShoppingResponse.list:type_name -> shopping.GetShoppingResponse
-	11, // 10: shopping.UpdateShoppingRequest.created_at:type_name -> google.protobuf.Timestamp
-	11, // 11: shopping.UpdateShoppingRequest.updated_at:type_name -> google.protobuf.Timestamp
-	11, // 12: shopping.UpdateShoppingRequest.completed_at:type_name -> google.protobuf.Timestamp
-	11, // 13: shopping.UpdateShoppingRequest.completion_date:type_name -> google.protobuf.Timestamp
-	11, // 14: shopping.UpdateShoppingResponse.created_at:type_name -> google.protobuf.Timestamp
-	11, // 15: shopping.UpdateShoppingResponse.updated_at:type_name -> google.protobuf.Timestamp
-	11, // 16: shopping.UpdateShoppingResponse.completed_at:type_name -> google.protobuf.Timestamp
-	11, // 17: shopping.UpdateShoppingResponse.completion_date:type_name -> google.protobuf.Timestamp
+	13, // 10: shopping.UpdateShoppingRequest.created_at:type_name -> google.protobuf.Timestamp
+	13, // 11: shopping.UpdateShoppingRequest.updated_at:type_name -> google.protobuf.Timestamp
+	13, // 12: shopping.UpdateShoppingRequest.completed_at:type_name -> google.protobuf.Timestamp
+	13, // 13: shopping.UpdateShoppingRequest.completion_date:type_name -> google.protobuf.Timestamp
+	13, // 14: shopping.UpdateShoppingResponse.created_at:type_name -> google.protobuf.Timestamp
+	13, // 15: shopping.UpdateShoppingResponse.updated_at:type_name -> google.protobuf.Timestamp
+	13, // 16: shopping.UpdateShoppingResponse.completed_at:type_name -> google.protobuf.Timestamp
+	13, // 17: shopping.UpdateShoppingResponse.completion_date:type_name -> google.protobuf.Timestamp
 	0,  // 18: shopping.ShoppingService.CreateShopping:input_type -> shopping.CreateShoppingRequest
 	2,  // 19: shopping.ShoppingService.GetShopping:input_type -> shopping.GetShoppingRequest
 	5,  // 20: shopping.ShoppingService.ListShopping:input_type -> shopping.ListShoppingRequest
-	12, // 21: shopping.ShoppingService.GetTotalShopping:input_type -> google.protobuf.Empty
-	4,  // 22: shopping.ShoppingService.CompletedShopping:input_type -> shopping.CompletedShoppingRequest
-	7,  // 23: shopping.ShoppingService.DeleteShopping:input_type -> shopping.DeleteShoppingRequest
-	8,  // 24: shopping.ShoppingService.UpdateShopping:input_type -> shopping.UpdateShoppingRequest
-	1,  // 25: shopping.ShoppingService.CreateShopping:output_type -> shopping.CreateShoppingResponse
-	3,  // 26: shopping.ShoppingService.GetShopping:output_type -> shopping.GetShoppingResponse
-	6,  // 27: shopping.ShoppingService.ListShopping:output_type -> shopping.ListShoppingResponse
-	10, // 28: shopping.ShoppingService.GetTotalShopping:output_type -> shopping.GetTotalResponse
-	12, // 29: shopping.ShoppingService.CompletedShopping:output_type -> google.protobuf.Empty
-	12, // 30: shopping.ShoppingService.DeleteShopping:output_type -> google.protobuf.Empty
-	9,  // 31: shopping.ShoppingService.UpdateShopping:output_type -> shopping.UpdateShoppingResponse
-	25, // [25:32] is the sub-list for method output_type
-	18, // [18:25] is the sub-list for method input_type
+	14, // 21: shopping.ShoppingService.GetTotalShopping:input_type -> google.protobuf.Empty
+	7,  // 22: shopping.ShoppingService.GetShoppingImage:input_type -> shopping.GetShoppingImageRequest
+	4,  // 23: shopping.ShoppingService.CompletedShopping:input_type -> shopping.CompletedShoppingRequest
+	9,  // 24: shopping.ShoppingService.DeleteShopping:input_type -> shopping.DeleteShoppingRequest
+	10, // 25: shopping.ShoppingService.UpdateShopping:input_type -> shopping.UpdateShoppingRequest
+	1,  // 26: shopping.ShoppingService.CreateShopping:output_type -> shopping.CreateShoppingResponse
+	3,  // 27: shopping.ShoppingService.GetShopping:output_type -> shopping.GetShoppingResponse
+	6,  // 28: shopping.ShoppingService.ListShopping:output_type -> shopping.ListShoppingResponse
+	12, // 29: shopping.ShoppingService.GetTotalShopping:output_type -> shopping.GetTotalResponse
+	8,  // 30: shopping.ShoppingService.GetShoppingImage:output_type -> shopping.GetShoppingImageResponse
+	14, // 31: shopping.ShoppingService.CompletedShopping:output_type -> google.protobuf.Empty
+	14, // 32: shopping.ShoppingService.DeleteShopping:output_type -> google.protobuf.Empty
+	11, // 33: shopping.ShoppingService.UpdateShopping:output_type -> shopping.UpdateShoppingResponse
+	26, // [26:34] is the sub-list for method output_type
+	18, // [18:26] is the sub-list for method input_type
 	18, // [18:18] is the sub-list for extension type_name
 	18, // [18:18] is the sub-list for extension extendee
 	0,  // [0:18] is the sub-list for field type_name
@@ -1143,14 +1271,15 @@ func file_proto_shopping_v1_shopping_proto_init() {
 	file_proto_shopping_v1_shopping_proto_msgTypes[1].OneofWrappers = []any{}
 	file_proto_shopping_v1_shopping_proto_msgTypes[3].OneofWrappers = []any{}
 	file_proto_shopping_v1_shopping_proto_msgTypes[8].OneofWrappers = []any{}
-	file_proto_shopping_v1_shopping_proto_msgTypes[9].OneofWrappers = []any{}
+	file_proto_shopping_v1_shopping_proto_msgTypes[10].OneofWrappers = []any{}
+	file_proto_shopping_v1_shopping_proto_msgTypes[11].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_shopping_v1_shopping_proto_rawDesc), len(file_proto_shopping_v1_shopping_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   11,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
