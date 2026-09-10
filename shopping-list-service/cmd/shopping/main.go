@@ -14,13 +14,17 @@ import (
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/core/auth/jwt"
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/core/cache"
 	grpcclient "github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/core/grpc"
+	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/core/kafka"
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/core/repository/postgres/pool/pgx"
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/core/s3"
+	sagacore "github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/core/saga"
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/core/telemetry"
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/features/repository/postgres"
 	redis_cache "github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/features/repository/redis"
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/features/service"
+	sagaService "github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/features/service/saga"
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/features/transport/gRPC"
+	kafkaAdapter "github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/features/transport/kafka"
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/features/web"
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/pkg/grpcutil/interceptors"
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/pkg/logger"
@@ -90,6 +94,46 @@ func main() {
 		logger,
 	)
 
+	logger.Debug("initializing kafka producer")
+	kafkaConfig := kafka.NewConfig()
+	kafkaProducer := kafka.NewProducer(kafkaConfig, logger)
+	defer kafkaProducer.Close()
+
+	eventPublisher := kafkaAdapter.NewShoppingEventPublisher(kafkaProducer, logger)
+
+	logger.Debug("initializing saga manager")
+	sagaManager := sagacore.NewSagaManager(logger, nil)
+	defer func() {
+		if err := sagaManager.Shutdown(ctx); err != nil {
+			logger.Error("saga manager shutdown error", zap.Error(err))
+		}
+	}()
+
+	logger.Debug("initializing delete user saga")
+	deleteUserSaga := sagaService.NewDeleteUserSaga(
+		logger,
+		sagaManager,
+		shoppingRepository,
+		storageClient,
+		eventPublisher,
+	)
+
+	logger.Debug("initializing kafka consumer")
+	kafkaConsumer := kafka.NewConsumer(kafkaConfig, logger)
+	shoppingConsumer := kafkaAdapter.NewShoppingKafkaConsumer(
+		kafkaConsumer,
+		deleteUserSaga,
+		logger,
+	)
+
+	go func() {
+		logger.Info("starting kafka consumer")
+		if err := shoppingConsumer.Start(ctx); err != nil {
+			logger.Error("kafka consumer error", zap.Error(err))
+		}
+	}()
+	defer shoppingConsumer.Close()
+
 	logger.Debug("initializing shopping service")
 	grpcServer := grpcclient.NewGRPCServer(
 		cfg,
@@ -145,16 +189,13 @@ func main() {
 		}
 	}()
 
-	// ===== Ждём сигнала завершения =====
 	<-ctx.Done()
 
 	logger.Warn("shutting down all servers...")
 
-	// ===== Graceful Shutdown =====
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer shutdownCancel()
 
-	// Останавливаем gRPC
 	done := make(chan struct{})
 	go func() {
 		grpcServer.GracefulStop()
@@ -169,14 +210,12 @@ func main() {
 		grpcServer.Stop()
 	}
 
-	// Останавливаем Web сервер
 	if err := webServer.Shutdown(shutdownCtx); err != nil {
 		logger.Error("web server shutdown error", zap.Error(err))
 	} else {
 		logger.Info("web server gracefully stopped")
 	}
 
-	// Останавливаем Metrics сервер
 	if err := metricsServer.Shutdown(shutdownCtx); err != nil {
 		logger.Error("metrics server error", zap.Error(err))
 	}

@@ -1,6 +1,8 @@
 package postgres
 
-import "github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/core/repository/postgres/pool"
+import (
+	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/core/repository/postgres/pool"
+)
 
 type ShoppingRepository struct {
 	pool pool.Pool

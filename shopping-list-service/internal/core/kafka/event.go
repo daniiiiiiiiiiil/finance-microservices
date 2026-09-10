@@ -5,16 +5,6 @@ import (
 	"time"
 )
 
-const (
-	EventTypeTransactionCreated      = "transaction.created"
-	EventTypeTransactionUpdated      = "transaction.updated"
-	EventTypeTransactionDeleted      = "transaction.deleted"
-	EventTypeUserCreated             = "user.created"
-	EventTypeUserDeleted             = "user.deleted"
-	EventTypeAdminMetrics            = "admin.metrics"
-	EventTypeUserTransactionsDeleted = "user.transactions.deleted"
-)
-
 type Event struct {
 	ID        string          `json:"id"`
 	Type      string          `json:"type"`
@@ -22,55 +12,85 @@ type Event struct {
 	Data      json.RawMessage `json:"data"`
 }
 
-type TransactionEvent struct {
-	TransactionID   int       `json:"transaction_id"`
-	UserID          int       `json:"user_id"`
-	TypeTransaction string    `json:"type_transaction"`
-	Amount          float64   `json:"amount"`
-	Category        string    `json:"category"`
-	CreatedAt       time.Time `json:"created_at"`
+const (
+	EventTypeUserDeleted = "user.deleted"
+	//EventTypeUserUpdated         = "user.updated"
+	EventTypeShoppingDeleted     = "shopping.deleted"
+	EventTypeShoppingCreated     = "shopping.created"
+	EventTypeShoppingUpdated     = "shopping.updated"
+	EventTypeImageUploaded       = "shopping.image.uploaded"
+	EventTypeImageDeleted        = "shopping.image.deleted"
+	EventTypeUserDeleteCompleted = "user.delete.completed"
+	EventTypeUserDeleteFailed    = "user.delete.failed"
+)
+
+type UserDeletedEvent struct {
+	UserID    int       `json:"user_id"`
+	Email     string    `json:"email"`
+	DeletedAt time.Time `json:"deleted_at"`
 }
 
-type UserEvent struct {
+type UserUpdatedEvent struct {
 	UserID   int    `json:"user_id"`
 	Email    string `json:"email"`
 	FullName string `json:"full_name"`
-	IsAdmin  bool   `json:"is_admin"`
-	Status   string `json:"status"`
 }
 
-type ConvertedEvent struct {
-	TransactionID    int       `json:"transaction_id"`
-	AmountUSD        float64   `json:"amount_usd"`
-	OriginalAmount   float64   `json:"original_amount"`
-	OriginalCurrency string    `json:"original_currency"`
-	ConvertedAt      time.Time `json:"converted_at"`
-}
-
-type RatesUpdatedEvent struct {
-	Base      string             `json:"base"`
-	Rates     map[string]float64 `json:"rates"`
-	UpdatedAt time.Time          `json:"updated_at"`
-}
-
-type TransactionCurrencyEvent struct {
-	TransactionID int       `json:"transaction_id"`
-	UserID        int       `json:"user_id"`
-	Amount        float64   `json:"amount"`
-	Currency      string    `json:"currency"`
-	Category      string    `json:"category"`
-	CreatedAt     time.Time `json:"created_at"`
-}
-
-type MetricsEvent struct {
-	TotalUsers        int       `json:"total_users"`
-	TotalTransactions int       `json:"total_transactions"`
-	TotalBalance      float64   `json:"total_balance"`
-	Timestamp         time.Time `json:"timestamp"`
-}
-
-type UserTransactionsDeletedEvent struct {
+type ShoppingDeletedEvent struct {
 	UserID       int       `json:"user_id"`
 	DeletedCount int       `json:"deleted_count"`
-	Timestamp    time.Time `json:"timestamp"`
+	DeletedIDs   []int     `json:"deleted_ids"`
+	ImageKeys    []string  `json:"image_keys"`
+	DeletedAt    time.Time `json:"deleted_at"`
+}
+
+type ShoppingCreatedEvent struct {
+	ShoppingID   int       `json:"shopping_id"`
+	UserID       int       `json:"user_id"`
+	Title        string    `json:"title"`
+	AmountNow    float64   `json:"amount_now"`
+	AmountFinish float64   `json:"amount_finish"`
+	ImageKey     *string   `json:"image_key,omitempty"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
+type ShoppingUpdatedEvent struct {
+	ShoppingID int                    `json:"shopping_id"`
+	UserID     int                    `json:"user_id"`
+	OldValues  map[string]interface{} `json:"old_values"`
+	NewValues  map[string]interface{} `json:"new_values"`
+	UpdatedAt  time.Time              `json:"updated_at"`
+}
+
+type ImageUploadedEvent struct {
+	ShoppingID int       `json:"shopping_id"`
+	UserID     int       `json:"user_id"`
+	ImageKey   string    `json:"image_key"`
+	Size       int64     `json:"size"`
+	Format     string    `json:"format"`
+	UploadedAt time.Time `json:"uploaded_at"`
+}
+
+type ImageDeletedEvent struct {
+	ShoppingID int       `json:"shopping_id"`
+	UserID     int       `json:"user_id"`
+	ImageKey   string    `json:"image_key"`
+	DeletedAt  time.Time `json:"deleted_at"`
+}
+
+type UserDeleteCompletedEvent struct {
+	UserID               int       `json:"user_id"`
+	Status               string    `json:"status"`
+	DeletedShoppingCount int       `json:"deleted_shopping_count"`
+	DeletedImagesCount   int       `json:"deleted_images_count"`
+	CompletedAt          time.Time `json:"completed_at"`
+}
+
+type UserDeleteFailedEvent struct {
+	UserID     int       `json:"user_id"`
+	Reason     string    `json:"reason"`
+	Error      string    `json:"error"`
+	FailedStep string    `json:"failed_step"`
+	RetryCount int       `json:"retry_count"`
+	FailedAt   time.Time `json:"failed_at"`
 }

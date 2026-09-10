@@ -14,10 +14,10 @@ import (
 type Producer struct {
 	writer *kafka.Writer
 	config Config
-	logger logger.Logger
+	logger *logger.Logger
 }
 
-func NewProducer(config Config, logger logger.Logger) *Producer {
+func NewProducer(config Config, logger *logger.Logger) *Producer {
 	write := &kafka.Writer{
 		Addr:         kafka.TCP(config.Brokers...),
 		Topic:        config.Topic,

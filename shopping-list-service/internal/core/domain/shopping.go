@@ -53,12 +53,14 @@ func NewShopping(
 
 func (s *Shopping) Validate() error {
 	titleRun := []rune(s.Title)
-	descRun := []rune(*s.Description)
 	if s.Title == " " || len(titleRun) >= 200 || len(titleRun) <= 0 {
 		return fmt.Errorf("title is required")
 	}
-	if s.Description == nil || len(descRun) >= 1000 {
-		return fmt.Errorf("description is required")
+	if s.Description != nil {
+		descRun := []rune(*s.Description)
+		if len(descRun) >= 1000 {
+			return fmt.Errorf("description must be less than 1000 characters")
+		}
 	}
 	if s.AmountNow < 0 {
 		return fmt.Errorf("amountNow is required amount now < 0")
