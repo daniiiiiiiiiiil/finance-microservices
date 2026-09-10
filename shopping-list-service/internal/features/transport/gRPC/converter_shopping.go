@@ -130,30 +130,11 @@ func convertTimestampToTime(ts *timestamppb.Timestamp) *time.Time {
 	t := ts.AsTime()
 	return &t
 }
-func convertTimestampToTimes(ts *timestamppb.Timestamp) time.Time {
-	if ts == nil {
-		return time.Time{}
-	}
-	return ts.AsTime()
-}
+
 func convertTimestampToTimePtr(ts *timestamppb.Timestamp) *time.Time {
 	if ts == nil {
 		return nil
 	}
 	t := ts.AsTime()
 	return &t
-}
-
-func convertTimeToTimestamp(t time.Time) *timestamppb.Timestamp {
-	if t.IsZero() {
-		return nil
-	}
-	return timestamppb.New(t)
-}
-
-func convertTimePtrToTimestamp(t *time.Time) *timestamppb.Timestamp {
-	if t == nil {
-		return nil
-	}
-	return timestamppb.New(*t)
 }

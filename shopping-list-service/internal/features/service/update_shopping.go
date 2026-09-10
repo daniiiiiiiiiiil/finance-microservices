@@ -36,7 +36,7 @@ func (s *ShoppingService) UpdateShopping(ctx context.Context, shopping *domain.S
 		return domain.Shopping{}, fmt.Errorf("error updating shopping with id %d: %w", shopping.ID, err)
 	}
 
-	if fileData != nil && len(fileData) > 0 && filename != "" {
+	if len(fileData) > 0 && filename != "" {
 		if err := validateImage(fileData, filename); err != nil {
 			return domain.Shopping{}, fmt.Errorf("validate image: %w", err)
 		}

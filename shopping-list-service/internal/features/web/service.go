@@ -15,7 +15,6 @@ func NewWebService(repo *WebRepository) *WebService {
 }
 
 func (s *WebService) GetHTMLFile(filename string) ([]byte, error) {
-	// Ищем файл в разных местах
 	paths := []string{
 		filepath.Join(".", "public", filename),
 		filepath.Join("..", "public", filename),

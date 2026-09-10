@@ -22,19 +22,18 @@ func (c *WebController) GetMainPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Write(html)
+	if _, err := w.Write(html); err != nil {
+		return
+	}
 }
 
-// ServeAssets отдает статические файлы (CSS, JS, изображения)
 func (c *WebController) ServeAssets(w http.ResponseWriter, r *http.Request) {
-	// Убираем /assets/ из пути
 	filename := strings.TrimPrefix(r.URL.Path, "/assets/")
 	if filename == "" {
 		http.NotFound(w, r)
 		return
 	}
 
-	// Ищем файл
 	paths := []string{
 		filepath.Join(".", "public", "assets", filename),
 		filepath.Join("..", "public", "assets", filename),
@@ -46,7 +45,6 @@ func (c *WebController) ServeAssets(w http.ResponseWriter, r *http.Request) {
 
 	for _, path := range paths {
 		if _, err := os.Stat(path); err == nil {
-			// Определяем Content-Type
 			ext := filepath.Ext(filename)
 			switch ext {
 			case ".css":
