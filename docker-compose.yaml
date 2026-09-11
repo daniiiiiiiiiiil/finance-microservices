@@ -71,6 +71,24 @@ services:
       timeout: 5s
       retries: 5
 
+  saga-postgres:
+    image: postgres:15-alpine
+    container_name: saga-env-postgres
+    networks:
+      - finance-net
+    environment:
+      - POSTGRES_USER=${SAGA_POSTGRES_USER}
+      - POSTGRES_PASSWORD=${SAGA_POSTGRES_PASSWORD}
+      - POSTGRES_DB=${SAGA_POSTGRES_DB}
+    volumes:
+      - ./out/pgdata/saga:/var/lib/postgresql/data:rw
+    restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${SAGA_POSTGRES_USER} -d ${SAGA_POSTGRES_DB}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   finance-redis:
     image: redis:7-alpine
     container_name: finance-redis
@@ -355,6 +373,42 @@ services:
       - minio
       - kafka
 
+  saga:
+    build:
+      context: .
+      dockerfile: build/saga/Dockerfile
+    container_name: saga-service
+    networks:
+      - finance-net
+    environment:
+      - POSTGRES_USER=${SAGA_POSTGRES_USER}
+      - POSTGRES_PASSWORD=${SAGA_POSTGRES_PASSWORD}
+      - POSTGRES_DB=${SAGA_POSTGRES_DB}
+      - POSTGRES_HOST=${SAGA_POSTGRES_HOST}
+      - POSTGRES_PORT=${SAGA_POSTGRES_PORT}
+      - POSTGRES_TIMEOUT=${POSTGRES_TIMEOUT}
+      - LOGGER_LEVEL=${LOGGER_LEVEL}
+      - LOGGER_FOLDER=${LOGGER_FOLDER}
+      - TIME_ZONE=${TIME_ZONE}
+      - KAFKA_BROKERS=${KAFKA_BROKERS}
+      - KAFKA_CONSUMER_GROUP=saga-orchestrator-service
+      - TLS_ENABLED=${TLS_ENABLED}
+      - TLS_CERT_FILE=${TLS_CERT_FILE}
+      - TLS_KEY_FILE=${TLS_KEY_FILE}
+      - TLS_CA_FILE=${TLS_CA_FILE}
+      - SAGA_GRPC_PORT=${SAGA_GRPC_PORT}
+      - SAGA_METRICS_PORT=${SAGA_METRICS_PORT}
+    volumes:
+      - ./logs:/out/logs
+      - ./certs:/certs:ro
+    ports:
+      - "50061:50061"
+      - "9098:9098"
+    restart: always
+    depends_on:
+      - saga-postgres
+      - kafka
+
   auth-postgres-migrate:
     image: migrate/migrate:latest
     networks:
@@ -427,6 +481,24 @@ services:
       migrate -path /migrations -database postgres://${SHOPPING_POSTGRES_USER}:${SHOPPING_POSTGRES_PASSWORD}@shopping-postgres:5432/${SHOPPING_POSTGRES_DB}?sslmode=disable up
       "
 
+  saga-postgres-migrate:
+    image: migrate/migrate:latest
+    networks:
+      - finance-net
+    volumes:
+      - ./saga-orchestrator-service/migrations:/migrations
+    environment:
+      - SAGA_POSTGRES_USER=${SAGA_POSTGRES_USER}
+      - SAGA_POSTGRES_PASSWORD=${SAGA_POSTGRES_PASSWORD}
+      - SAGA_POSTGRES_DB=${SAGA_POSTGRES_DB}
+    depends_on:
+      - saga-postgres
+    entrypoint:
+      sh -c "
+      echo 'Applying saga migrations' &&
+      migrate -path /migrations -database postgres://${SAGA_POSTGRES_USER}:${SAGA_POSTGRES_PASSWORD}@saga-postgres:5432/${SAGA_POSTGRES_DB}?sslmode=disable up
+      "
+
 
   gateway:
     build:
@@ -458,6 +530,7 @@ services:
       - admin
       - currency
       - shopping-list
+      - saga
 
 
   kafka-ui:
