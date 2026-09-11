@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/daniiiiiiiiiiil/finance-microservices/currency-service/pkg/logger"
+	"github.com/daniiiiiiiiiiil/finance-microservices/saga-orchestrator-service/pkg/logger"
 	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
 )
@@ -14,11 +14,11 @@ import (
 type Consumer struct {
 	reader   *kafka.Reader
 	config   Config
-	logger   logger.Logger
+	logger   *logger.Logger
 	handlers map[string]func(ctx context.Context, event Event) error
 }
 
-func NewConsumer(config Config, logger logger.Logger) *Consumer {
+func NewConsumer(config Config, logger *logger.Logger) *Consumer {
 	reader := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:        config.Brokers,
 		GroupID:        config.ConsumerGroup,
