@@ -1,11 +1,11 @@
 package postgres
 
 import (
+	"context"
 	"fmt"
 	"time"
 
 	"github.com/daniiiiiiiiiiil/finance-microservices/saga-orchestrator-service/internal/core/domain"
-	"golang.org/x/net/context"
 )
 
 func (r *SagaRepository) Update(ctx context.Context, saga *domain.Saga) error {

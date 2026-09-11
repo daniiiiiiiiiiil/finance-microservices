@@ -177,27 +177,27 @@ func stepFromModel(model *StepModel) *domain.Step {
 	}
 }
 
-func compensationFromModel(model *CompensationModel) *domain.Compensation {
-	var data map[string]interface{}
-	if len(model.CompensationData) > 0 {
-		_ = json.Unmarshal(model.CompensationData, &data)
-	}
-
-	var errMsg string
-	if model.Error != nil {
-		errMsg = *model.Error
-	}
-
-	return &domain.Compensation{
-		ID:          model.ID,
-		SagaID:      model.SagaID,
-		StepName:    model.StepName,
-		Data:        data,
-		Status:      domain.CompensationStatus(model.Status),
-		Error:       errMsg,
-		StartedAt:   model.StartedAt,
-		CompletedAt: model.CompletedAt,
-		CreatedAt:   model.CreatedAt,
-		UpdatedAt:   model.UpdatedAt,
-	}
-}
+//func compensationFromModel(model *CompensationModel) *domain.Compensation {
+//	var data map[string]interface{}
+//	if len(model.CompensationData) > 0 {
+//		_ = json.Unmarshal(model.CompensationData, &data)
+//	}
+//
+//	var errMsg string
+//	if model.Error != nil {
+//		errMsg = *model.Error
+//	}
+//
+//	return &domain.Compensation{
+//		ID:          model.ID,
+//		SagaID:      model.SagaID,
+//		StepName:    model.StepName,
+//		Data:        data,
+//		Status:      domain.CompensationStatus(model.Status),
+//		Error:       errMsg,
+//		StartedAt:   model.StartedAt,
+//		CompletedAt: model.CompletedAt,
+//		CreatedAt:   model.CreatedAt,
+//		UpdatedAt:   model.UpdatedAt,
+//	}
+//}

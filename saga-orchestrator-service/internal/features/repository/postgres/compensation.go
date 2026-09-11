@@ -1,10 +1,10 @@
 package postgres
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/daniiiiiiiiiiil/finance-microservices/saga-orchestrator-service/internal/core/domain"
-	"golang.org/x/net/context"
 )
 
 func (r *SagaRepository) SaveCompensation(ctx context.Context, comp *domain.Compensation) error {
