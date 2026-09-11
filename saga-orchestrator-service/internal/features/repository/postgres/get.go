@@ -194,7 +194,7 @@ func (r *SagaRepository) GetByStatus(ctx context.Context, status domain.Status) 
 `
 	rows, err := r.pool.Query(ctx, query, status)
 	if err != nil {
-		return nil, fmt.Errorf("get saga by status %d: %w", status, err)
+		return nil, fmt.Errorf("get saga by status: %w", err)
 	}
 	defer rows.Close()
 
@@ -215,12 +215,12 @@ func (r *SagaRepository) GetByStatus(ctx context.Context, status domain.Status) 
 			&model.UpdatedAt,
 			&model.CompletedAt)
 		if err != nil {
-			return nil, fmt.Errorf("get saga by status %d: %w", status, err)
+			return nil, fmt.Errorf("get saga by status: %w", err)
 		}
 		sagas = append(sagas, sagaFromModel(&model))
 	}
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("get saga by status %d: %w", status, err)
+		return nil, fmt.Errorf("get saga by status: %w", err)
 	}
 	return sagas, nil
 }
