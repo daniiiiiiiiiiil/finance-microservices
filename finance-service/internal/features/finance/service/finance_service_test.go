@@ -543,7 +543,6 @@ func TestDeleteUserTransactions_Success(t *testing.T) {
 	s.mockPublisher.On("Publish", ctx, "user.transactions.deleted", mock.Anything).Return(nil)
 
 	count, err := s.service.DeleteUserTransactions(ctx, 1)
-
 	assert.NoError(t, err)
 	assert.Equal(t, 5, count)
 	s.mockRepo.AssertExpectations(t)
