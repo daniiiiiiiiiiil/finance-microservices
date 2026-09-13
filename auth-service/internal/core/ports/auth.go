@@ -2,9 +2,10 @@ package ports
 
 import (
 	"context"
+	"time"
+
 	usersclient "github.com/daniiiiiiiiiiil/finance-microservices/auth-service/internal/core/clients/users"
 	"github.com/daniiiiiiiiiiil/finance-microservices/auth-service/internal/core/domain"
-	"time"
 )
 
 type RegisterRequest struct {
@@ -35,12 +36,14 @@ type AuthServiceInterface interface {
 	AdminExists(ctx context.Context) (bool, error)
 	RateLimitCheck(ctx context.Context, key string, limit int64, ttl time.Duration) (bool, error)
 	AddToBlacklist(ctx context.Context, token string, ttl time.Duration) error
+	DeleteCredentials(ctx context.Context, email string) error // ← ДОБАВИТЬ
 }
 
 type CredRepoInterface interface {
 	GetByEmail(ctx context.Context, email string) (*domain.Credentials, error)
 	Create(ctx context.Context, email, passwordHash string) (int, error)
 	AdminUpdateStatus(ctx context.Context, id int, status string) error
+	DeleteByEmail(ctx context.Context, email string) error // ← ДОБАВИТЬ
 }
 
 type UsersClientInterface interface {

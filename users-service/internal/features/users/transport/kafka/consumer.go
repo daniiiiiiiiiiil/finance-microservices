@@ -5,32 +5,32 @@ import (
 	"encoding/json"
 	"fmt"
 
-	corekafka "github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/core/kafka"
-	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/core/ports"
-	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/pkg/logger"
+	corekafka "github.com/daniiiiiiiiiiil/finance-microservices/users-service/internal/core/kafka"
+	"github.com/daniiiiiiiiiiil/finance-microservices/users-service/internal/core/ports"
+	"github.com/daniiiiiiiiiiil/finance-microservices/users-service/pkg/logger"
 	"go.uber.org/zap"
 )
 
 type EventHandler func(ctx context.Context, event ports.Event) error
 
-type ShoppingKafkaConsumer struct {
+type UserKafkaConsumer struct {
 	consumer *corekafka.Consumer
 	handlers map[string]EventHandler
 	logger   *logger.Logger
 }
 
-func NewShoppingKafkaConsumer(
+func NewUserKafkaConsumer(
 	consumer *corekafka.Consumer,
 	logger *logger.Logger,
-) *ShoppingKafkaConsumer {
-	return &ShoppingKafkaConsumer{
+) *UserKafkaConsumer {
+	return &UserKafkaConsumer{
 		consumer: consumer,
 		handlers: make(map[string]EventHandler),
 		logger:   logger,
 	}
 }
 
-func (c *ShoppingKafkaConsumer) RegisterHandler(eventType string, handler EventHandler) error {
+func (c *UserKafkaConsumer) RegisterHandler(eventType string, handler EventHandler) error {
 	c.handlers[eventType] = handler
 
 	c.consumer.RegisterHandler(eventType, func(ctx context.Context, event corekafka.Event) error {
@@ -47,20 +47,20 @@ func (c *ShoppingKafkaConsumer) RegisterHandler(eventType string, handler EventH
 	return nil
 }
 
-func (c *ShoppingKafkaConsumer) Start(ctx context.Context) error {
-	c.logger.Info("starting shopping kafka consumer")
+func (c *UserKafkaConsumer) Start(ctx context.Context) error {
+	c.logger.Info("starting user kafka consumer")
 	return c.consumer.Start(ctx)
 }
 
-func (c *ShoppingKafkaConsumer) Close() error {
-	c.logger.Info("closing shopping kafka consumer")
+func (c *UserKafkaConsumer) Close() error {
+	c.logger.Info("closing user kafka consumer")
 	return c.consumer.Close()
 }
 
-func ParseUserDeletedEvent(data []byte) (map[string]interface{}, error) {
+func ParseUserEvent(data []byte) (map[string]interface{}, error) {
 	var event map[string]interface{}
 	if err := json.Unmarshal(data, &event); err != nil {
-		return nil, fmt.Errorf("unmarshal: %w", err)
+		return nil, fmt.Errorf("unmarshal user event: %w", err)
 	}
 	return event, nil
 }

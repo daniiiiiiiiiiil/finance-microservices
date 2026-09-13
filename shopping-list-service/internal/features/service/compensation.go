@@ -1,4 +1,4 @@
-package saga
+package service
 
 import (
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/pkg/logger"

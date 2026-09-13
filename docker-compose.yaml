@@ -169,6 +169,8 @@ services:
       - JWT_DURATION=${JWT_DURATION}
       - REDIS_ADDR=${REDIS_ADDR}
       - KAFKA_BROKERS=${KAFKA_BROKERS}
+      - KAFKA_CONSUMER_GROUP=auth-service
+      - KAFKA_TOPIC=finance-events
       - TLS_ENABLED=${TLS_ENABLED}
       - TLS_CERT_FILE=${TLS_CERT_FILE}
       - TLS_KEY_FILE=${TLS_KEY_FILE}
@@ -206,6 +208,7 @@ services:
       - JWT_DURATION=${JWT_DURATION}
       - REDIS_ADDR=${REDIS_ADDR}
       - KAFKA_BROKERS=${KAFKA_BROKERS}
+      - KAFKA_CONSUMER_GROUP=users-service
       - TLS_ENABLED=${TLS_ENABLED}
       - TLS_CERT_FILE=${TLS_CERT_FILE}
       - TLS_KEY_FILE=${TLS_KEY_FILE}
@@ -215,7 +218,7 @@ services:
       - ./certs:/certs:ro
     ports:
       - "50052:50052"
-      - "9096:9092"
+      - "9096:9096"
     restart: always
     depends_on:
       - users-postgres
@@ -243,6 +246,7 @@ services:
       - JWT_DURATION=${JWT_DURATION}
       - REDIS_ADDR=${REDIS_ADDR}
       - KAFKA_BROKERS=${KAFKA_BROKERS}
+      - KAFKA_CONSUMER_GROUP=finance-service
       - S3_ENDPOINT_URL=${S3_ENDPOINT_URL}
       - S3_REGION=${S3_REGION}
       - S3_BUCKET=${S3_BUCKET}
@@ -347,6 +351,7 @@ services:
       - JWT_DURATION=${JWT_DURATION}
       - REDIS_ADDR=${REDIS_ADDR}
       - KAFKA_BROKERS=${KAFKA_BROKERS}
+      - KAFKA_CONSUMER_GROUP=shopping-list-service
       - S3_ENDPOINT_URL=${S3_ENDPOINT_URL}
       - S3_REGION=${S3_REGION}
       - S3_BUCKET=${S3_BUCKET}
@@ -392,6 +397,8 @@ services:
       - TIME_ZONE=${TIME_ZONE}
       - KAFKA_BROKERS=${KAFKA_BROKERS}
       - KAFKA_CONSUMER_GROUP=saga-orchestrator-service
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_DURATION=${JWT_DURATION}
       - TLS_ENABLED=${TLS_ENABLED}
       - TLS_CERT_FILE=${TLS_CERT_FILE}
       - TLS_KEY_FILE=${TLS_KEY_FILE}

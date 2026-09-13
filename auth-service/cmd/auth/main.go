@@ -15,6 +15,7 @@ import (
 	"github.com/daniiiiiiiiiiil/finance-microservices/auth-service/internal/core/cache"
 	usersclient "github.com/daniiiiiiiiiiil/finance-microservices/auth-service/internal/core/clients/users"
 	grpcclient "github.com/daniiiiiiiiiiil/finance-microservices/auth-service/internal/core/grpc"
+	corekafka "github.com/daniiiiiiiiiiil/finance-microservices/auth-service/internal/core/kafka"
 	"github.com/daniiiiiiiiiiil/finance-microservices/auth-service/internal/core/ports"
 	"github.com/daniiiiiiiiiiil/finance-microservices/auth-service/internal/core/repository/postgres/pool/pgx"
 	"github.com/daniiiiiiiiiiil/finance-microservices/auth-service/internal/core/telemetry"
@@ -22,6 +23,7 @@ import (
 	"github.com/daniiiiiiiiiiil/finance-microservices/auth-service/internal/features/auth/repository/redis"
 	service_auth "github.com/daniiiiiiiiiiil/finance-microservices/auth-service/internal/features/auth/service"
 	authgrpc "github.com/daniiiiiiiiiiil/finance-microservices/auth-service/internal/features/auth/transport/grpc"
+	authkafka "github.com/daniiiiiiiiiiil/finance-microservices/auth-service/internal/features/auth/transport/kafka"
 	"github.com/daniiiiiiiiiiil/finance-microservices/auth-service/pkg/grpcutil/interceptors"
 	"github.com/daniiiiiiiiiiil/finance-microservices/auth-service/pkg/logger"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -83,6 +85,25 @@ func main() {
 	authRepo := postgres_auth.NewAuthRepository(pool)
 	authService := service_auth.NewAuthService(authRepo, jwtManager, redisClient, usersClient)
 	createFirstAdmin(ctx, authService, logger)
+
+	logger.Debug("initializing kafka consumer")
+	kafkaConfig := corekafka.NewConfig()
+	kafkaConsumer := corekafka.NewConsumer(kafkaConfig, *logger)
+
+	authConsumer := authkafka.NewAuthKafkaConsumer(kafkaConsumer, logger)
+
+	authHandlers := authkafka.NewAuthHandlers(authService, logger)
+	if err := authHandlers.RegisterHandlers(authConsumer); err != nil {
+		logger.Fatal("failed to register kafka handlers", zap.Error(err))
+	}
+
+	go func() {
+		logger.Info("starting auth kafka consumer")
+		if err := authConsumer.Start(ctx); err != nil {
+			logger.Error("kafka consumer error", zap.Error(err))
+		}
+	}()
+	defer authConsumer.Close()
 
 	logger.Debug("initializing auth service gRPC")
 	grpcServer := grpcclient.NewGRPCServer(

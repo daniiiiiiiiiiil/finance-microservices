@@ -73,7 +73,7 @@ func (s *UsersService) FinalizeDelete(ctx context.Context, id int) error {
 		}
 	}()
 
-	user, err := s.userRepository.GetUser(ctx, id)
+	user, err := s.userRepository.GetUserTx(ctx, tx, id)
 	if err != nil {
 		return fmt.Errorf("get user: %w", err)
 	}

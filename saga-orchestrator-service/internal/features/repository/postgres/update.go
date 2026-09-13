@@ -12,16 +12,15 @@ func (r *SagaRepository) Update(ctx context.Context, saga *domain.Saga) error {
 	ctx, cancel := context.WithTimeout(ctx, r.pool.OpTimeout())
 	defer cancel()
 
-	query :=
-		`
-		UPDATE saga.sagas SET
-		    	status = $1,
-		    	current_step = $2,
-		    	error = $3,
-		    	metadata = $4,
-		    	updated_at = $5,
-		    	completed_at = $6,
-		WHERE saga.id = $7
+	query := `
+   UPDATE saga.sagas SET
+        status = $1,
+        current_step = $2,
+        error = $3,
+        metadata = $4,
+        updated_at = $5,
+        completed_at = $6
+    WHERE id = $7
 `
 	model := sagaToModel(saga)
 
@@ -49,24 +48,27 @@ func (r *SagaRepository) UpdateStatus(ctx context.Context, sagaID int, status do
 	}
 
 	query := `
-		UPDATE saga.sagas SET
-			status = $1,
-			error = $2,
-			updated_at = $3,
-			completed_at = CASE 
-				WHEN $1 IN ('completed', 'failed', 'compensated') THEN $3 
-				ELSE completed_at 
-			END
-		WHERE id = $4
-	`
+    UPDATE saga.sagas SET
+        status = $1,
+        error = $2,
+        updated_at = $3,
+        completed_at = $4
+    WHERE id = $5
+`
+
+	var completedAt *time.Time
+	if status.IsFinal() {
+		now := time.Now()
+		completedAt = &now
+	}
 
 	_, err := r.pool.Exec(ctx, query,
 		status.String(),
 		errPtr,
 		time.Now(),
+		completedAt,
 		sagaID,
 	)
-
 	if err != nil {
 		return fmt.Errorf("update saga status: %w", err)
 	}

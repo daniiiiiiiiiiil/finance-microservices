@@ -72,6 +72,11 @@ func main() {
 
 	eventPublisher := transportkafka.NewUserEventPublisher(kafkaProducer)
 
+	logger.Debug("initializing kafka consumer")
+	kafkaConsumer := kafka.NewConsumer(kafkaConfig, *logger)
+	userKafkaConsumer := transportkafka.NewUserKafkaConsumer(kafkaConsumer, logger)
+	defer userKafkaConsumer.Close()
+
 	serviceName := "users"
 	shutdown, err := telemetry.InitTracer(serviceName)
 	if err != nil {
@@ -101,6 +106,19 @@ func main() {
 		redisClient,
 	)
 
+	logger.Debug("initializing kafka handlers")
+	userHandlers := transportkafka.NewUserHandlers(usersService, logger)
+	if err := userHandlers.RegisterHandlers(userKafkaConsumer); err != nil {
+		logger.Fatal("failed to register kafka handlers", zap.Error(err))
+	}
+
+	go func() {
+		logger.Info("starting user kafka consumer")
+		if err := userKafkaConsumer.Start(ctx); err != nil {
+			logger.Error("kafka consumer error", zap.Error(err))
+		}
+	}()
+
 	logger.Debug("initializing gRPC server with interceptors")
 
 	grpcServer := grpcclient.NewGRPCServer(
@@ -116,7 +134,7 @@ func main() {
 
 	reflection.Register(grpcServer)
 
-	metricsPort := ":9092"
+	metricsPort := ":9096"
 	metricsServer := &http.Server{Addr: metricsPort, Handler: promhttp.Handler()}
 	go func() {
 		logger.Info("starting metrics server", zap.String("addr", metricsPort))
@@ -147,6 +165,10 @@ func main() {
 
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer shutdownCancel()
+
+	if err := userKafkaConsumer.Close(); err != nil {
+		logger.Error("kafka consumer close error", zap.Error(err))
+	}
 
 	done := make(chan struct{})
 	go func() {

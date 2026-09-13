@@ -240,6 +240,15 @@ func (m *MockOutboxRepo) MarkFailed(ctx context.Context, id string, errMsg strin
 	args := m.Called(ctx, id, errMsg)
 	return args.Error(0)
 }
+func (m *MockUsersRepository) CreateUserTx(ctx context.Context, tx pool.Tx, user domain.User) (int, error) {
+	args := m.Called(ctx, tx, user)
+	return args.Int(0), args.Error(1)
+}
+
+func (m *MockUsersRepository) GetUserTx(ctx context.Context, tx pool.Tx, id int) (domain.User, error) {
+	args := m.Called(ctx, tx, id)
+	return args.Get(0).(domain.User), args.Error(1)
+}
 
 type testSuite struct {
 	service       *UsersService
@@ -304,8 +313,8 @@ func TestCreateProfile_Success(t *testing.T) {
 	mockTx.On("Commit", ctx).Return(nil)
 
 	s.mockRepo.On("GetUserByEmail", ctx, req.Email).Return(domain.User{}, errors.New("not found"))
-	s.mockRepo.On("CreateUser", ctx, mock.Anything).Return(1, nil)
-	s.mockRepo.On("GetUser", ctx, 1).Return(domain.User{
+	s.mockRepo.On("CreateUserTx", ctx, mockTx, mock.Anything).Return(1, nil)
+	s.mockRepo.On("GetUserTx", ctx, mockTx, 1).Return(domain.User{
 		ID:           1,
 		FullName:     "John Doe",
 		Email:        "john@example.com",
@@ -498,7 +507,7 @@ func TestFinalizeDelete_Success(t *testing.T) {
 	mockTx.On("Rollback", ctx).Return(nil)
 	mockTx.On("Commit", ctx).Return(nil)
 
-	s.mockRepo.On("GetUser", ctx, 1).Return(domain.User{
+	s.mockRepo.On("GetUserTx", ctx, mockTx, 1).Return(domain.User{
 		ID:     1,
 		Email:  "john@example.com",
 		Status: "deleting",

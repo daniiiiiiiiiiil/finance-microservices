@@ -86,6 +86,7 @@ func main() {
 	if err != nil {
 		logger.Fatal("failed to create S3 client", zap.Error(err))
 	}
+
 	logger.Debug("initializing export service")
 	exportService := finance_service.NewExportService(financeRepository, s3Client)
 
@@ -104,6 +105,24 @@ func main() {
 
 	outboxPublisher := finance_service.NewOutboxPublisher(outboxRepository, kafkaProducer, logger)
 	outboxPublisher.Start(ctx)
+
+	logger.Debug("initializing kafka consumer")
+	kafkaConsumer := kafka.NewConsumer(kafkaConfig, *logger)
+	financeKafkaConsumer := transportkafka.NewFinanceKafkaConsumer(kafkaConsumer, logger)
+
+	logger.Debug("initializing finance handlers")
+	financeHandlers := transportkafka.NewFinanceHandlers(financeService, logger)
+	if err := financeHandlers.RegisterHandlers(financeKafkaConsumer); err != nil {
+		logger.Fatal("failed to register kafka handlers", zap.Error(err))
+	}
+
+	go func() {
+		logger.Info("starting finance kafka consumer")
+		if err := financeKafkaConsumer.Start(ctx); err != nil {
+			logger.Error("kafka consumer error", zap.Error(err))
+		}
+	}()
+	defer financeKafkaConsumer.Close()
 
 	logger.Debug("initializing finance grpc server")
 	grpcServer := grpcclient.NewGRPCServer(
@@ -145,6 +164,10 @@ func main() {
 
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer shutdownCancel()
+
+	if err := financeKafkaConsumer.Close(); err != nil {
+		logger.Error("kafka consumer close error", zap.Error(err))
+	}
 
 	done := make(chan struct{})
 	go func() {

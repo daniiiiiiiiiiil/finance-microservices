@@ -36,12 +36,12 @@ func (s *UsersService) CreateProfile(ctx context.Context, req *CreateProfileRequ
 		"active",
 	)
 
-	userID, err := s.userRepository.CreateUser(ctx, user)
+	userID, err := s.userRepository.CreateUserTx(ctx, tx, user)
 	if err != nil {
 		return domain.User{}, err
 	}
 
-	created, err := s.userRepository.GetUser(ctx, userID)
+	created, err := s.userRepository.GetUserTx(ctx, tx, userID)
 	if err != nil {
 		return domain.User{}, err
 	}

@@ -1,6 +1,7 @@
 package service_auth
 
 import (
+	"fmt"
 	"time"
 
 	"context"
@@ -24,4 +25,14 @@ func (s *AuthService) RateLimitCheck(ctx context.Context, key string, limit int6
 
 func (s *AuthService) AddToBlacklist(ctx context.Context, token string, ttl time.Duration) error {
 	return s.blacklist.Add(ctx, token, ttl)
+}
+
+func (s *AuthService) DeleteCredentials(ctx context.Context, email string) error {
+	if email == "" {
+		return fmt.Errorf("email is required")
+	}
+	if err := s.credRepo.DeleteByEmail(ctx, email); err != nil {
+		return fmt.Errorf("delete credentials: %w", err)
+	}
+	return nil
 }

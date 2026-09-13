@@ -15,8 +15,8 @@ type SagaOrchestrator interface {
 
 type SagaManager interface {
 	StartSaga(ctx context.Context, saga *domain.Saga) error
-	ExecuteStep(ctx context.Context, saga *domain.Saga, step *domain.Step) error
-	Compensate(ctx context.Context, saga *domain.Saga) error
+	GetSaga(sagaID string) (*domain.Saga, bool)
+	GetActiveSagas() []*domain.Saga
 	Shutdown(ctx context.Context) error
 }
 

@@ -17,12 +17,10 @@ import (
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/core/kafka"
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/core/repository/postgres/pool/pgx"
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/core/s3"
-	sagacore "github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/core/saga"
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/core/telemetry"
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/features/repository/postgres"
 	redis_cache "github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/features/repository/redis"
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/features/service"
-	sagaService "github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/features/service/saga"
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/features/transport/gRPC"
 	kafkaAdapter "github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/features/transport/kafka"
 	"github.com/daniiiiiiiiiiil/finance-microservices/shopping-list-service/internal/features/web"
@@ -99,32 +97,22 @@ func main() {
 	kafkaProducer := kafka.NewProducer(kafkaConfig, logger)
 	defer kafkaProducer.Close()
 
-	eventPublisher := kafkaAdapter.NewShoppingEventPublisher(kafkaProducer, logger)
-
-	logger.Debug("initializing saga manager")
-	sagaManager := sagacore.NewSagaManager(logger, nil)
-	defer func() {
-		if err := sagaManager.Shutdown(ctx); err != nil {
-			logger.Error("saga manager shutdown error", zap.Error(err))
-		}
-	}()
-
-	logger.Debug("initializing delete user saga")
-	deleteUserSaga := sagaService.NewDeleteUserSaga(
-		logger,
-		sagaManager,
-		shoppingRepository,
-		storageClient,
-		eventPublisher,
-	)
-
 	logger.Debug("initializing kafka consumer")
 	kafkaConsumer := kafka.NewConsumer(kafkaConfig, logger)
 	shoppingConsumer := kafkaAdapter.NewShoppingKafkaConsumer(
 		kafkaConsumer,
-		deleteUserSaga,
 		logger,
 	)
+
+	logger.Debug("initializing shopping handlers")
+	shoppingHandlers := kafkaAdapter.NewShoppingHandlers(
+		shoppingService,
+		logger,
+	)
+
+	if err := shoppingHandlers.RegisterHandlers(shoppingConsumer); err != nil {
+		logger.Fatal("failed to register kafka handlers", zap.Error(err))
+	}
 
 	go func() {
 		logger.Info("starting kafka consumer")

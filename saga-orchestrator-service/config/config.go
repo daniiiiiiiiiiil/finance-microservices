@@ -28,9 +28,6 @@ func NewConfig() (*Config, error) {
 	}
 
 	jwtSecret := os.Getenv("JWT_SECRET")
-	if jwtSecret == "" {
-		return nil, fmt.Errorf("JWT_SECRET is required")
-	}
 
 	jwtDuration := os.Getenv("JWT_DURATION")
 	if jwtDuration == "" {

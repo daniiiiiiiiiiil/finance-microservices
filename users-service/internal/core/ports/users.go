@@ -9,10 +9,12 @@ import (
 
 type UsersRepositoryInterface interface {
 	GetUser(ctx context.Context, id int) (domain.User, error)
+	GetUserTx(ctx context.Context, tx pool.Tx, id int) (domain.User, error)
 	DeleteUserTx(ctx context.Context, tx pool.Tx, id int) error
 	PatchUser(ctx context.Context, id int, patch domain.User) (domain.User, error)
 	GetUserByEmail(ctx context.Context, email string) (domain.User, error)
 	CreateUser(ctx context.Context, user domain.User) (int, error)
+	CreateUserTx(ctx context.Context, tx pool.Tx, user domain.User) (int, error)
 	ListUsers(ctx context.Context, limit, offset int) ([]domain.User, int, error)
 	UpdateRole(ctx context.Context, id int, isAdmin bool) (domain.User, error)
 	GetTotalUsers(ctx context.Context) (int, error)

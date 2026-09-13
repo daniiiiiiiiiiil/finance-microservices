@@ -2,11 +2,11 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 
 	"github.com/daniiiiiiiiiiil/finance-microservices/saga-orchestrator-service/internal/core/domain"
+	"github.com/daniiiiiiiiiiil/finance-microservices/saga-orchestrator-service/internal/core/repository/postgres/pool"
 )
 
 func (r *SagaRepository) GetByID(ctx context.Context, id int) (*domain.Saga, error) {
@@ -14,11 +14,11 @@ func (r *SagaRepository) GetByID(ctx context.Context, id int) (*domain.Saga, err
 	defer cancel()
 
 	query := `
-		SELECT id,saga_id,saga_type,user_id,status,current_step,
-				total_steps,error,metadata,created_at,updated_at,completed_at
+		SELECT id, saga_id, saga_type, user_id, status, current_step,
+			total_steps, error, metadata, created_at, updated_at, completed_at
 		FROM saga.sagas
 		WHERE id = $1
-`
+	`
 	var model SagaModel
 	err := r.pool.QueryRow(ctx, query, id).Scan(
 		&model.ID,
@@ -34,17 +34,17 @@ func (r *SagaRepository) GetByID(ctx context.Context, id int) (*domain.Saga, err
 		&model.UpdatedAt,
 		&model.CompletedAt)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("saga with id %d not found: %w", id, errors.New("not found"))
+		if errors.Is(err, pool.ErrNoRows) {
+			return nil, fmt.Errorf("saga with id %d: %w", id, pool.ErrNoRows)
 		}
-		return nil, fmt.Errorf("get saga by id: %w", err)
+		return nil, fmt.Errorf("get saga by id %d: %w", id, err)
 	}
 
 	saga := sagaFromModel(&model)
 
-	steps, err := r.getStepsBySagaID(ctx, id)
+	steps, err := r.getStepsBySagaID(ctx, model.ID)
 	if err != nil {
-		return nil, fmt.Errorf("get saga by id %d: %w", id, err)
+		return nil, fmt.Errorf("get steps for saga %d: %w", model.ID, err)
 	}
 	saga.Steps = steps
 	return saga, nil
@@ -55,11 +55,11 @@ func (r *SagaRepository) GetBySagaID(ctx context.Context, sagaID string) (*domai
 	defer cancel()
 
 	query := `
-		SELECT id,saga_id,saga_type,user_id,status,current_step,
-				total_steps,error,metadata,created_at,updated_at,completed_at
+		SELECT id, saga_id, saga_type, user_id, status, current_step,
+			total_steps, error, metadata, created_at, updated_at, completed_at
 		FROM saga.sagas
-		WHERE id = $1
-`
+		WHERE saga_id = $1
+	`
 
 	var model SagaModel
 	err := r.pool.QueryRow(ctx, query, sagaID).Scan(
@@ -76,16 +76,17 @@ func (r *SagaRepository) GetBySagaID(ctx context.Context, sagaID string) (*domai
 		&model.UpdatedAt,
 		&model.CompletedAt)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("saga with id %s not found: %w", sagaID, errors.New("not found"))
+		if errors.Is(err, pool.ErrNoRows) {
+			return nil, fmt.Errorf("saga with saga_id %s: %w", sagaID, pool.ErrNoRows)
 		}
-		return nil, fmt.Errorf("get saga by id %s: %w", sagaID, err)
+		return nil, fmt.Errorf("get saga by saga_id %s: %w", sagaID, err)
 	}
 
 	saga := sagaFromModel(&model)
+
 	steps, err := r.getStepsBySagaID(ctx, model.ID)
 	if err != nil {
-		return nil, fmt.Errorf("get saga by id %d: %w", model.ID, err)
+		return nil, fmt.Errorf("get steps for saga %d: %w", model.ID, err)
 	}
 	saga.Steps = steps
 	return saga, nil
@@ -108,6 +109,7 @@ func (r *SagaRepository) GetByUserID(ctx context.Context, userID int) ([]*domain
 		return nil, fmt.Errorf("get saga by user id %d: %w", userID, err)
 	}
 	defer rows.Close()
+
 	var sagas []*domain.Saga
 	for rows.Next() {
 		var model SagaModel
@@ -125,9 +127,18 @@ func (r *SagaRepository) GetByUserID(ctx context.Context, userID int) ([]*domain
 			&model.UpdatedAt,
 			&model.CompletedAt)
 		if err != nil {
-			return nil, fmt.Errorf("get saga by user id %d: %w", userID, err)
+			return nil, fmt.Errorf("scan saga by user id %d: %w", userID, err)
 		}
-		sagas = append(sagas, sagaFromModel(&model))
+
+		saga := sagaFromModel(&model)
+
+		steps, err := r.getStepsBySagaID(ctx, model.ID)
+		if err != nil {
+			return nil, fmt.Errorf("get steps for saga %d: %w", model.ID, err)
+		}
+		saga.Steps = steps
+
+		sagas = append(sagas, saga)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("get saga by user id %d: %w", userID, err)
@@ -150,7 +161,7 @@ func (r *SagaRepository) GetActive(ctx context.Context) ([]*domain.Saga, error) 
 
 	rows, err := r.pool.Query(ctx, query)
 	if err != nil {
-		return nil, fmt.Errorf("get saga active %d: %w", 1, err)
+		return nil, fmt.Errorf("get active sagas: %w", err)
 	}
 	defer rows.Close()
 
@@ -171,13 +182,23 @@ func (r *SagaRepository) GetActive(ctx context.Context) ([]*domain.Saga, error) 
 			&model.UpdatedAt,
 			&model.CompletedAt)
 		if err != nil {
-			return nil, fmt.Errorf("get saga active %d: %w", model.ID, err)
+			return nil, fmt.Errorf("scan active saga: %w", err)
 		}
-		sagas = append(sagas, sagaFromModel(&model))
+
+		saga := sagaFromModel(&model)
+
+		steps, err := r.getStepsBySagaID(ctx, model.ID)
+		if err != nil {
+			return nil, fmt.Errorf("get steps for saga %d: %w", model.ID, err)
+		}
+		saga.Steps = steps
+
+		sagas = append(sagas, saga)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("get saga active: %w", err)
+		return nil, fmt.Errorf("get active sagas rows: %w", err)
 	}
+
 	return sagas, nil
 }
 
@@ -186,15 +207,16 @@ func (r *SagaRepository) GetByStatus(ctx context.Context, status domain.Status) 
 	defer cancel()
 
 	query := `
-			SELECT id,saga_id,saga_type,user_id,status,current_step,
-				total_steps,error,metadata,created_at,updated_at,completed_at
-			FROM saga.sagas
-			WHERE status = $1
-			ORDER BY created_at ASC
-`
+		SELECT id, saga_id, saga_type, user_id, status, current_step,
+			total_steps, error, metadata, created_at, updated_at, completed_at
+		FROM saga.sagas
+		WHERE status = $1
+		ORDER BY created_at ASC
+	`
+
 	rows, err := r.pool.Query(ctx, query, status)
 	if err != nil {
-		return nil, fmt.Errorf("get saga by status: %w", err)
+		return nil, fmt.Errorf("get saga by status %s: %w", status, err)
 	}
 	defer rows.Close()
 
@@ -215,13 +237,23 @@ func (r *SagaRepository) GetByStatus(ctx context.Context, status domain.Status) 
 			&model.UpdatedAt,
 			&model.CompletedAt)
 		if err != nil {
-			return nil, fmt.Errorf("get saga by status: %w", err)
+			return nil, fmt.Errorf("scan saga by status: %w", err)
 		}
-		sagas = append(sagas, sagaFromModel(&model))
+
+		saga := sagaFromModel(&model)
+
+		steps, err := r.getStepsBySagaID(ctx, model.ID)
+		if err != nil {
+			return nil, fmt.Errorf("get steps for saga %d: %w", model.ID, err)
+		}
+		saga.Steps = steps
+
+		sagas = append(sagas, saga)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("get saga by status: %w", err)
+		return nil, fmt.Errorf("get saga by status rows: %w", err)
 	}
+
 	return sagas, nil
 }
 

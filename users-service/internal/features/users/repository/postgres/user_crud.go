@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"context"
+
 	"github.com/daniiiiiiiiiiil/finance-microservices/users-service/internal/core/domain"
 	"github.com/daniiiiiiiiiiil/finance-microservices/users-service/internal/core/repository/postgres/pool"
 	errors_core "github.com/daniiiiiiiiiiil/finance-microservices/users-service/pkg/errors"
@@ -71,6 +72,69 @@ func (r *UserRepository) GetUser(ctx context.Context, id int) (domain.User, erro
 		userModal.IsAdmin,
 		userModal.Status)
 	return UserDomain, nil
+}
+
+func (r *UserRepository) CreateUserTx(ctx context.Context, tx pool.Tx, user domain.User) (int, error) {
+	ctx, cancel := context.WithTimeout(ctx, r.pool.OpTimeout())
+	defer cancel()
+
+	query := `
+        INSERT INTO users.users (full_name, email, password_hash, phone_number, is_admin, status)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING id`
+
+	var id int
+	err := tx.QueryRow(ctx, query,
+		user.FullName,
+		user.Email,
+		user.PasswordHash,
+		user.PhoneNumber,
+		user.IsAdmin,
+		user.Status,
+	).Scan(&id)
+	if err != nil {
+		return 0, fmt.Errorf("create user tx: %w", err)
+	}
+	return id, nil
+}
+
+func (r *UserRepository) GetUserTx(ctx context.Context, tx pool.Tx, id int) (domain.User, error) {
+	ctx, cancel := context.WithTimeout(ctx, r.pool.OpTimeout())
+	defer cancel()
+
+	query := `
+        SELECT id, version, full_name, email, password_hash, phone_number, is_admin, status
+        FROM users.users
+        WHERE id = $1`
+
+	var userModel UserModel
+	err := tx.QueryRow(ctx, query, id).Scan(
+		&userModel.ID,
+		&userModel.Version,
+		&userModel.FullName,
+		&userModel.Email,
+		&userModel.Password,
+		&userModel.PhoneNumber,
+		&userModel.IsAdmin,
+		&userModel.Status,
+	)
+	if err != nil {
+		if errors.Is(err, pool.ErrNoRows) {
+			return domain.User{}, fmt.Errorf("user with id %d: %w", id, errors_core.ErrNotFound)
+		}
+		return domain.User{}, fmt.Errorf("get user tx: %w", err)
+	}
+
+	return domain.NewUser(
+		userModel.ID,
+		userModel.Version,
+		userModel.FullName,
+		userModel.Email,
+		userModel.Password,
+		userModel.PhoneNumber,
+		userModel.IsAdmin,
+		userModel.Status,
+	), nil
 }
 
 func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (domain.User, error) {

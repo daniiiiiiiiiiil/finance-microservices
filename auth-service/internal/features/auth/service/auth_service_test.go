@@ -108,6 +108,11 @@ func (m *MockBlacklist) Remove(ctx context.Context, token string) error {
 	return args.Error(0)
 }
 
+func (m *MockCredRepo) DeleteByEmail(ctx context.Context, email string) error {
+	args := m.Called(ctx, email)
+	return args.Error(0)
+}
+
 type testSuite struct {
 	service       *AuthService
 	mockCred      *MockCredRepo

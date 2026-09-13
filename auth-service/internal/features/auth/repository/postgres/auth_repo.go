@@ -61,3 +61,15 @@ func (r *AuthRepository) AdminUpdateStatus(ctx context.Context, id int, status s
 	}
 	return nil
 }
+
+func (r *AuthRepository) DeleteByEmail(ctx context.Context, email string) error {
+	ctx, cancel := context.WithTimeout(ctx, r.pool.OpTimeout())
+	defer cancel()
+
+	query := `DELETE FROM auth.credentials WHERE email = $1`
+	_, err := r.pool.Exec(ctx, query, email)
+	if err != nil {
+		return fmt.Errorf("delete credentials by email: %w", err)
+	}
+	return nil
+}
