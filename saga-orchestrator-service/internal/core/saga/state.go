@@ -1,11 +1,11 @@
 package saga
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/daniiiiiiiiiiil/finance-microservices/saga-orchestrator-service/internal/core/domain"
 	"go.uber.org/zap"
-	"golang.org/x/net/context"
 )
 
 func (m *SagaManager) LoadState(ctx context.Context, sagaID string) (*domain.Saga, error) {
