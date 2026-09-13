@@ -453,6 +453,7 @@ func TestDeleteTransaction_Success(t *testing.T) {
 	err := s.service.DeleteTransaction(ctx, 1)
 
 	assert.NoError(t, err)
+	time.Sleep(500 * time.Millisecond)
 	s.mockRepo.AssertExpectations(t)
 	s.mockOutbox.AssertExpectations(t)
 	s.mockRedis.AssertExpectations(t)
