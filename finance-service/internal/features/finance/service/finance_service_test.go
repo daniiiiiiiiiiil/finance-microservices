@@ -437,7 +437,6 @@ func TestUpdateTransaction_NotFound(t *testing.T) {
 func TestDeleteTransaction_Success(t *testing.T) {
 	s := setup()
 	ctx := context.Background()
-
 	existing := domain.Finance{
 		ID:     1,
 		UserID: 1,
