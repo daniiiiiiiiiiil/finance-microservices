@@ -16,5 +16,5 @@ type ShoppingListRepository interface {
 	DeleteShopping(ctx context.Context, tx pool.Tx, id int, userID int) error
 	DeleteShoppingNoTx(ctx context.Context, id int, userID int) error
 	CompletedShopping(ctx context.Context, tx pool.Tx, id, userID int, completed bool) error
-	GetTotalShopping(ctx context.Context, tx pool.Tx, userID int) (int, error)
+	GetTotalShopping(ctx context.Context, userID int) (int, error)
 }

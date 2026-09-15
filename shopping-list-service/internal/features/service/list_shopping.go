@@ -15,7 +15,7 @@ func (s *ShoppingService) ListShopping(ctx context.Context, limit, offset int, u
 
 	list, found := s.shoppingListCache.GetShoppingList(ctx, limit, offset)
 	if found {
-		total, err := s.shoppingRepository.GetTotalShopping(ctx, nil, userID)
+		total, err := s.shoppingRepository.GetTotalShopping(ctx, userID)
 		if err != nil {
 			return nil, 0, fmt.Errorf("error getting total shopping list: %w", err)
 		}
