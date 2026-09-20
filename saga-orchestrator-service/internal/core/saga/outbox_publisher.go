@@ -1,0 +1,77 @@
+package saga
+
+import (
+	"context"
+	"time"
+
+	"github.com/daniiiiiiiiiiil/finance-microservices/saga-orchestrator-service/internal/core/ports"
+	"github.com/daniiiiiiiiiiil/finance-microservices/saga-orchestrator-service/pkg/logger"
+	"go.uber.org/zap"
+)
+
+type OutboxPublisher struct {
+	repo      ports.SagaRepository
+	publisher ports.EventPublisher
+	logger    *logger.Logger
+}
+
+func NewOutboxPublisher(
+	repo ports.SagaRepository,
+	publisher ports.EventPublisher,
+	logger *logger.Logger,
+) *OutboxPublisher {
+	return &OutboxPublisher{
+		repo:      repo,
+		publisher: publisher,
+		logger:    logger,
+	}
+}
+
+func (p *OutboxPublisher) Start(ctx context.Context) {
+	go func() {
+		ticker := time.NewTicker(1 * time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				p.logger.Info("OutboxPublisher shutting down")
+				return
+			case <-ticker.C:
+				p.publishPending(ctx)
+			}
+		}
+	}()
+}
+
+func (p *OutboxPublisher) publishPending(ctx context.Context) {
+	events, err := p.repo.GetPendingOutbox(ctx, 100)
+	if err != nil {
+		p.logger.Error("failed to get pending events", zap.Error(err))
+		return
+	}
+
+	for _, event := range events {
+		if err := p.publisher.Publish(ctx, event.EventType, event.EventPayload); err != nil {
+			p.logger.Error("failed to send event",
+				zap.String("event_type", event.EventType),
+				zap.String("event_id", event.ID),
+				zap.Error(err))
+
+			if markErr := p.repo.MarkOutboxFailed(ctx, event.ID, err.Error()); markErr != nil {
+				p.logger.Error("failed to mark failed event", zap.Error(markErr))
+			}
+			continue
+		}
+
+		if err := p.repo.MarkOutboxProcessed(ctx, event.ID); err != nil {
+			p.logger.Error("failed to mark processed event", zap.Error(err))
+			continue
+		}
+
+		p.logger.Debug("outbox event sent",
+			zap.String("event_type", event.EventType),
+			zap.String("event_id", event.ID),
+		)
+	}
+}

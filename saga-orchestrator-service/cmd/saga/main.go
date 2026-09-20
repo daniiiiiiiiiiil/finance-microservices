@@ -57,12 +57,22 @@ func main() {
 
 	sagaRegistry := orchestrator.NewSagaRegistryImpl()
 
-	sagaManager := saga.NewSagaManager(loggerInstance, sagaRepo, sagaRegistry, eventPublisher)
+	sagaManager := saga.NewSagaManager(
+		loggerInstance,
+		sagaRepo,
+		sagaRegistry,
+		eventPublisher,
+		pool,
+	)
 	defer func() {
 		if err := sagaManager.Shutdown(ctx); err != nil {
 			loggerInstance.Error("saga manager shutdown error", zap.Error(err))
 		}
 	}()
+
+	loggerInstance.Debug("initializing outbox publisher")
+	outboxPublisher := saga.NewOutboxPublisher(sagaRepo, eventPublisher, loggerInstance)
+	outboxPublisher.Start(ctx)
 
 	deleteUserSaga := orchestrator.NewDeleteUserSaga(loggerInstance, sagaManager, eventPublisher, sagaRepo)
 	registerUserSaga := orchestrator.NewRegisterUserSaga(loggerInstance, sagaManager, eventPublisher, sagaRepo)

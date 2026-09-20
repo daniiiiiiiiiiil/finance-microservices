@@ -4,11 +4,12 @@ import (
 	"context"
 
 	"github.com/daniiiiiiiiiiil/finance-microservices/saga-orchestrator-service/internal/core/domain"
+	"github.com/daniiiiiiiiiiil/finance-microservices/saga-orchestrator-service/internal/core/repository/postgres/pool"
 )
 
 type SagaRepository interface {
 	Save(ctx context.Context, saga *domain.Saga) error
-	SaveTx(ctx context.Context, tx Tx, saga *domain.Saga) error
+	SaveTx(ctx context.Context, tx pool.Tx, saga *domain.Saga) error
 	Update(ctx context.Context, saga *domain.Saga) error
 	UpdateStatus(ctx context.Context, sagaID int, status domain.Status, errMsg string) error
 	UpdateStep(ctx context.Context, step *domain.Step) error
@@ -20,4 +21,9 @@ type SagaRepository interface {
 	GetActive(ctx context.Context) ([]*domain.Saga, error)
 	GetByStatus(ctx context.Context, status domain.Status) ([]*domain.Saga, error)
 	Delete(ctx context.Context, id int) error
+	SaveOutboxTx(ctx context.Context, tx pool.Tx, event domain.OutboxEvent) error
+	SaveOutbox(ctx context.Context, event domain.OutboxEvent) error
+	GetPendingOutbox(ctx context.Context, limit int) ([]domain.OutboxEvent, error)
+	MarkOutboxProcessed(ctx context.Context, id string) error
+	MarkOutboxFailed(ctx context.Context, id string, errMsg string) error
 }

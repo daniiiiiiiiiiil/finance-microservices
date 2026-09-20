@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/daniiiiiiiiiiil/finance-microservices/saga-orchestrator-service/internal/core/domain"
-	"github.com/daniiiiiiiiiiil/finance-microservices/saga-orchestrator-service/internal/core/ports"
+	"github.com/daniiiiiiiiiiil/finance-microservices/saga-orchestrator-service/internal/core/repository/postgres/pool"
 )
 
 func (r *SagaRepository) Save(ctx context.Context, saga *domain.Saga) error {
@@ -41,7 +41,7 @@ func (r *SagaRepository) Save(ctx context.Context, saga *domain.Saga) error {
 	return nil
 }
 
-func (r *SagaRepository) SaveTx(ctx context.Context, tx ports.Tx, saga *domain.Saga) error {
+func (r *SagaRepository) SaveTx(ctx context.Context, tx pool.Tx, saga *domain.Saga) error {
 	ctx, cancel := context.WithTimeout(ctx, r.pool.OpTimeout())
 	defer cancel()
 
@@ -55,7 +55,7 @@ func (r *SagaRepository) SaveTx(ctx context.Context, tx ports.Tx, saga *domain.S
 	model := sagaToModel(saga)
 
 	var id int
-	err := r.pool.QueryRow(ctx, query,
+	err := tx.QueryRow(ctx, query,
 		model.SagaID,
 		model.SagaType,
 		model.UserID,

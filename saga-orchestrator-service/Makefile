@@ -35,7 +35,7 @@ migrate-down:
 		-database "postgres://${SAGA_POSTGRES_USER}:${SAGA_POSTGRES_PASSWORD}@saga-postgres:5432/${SAGA_POSTGRES_DB}?sslmode=disable" \
 		down $(N)
 
-migrate-down-all:
+migrЫate-down-all:
 	@docker compose -f ../docker-compose.yml run --rm saga-postgres-migrate \
 		-path /migrations \
 		-database "postgres://${SAGA_POSTGRES_USER}:${SAGA_POSTGRES_PASSWORD}@saga-postgres:5432/${SAGA_POSTGRES_DB}?sslmode=disable" \

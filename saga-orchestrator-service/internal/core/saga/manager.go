@@ -9,6 +9,7 @@ import (
 
 	"github.com/daniiiiiiiiiiil/finance-microservices/saga-orchestrator-service/internal/core/domain"
 	"github.com/daniiiiiiiiiiil/finance-microservices/saga-orchestrator-service/internal/core/ports"
+	poolPkg "github.com/daniiiiiiiiiiil/finance-microservices/saga-orchestrator-service/internal/core/repository/postgres/pool"
 	"github.com/daniiiiiiiiiiil/finance-microservices/saga-orchestrator-service/pkg/logger"
 	"go.uber.org/zap"
 )
@@ -20,6 +21,7 @@ type SagaManager struct {
 	repo      ports.SagaRepository
 	registry  ports.SagaRegistry
 	publisher ports.EventPublisher
+	pool      poolPkg.Pool
 }
 
 func NewSagaManager(
@@ -27,6 +29,7 @@ func NewSagaManager(
 	repo ports.SagaRepository,
 	registry ports.SagaRegistry,
 	publisher ports.EventPublisher,
+	pool poolPkg.Pool,
 ) *SagaManager {
 	return &SagaManager{
 		sagas:     make(map[string]*domain.Saga),
@@ -34,6 +37,7 @@ func NewSagaManager(
 		repo:      repo,
 		registry:  registry,
 		publisher: publisher,
+		pool:      pool,
 	}
 }
 
