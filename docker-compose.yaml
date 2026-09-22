@@ -148,6 +148,33 @@ services:
     restart: always
 
 
+  clickhouse:
+    image: clickhouse/clickhouse-server:24-alpine
+    container_name: finance-clickhouse
+    networks:
+      - finance-net
+    ports:
+      - "8123:8123"
+      - "9003:9000"
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+    environment:
+      CLICKHOUSE_DB: finance
+      CLICKHOUSE_USER: finance_user
+      CLICKHOUSE_PASSWORD: finance_pass
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    healthcheck:
+      test: [ "CMD", "clickhouse-client", "--user", "finance_user", "--password", "finance_pass", "--query", "SELECT 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    restart: always
+
   auth:
     build:
       context: .
@@ -239,6 +266,12 @@ services:
       - POSTGRES_HOST=${FINANCE_POSTGRES_HOST}
       - POSTGRES_PORT=${FINANCE_POSTGRES_PORT}
       - POSTGRES_TIMEOUT=${POSTGRES_TIMEOUT}
+      - CLICKHOUSE_HOST=${CLICKHOUSE_HOST}
+      - CLICKHOUSE_PORT=${CLICKHOUSE_PORT}
+      - CLICKHOUSE_DB=${CLICKHOUSE_DB}
+      - CLICKHOUSE_USER=${CLICKHOUSE_USER}
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD}
+      - CLICKHOUSE_TIMEOUT=${CLICKHOUSE_TIMEOUT}
       - LOGGER_LEVEL=${LOGGER_LEVEL}
       - LOGGER_FOLDER=${LOGGER_FOLDER}
       - TIME_ZONE=${TIME_ZONE}
@@ -268,6 +301,7 @@ services:
       - finance-redis
       - kafka
       - minio
+      - clickhouse
 
   admin:
     build:
@@ -506,6 +540,30 @@ services:
       migrate -path /migrations -database postgres://${SAGA_POSTGRES_USER}:${SAGA_POSTGRES_PASSWORD}@saga-postgres:5432/${SAGA_POSTGRES_DB}?sslmode=disable up
       "
 
+  clickhouse-migrate:
+    image: clickhouse/clickhouse-server:24-alpine
+    container_name: finance-clickhouse-migrate
+    networks:
+      - finance-net
+    volumes:
+      - ./finance-service/clickhouse-migrations:/migrations
+    environment:
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-finance_user}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-finance_pass}
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    entrypoint: |
+      sh -c "
+        echo 'Applying ClickHouse migrations...'
+        for f in /migrations/*.sql; do
+          echo \"Applying $$f...\"
+          clickhouse-client --host $$CLICKHOUSE_HOST --user $$CLICKHOUSE_USER --password $$CLICKHOUSE_PASSWORD --multiquery < $$f
+        done
+        echo 'ClickHouse migrations applied.'
+      "
+    restart: "no"
 
   gateway:
     build:
@@ -579,6 +637,10 @@ services:
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
+
+volumes:
+  clickhouse-data:
+
 
 networks:
   finance-net:

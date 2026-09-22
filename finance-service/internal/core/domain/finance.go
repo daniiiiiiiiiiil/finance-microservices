@@ -41,13 +41,13 @@ type CategoryStat struct {
 }
 
 type Finance struct {
-	ID              int
-	Version         int
-	TypeTransaction string
-	Amount          float64
-	Category        string
-	CreatedAt       time.Time
-	UserID          int
+	ID              int       `json:"id"`
+	Version         int       `json:"version"`
+	TypeTransaction string    `json:"type_transaction"`
+	Amount          float64   `json:"amount"`
+	Category        string    `json:"category"`
+	CreatedAt       time.Time `json:"created_at"`
+	UserID          int       `json:"user_id"`
 }
 
 func NewFinance(id int, version int, typeTransaction string, amount float64, createdAt time.Time, userID int) *Finance {

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"context"
+
 	"github.com/daniiiiiiiiiiil/finance-microservices/finance-service/internal/core/domain"
 	"github.com/redis/go-redis/v9"
 )
@@ -17,7 +18,7 @@ func (s *FinanceService) GetDashboard(ctx context.Context, userID int) (domain.D
 	err := s.redis.Get(ctx, key, &dashboard)
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			dashboard, err = s.repo.GetDashboard(ctx, userID)
+			dashboard, err = s.analyticsRepo.GetDashboard(ctx, userID)
 			if err != nil {
 				return domain.Dashboard{}, fmt.Errorf("Failed to get dashboard: %w", err)
 			}

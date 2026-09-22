@@ -110,6 +110,31 @@ migrate-create:
 	@echo "Migration created in ./migrations/"
 
 
+clickhouse-up:
+	docker compose up -d clickhouse
+
+clickhouse-down:
+	docker compose down clickhouse
+
+clickhouse-logs:
+	docker compose logs -f clickhouse
+
+clickhouse-cli:
+	docker compose exec clickhouse clickhouse-client --user $${CLICKHOUSE_USER} --password $${CLICKHOUSE_PASSWORD}
+
+clickhouse-migrate:
+	@echo "Applying ClickHouse migrations..."
+	@docker compose run --rm clickhouse-migrate
+
+clickhouse-migrate-create:
+	@echo "Creating ClickHouse migration: $(name)"
+	@New-Item -ItemType File -Path .\finance-service\clickhouse-migrations\$(name).sql -Force
+	@echo "Created: finance-service/clickhouse-migrations/$(name).sql"
+
+clickhouse-query:
+	@docker compose exec clickhouse clickhouse-client --user $${CLICKHOUSE_USER} --password $${CLICKHOUSE_PASSWORD} --query "$(query)"
+
+
 s3-up:
 	docker compose up -d minio
 

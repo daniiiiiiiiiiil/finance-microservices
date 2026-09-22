@@ -12,6 +12,7 @@ var _ ports.FinanceServiceInterface = (*FinanceService)(nil)
 
 type FinanceService struct {
 	repo           ports.FinanceRepositoryInterface
+	analyticsRepo  ports.AnalyticsRepository
 	pool           pool.Pool
 	redis          ports.RedisInterface
 	eventPublisher ports.EventPublisherInterface
@@ -22,6 +23,7 @@ type FinanceService struct {
 
 func NewFinanceService(
 	repo ports.FinanceRepositoryInterface,
+	analyticsRepo ports.AnalyticsRepository,
 	pool pool.Pool,
 	redis ports.RedisInterface,
 	eventPublisher ports.EventPublisherInterface,
@@ -31,6 +33,7 @@ func NewFinanceService(
 ) *FinanceService {
 	return &FinanceService{
 		repo:           repo,
+		analyticsRepo:  analyticsRepo,
 		pool:           pool,
 		redis:          redis,
 		eventPublisher: eventPublisher,

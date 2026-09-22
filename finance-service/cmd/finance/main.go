@@ -18,8 +18,10 @@ import (
 	"github.com/daniiiiiiiiiiil/finance-microservices/finance-service/internal/core/cache"
 	grpcclient "github.com/daniiiiiiiiiiil/finance-microservices/finance-service/internal/core/grpc"
 	"github.com/daniiiiiiiiiiil/finance-microservices/finance-service/internal/core/kafka"
+	clickhousecore "github.com/daniiiiiiiiiiil/finance-microservices/finance-service/internal/core/repository/clickhouse"
 	"github.com/daniiiiiiiiiiil/finance-microservices/finance-service/internal/core/repository/postgres/pool/pgx"
 	"github.com/daniiiiiiiiiiil/finance-microservices/finance-service/internal/core/telemetry"
+	clickhouserepo "github.com/daniiiiiiiiiiil/finance-microservices/finance-service/internal/features/finance/repository/clickhouse"
 	finance_repo "github.com/daniiiiiiiiiiil/finance-microservices/finance-service/internal/features/finance/repository/postgres"
 	finance_service "github.com/daniiiiiiiiiiil/finance-microservices/finance-service/internal/features/finance/service"
 	finance_grpc "github.com/daniiiiiiiiiiil/finance-microservices/finance-service/internal/features/finance/transport/grpc"
@@ -87,6 +89,21 @@ func main() {
 		logger.Fatal("failed to create S3 client", zap.Error(err))
 	}
 
+	logger.Debug("initializing clickhouse connection")
+	chCfg := clickhousecore.NewConfigMust()
+	chConn, err := clickhousecore.NewConnection(ctx, chCfg)
+	if err != nil {
+		logger.Fatal("clickhouse connection error", zap.Error(err))
+	}
+	defer chConn.Close()
+
+	logger.Debug("clickhouse connection established",
+		zap.String("host", chCfg.Host),
+		zap.String("database", chCfg.Database),
+	)
+
+	analyticsRepo := clickhouserepo.NewDashboardRepository(chConn)
+
 	logger.Debug("initializing export service")
 	exportService := finance_service.NewExportService(financeRepository, s3Client)
 
@@ -95,6 +112,7 @@ func main() {
 
 	financeService := finance_service.NewFinanceService(
 		financeRepository,
+		analyticsRepo,
 		pool,
 		redisClient,
 		eventPublisher,

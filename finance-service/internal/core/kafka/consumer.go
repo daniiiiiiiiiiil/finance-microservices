@@ -23,11 +23,11 @@ func NewConsumer(config Config, logger logger.Logger) *Consumer {
 		Brokers:        config.Brokers,
 		GroupID:        config.ConsumerGroup,
 		Topic:          config.Topic,
-		MinBytes:       10e3,
+		MinBytes:       1,
 		MaxBytes:       10e6,
 		MaxWait:        1 * time.Second,
 		CommitInterval: time.Second,
-		StartOffset:    kafka.LastOffset,
+		StartOffset:    kafka.FirstOffset,
 	})
 	return &Consumer{
 		reader:   reader,

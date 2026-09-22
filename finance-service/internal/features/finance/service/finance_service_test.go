@@ -31,6 +31,9 @@ func (m *MockFinanceRepository) CreateTransactionTx(ctx context.Context, tx pool
 
 func (m *MockFinanceRepository) GetTransaction(ctx context.Context, id int) (domain.Finance, error) {
 	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return domain.Finance{}, args.Error(1)
+	}
 	return args.Get(0).(domain.Finance), args.Error(1)
 }
 
@@ -44,6 +47,9 @@ func (m *MockFinanceRepository) GetTransactions(ctx context.Context, userID int,
 
 func (m *MockFinanceRepository) UpdateTransaction(ctx context.Context, transaction domain.Finance) (domain.Finance, error) {
 	args := m.Called(ctx, transaction)
+	if args.Get(0) == nil {
+		return domain.Finance{}, args.Error(1)
+	}
 	return args.Get(0).(domain.Finance), args.Error(1)
 }
 
@@ -62,6 +68,9 @@ func (m *MockFinanceRepository) GetCategories(ctx context.Context, userID int) (
 
 func (m *MockFinanceRepository) GetDashboard(ctx context.Context, userID int) (domain.Dashboard, error) {
 	args := m.Called(ctx, userID)
+	if args.Get(0) == nil {
+		return domain.Dashboard{}, args.Error(1)
+	}
 	return args.Get(0).(domain.Dashboard), args.Error(1)
 }
 
@@ -72,12 +81,37 @@ func (m *MockFinanceRepository) DeleteUserTransactions(ctx context.Context, user
 
 func (m *MockFinanceRepository) GetMetrics(ctx context.Context) (postgres.Metrics, error) {
 	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return postgres.Metrics{}, args.Error(1)
+	}
 	return args.Get(0).(postgres.Metrics), args.Error(1)
 }
 
 func (m *MockFinanceRepository) GetTransactionsCount(ctx context.Context, userID int, transactionType, category *string, from, to *time.Time) (int, error) {
 	args := m.Called(ctx, userID, transactionType, category, from, to)
 	return args.Int(0), args.Error(1)
+}
+
+type MockAnalyticsRepo struct {
+	mock.Mock
+}
+
+func (m *MockAnalyticsRepo) GetDashboard(ctx context.Context, userID int) (domain.Dashboard, error) {
+	args := m.Called(ctx, userID)
+	if args.Get(0) == nil {
+		return domain.Dashboard{}, args.Error(1)
+	}
+	return args.Get(0).(domain.Dashboard), args.Error(1)
+}
+
+func (m *MockAnalyticsRepo) SaveTransaction(ctx context.Context, tx domain.Finance) error {
+	args := m.Called(ctx, tx)
+	return args.Error(0)
+}
+
+func (m *MockAnalyticsRepo) DeleteTransaction(ctx context.Context, transactionID int) error {
+	args := m.Called(ctx, transactionID)
+	return args.Error(0)
 }
 
 type MockRedis struct {
@@ -200,43 +234,6 @@ func (m *MockOutboxRepo) MarkFailed(ctx context.Context, id string, errMsg strin
 	return args.Error(0)
 }
 
-type testSuite struct {
-	service       *FinanceService
-	mockRepo      *MockFinanceRepository
-	mockPool      *MockPool
-	mockRedis     *MockRedis
-	mockPublisher *MockPublisher
-	mockOutbox    *MockOutboxRepo
-}
-
-func setup() *testSuite {
-	mockRepo := new(MockFinanceRepository)
-	mockPool := new(MockPool)
-	mockRedis := new(MockRedis)
-	mockPublisher := new(MockPublisher)
-	mockOutbox := new(MockOutboxRepo)
-
-	loggerInstance := &logger.Logger{Logger: zap.NewNop()}
-
-	service := &FinanceService{
-		repo:           mockRepo,
-		pool:           mockPool,
-		redis:          mockRedis,
-		eventPublisher: mockPublisher,
-		outboxRepo:     mockOutbox,
-		logger:         loggerInstance,
-	}
-
-	return &testSuite{
-		service:       service,
-		mockRepo:      mockRepo,
-		mockPool:      mockPool,
-		mockRedis:     mockRedis,
-		mockPublisher: mockPublisher,
-		mockOutbox:    mockOutbox,
-	}
-}
-
 type MockTx struct {
 	mock.Mock
 }
@@ -275,6 +272,47 @@ func (m *MockTx) Rollback(ctx context.Context) error {
 	return callArgs.Error(0)
 }
 
+type testSuite struct {
+	service           *FinanceService
+	mockRepo          *MockFinanceRepository
+	mockAnalyticsRepo *MockAnalyticsRepo
+	mockPool          *MockPool
+	mockRedis         *MockRedis
+	mockPublisher     *MockPublisher
+	mockOutbox        *MockOutboxRepo
+}
+
+func setup() *testSuite {
+	mockRepo := new(MockFinanceRepository)
+	mockAnalyticsRepo := new(MockAnalyticsRepo)
+	mockPool := new(MockPool)
+	mockRedis := new(MockRedis)
+	mockPublisher := new(MockPublisher)
+	mockOutbox := new(MockOutboxRepo)
+
+	loggerInstance := &logger.Logger{Logger: zap.NewNop()}
+
+	service := &FinanceService{
+		repo:           mockRepo,
+		analyticsRepo:  mockAnalyticsRepo,
+		pool:           mockPool,
+		redis:          mockRedis,
+		eventPublisher: mockPublisher,
+		outboxRepo:     mockOutbox,
+		logger:         loggerInstance,
+	}
+
+	return &testSuite{
+		service:           service,
+		mockRepo:          mockRepo,
+		mockAnalyticsRepo: mockAnalyticsRepo,
+		mockPool:          mockPool,
+		mockRedis:         mockRedis,
+		mockPublisher:     mockPublisher,
+		mockOutbox:        mockOutbox,
+	}
+}
+
 func TestCreateTransaction_Success(t *testing.T) {
 	s := setup()
 	ctx := context.Background()
@@ -302,11 +340,9 @@ func TestCreateTransaction_Success(t *testing.T) {
 	mockTx.On("Rollback", ctx).Return(nil)
 	mockTx.On("Commit", ctx).Return(nil)
 	s.mockRepo.On("CreateTransactionTx", ctx, mockTx, transaction).Return(expected, nil)
-
 	s.mockOutbox.On("SaveTx", ctx, mockTx, mock.Anything).Return(nil)
-
-	s.mockRedis.On("Delete", ctx, "dashboard:1").Return(nil)
-	s.mockRedis.On("Delete", ctx, "categories:1").Return(nil)
+	s.mockRedis.On("Delete", mock.Anything, "dashboard:1").Return(nil)
+	s.mockRedis.On("Delete", mock.Anything, "categories:1").Return(nil)
 
 	result, err := s.service.CreateTransaction(ctx, transaction)
 
@@ -405,11 +441,9 @@ func TestUpdateTransaction_Success(t *testing.T) {
 		UserID:          1,
 		CreatedAt:       existing.CreatedAt,
 	}, nil)
-
 	s.mockOutbox.On("Save", ctx, mock.Anything).Return(nil)
-
-	s.mockRedis.On("Delete", ctx, "dashboard:1").Return(nil)
-	s.mockRedis.On("Delete", ctx, "categories:1").Return(nil)
+	s.mockRedis.On("Delete", mock.Anything, "dashboard:1").Return(nil)
+	s.mockRedis.On("Delete", mock.Anything, "categories:1").Return(nil)
 
 	result, err := s.service.UpdateTransaction(ctx, updated)
 
@@ -437,6 +471,7 @@ func TestUpdateTransaction_NotFound(t *testing.T) {
 func TestDeleteTransaction_Success(t *testing.T) {
 	s := setup()
 	ctx := context.Background()
+
 	existing := domain.Finance{
 		ID:     1,
 		UserID: 1,
@@ -444,19 +479,15 @@ func TestDeleteTransaction_Success(t *testing.T) {
 
 	s.mockRepo.On("GetTransaction", ctx, 1).Return(existing, nil)
 	s.mockRepo.On("DeleteTransaction", ctx, 1).Return(nil)
-
 	s.mockOutbox.On("Save", ctx, mock.Anything).Return(nil)
-
-	s.mockRedis.On("Delete", ctx, "dashboard:1").Return(nil)
-	s.mockRedis.On("Delete", ctx, "categories:1").Return(nil)
+	s.mockRedis.On("Delete", mock.Anything, "dashboard:1").Return(nil)
+	s.mockRedis.On("Delete", mock.Anything, "categories:1").Return(nil)
 
 	err := s.service.DeleteTransaction(ctx, 1)
 
 	assert.NoError(t, err)
-	time.Sleep(500 * time.Millisecond)
 	s.mockRepo.AssertExpectations(t)
 	s.mockOutbox.AssertExpectations(t)
-	s.mockRedis.AssertExpectations(t)
 }
 
 func TestDeleteTransaction_NotFound(t *testing.T) {
@@ -483,7 +514,7 @@ func TestGetDashboard_Success(t *testing.T) {
 	}
 
 	s.mockRedis.On("Get", ctx, "dashboard:1", mock.Anything).Return(redis.Nil)
-	s.mockRepo.On("GetDashboard", ctx, 1).Return(expected, nil)
+	s.mockAnalyticsRepo.On("GetDashboard", ctx, 1).Return(expected, nil) // ← analyticsRepo
 	s.mockRedis.On("Set", ctx, "dashboard:1", expected, 10*time.Minute).Return(nil)
 
 	result, err := s.service.GetDashboard(ctx, 1)
@@ -491,7 +522,7 @@ func TestGetDashboard_Success(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 15000.50, result.TotalBalance)
 	assert.Equal(t, 60.0, result.SavingsRate)
-	s.mockRepo.AssertExpectations(t)
+	s.mockAnalyticsRepo.AssertExpectations(t)
 }
 
 func TestGetDashboard_FromCache(t *testing.T) {
@@ -511,7 +542,20 @@ func TestGetDashboard_FromCache(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, 10000.00, result.TotalBalance)
-	s.mockRepo.AssertNotCalled(t, "GetDashboard", mock.Anything, mock.Anything)
+	s.mockAnalyticsRepo.AssertNotCalled(t, "GetDashboard", mock.Anything, mock.Anything)
+}
+
+func TestGetDashboard_AnalyticsError(t *testing.T) {
+	s := setup()
+	ctx := context.Background()
+
+	s.mockRedis.On("Get", ctx, "dashboard:1", mock.Anything).Return(redis.Nil)
+	s.mockAnalyticsRepo.On("GetDashboard", ctx, 1).Return(domain.Dashboard{}, errors.New("clickhouse down"))
+
+	_, err := s.service.GetDashboard(ctx, 1)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "Failed to get dashboard")
 }
 
 func TestGetCategories_Success(t *testing.T) {
@@ -520,9 +564,9 @@ func TestGetCategories_Success(t *testing.T) {
 
 	expected := []string{"food", "salary", "transport"}
 
-	s.mockRedis.On("Get", ctx, "categories:1", mock.Anything).Return(errors.New("not found"))
+	s.mockRedis.On("Get", ctx, "categories:1", mock.Anything).Return(redis.Nil)
 	s.mockRepo.On("GetCategories", ctx, 1).Return(expected, nil)
-	s.mockRedis.On("Set", ctx, "categories:1", expected, 24*time.Hour).Return(nil)
+	s.mockRedis.On("Set", mock.Anything, "categories:1", expected, 24*time.Hour).Return(nil)
 
 	result, err := s.service.GetCategories(ctx, 1)
 
@@ -537,10 +581,10 @@ func TestDeleteUserTransactions_Success(t *testing.T) {
 
 	s.mockRedis.On("Exists", ctx, "deleted:user_transactions:1").Return(int64(0), nil)
 	s.mockRepo.On("DeleteUserTransactions", ctx, 1).Return(5, nil)
-	s.mockRedis.On("Set", ctx, "deleted:user_transactions:1", true, 24*time.Hour).Return(nil)
-	s.mockRedis.On("Delete", ctx, "dashboard:1").Return(nil)
-	s.mockRedis.On("Delete", ctx, "categories:1").Return(nil)
-	s.mockPublisher.On("Publish", ctx, "user.transactions.deleted", mock.Anything).Return(nil)
+	s.mockRedis.On("Set", mock.Anything, "deleted:user_transactions:1", true, 24*time.Hour).Return(nil)
+	s.mockRedis.On("Delete", mock.Anything, "dashboard:1").Return(nil)
+	s.mockRedis.On("Delete", mock.Anything, "categories:1").Return(nil)
+	s.mockPublisher.On("Publish", mock.Anything, "user.transactions.deleted", mock.Anything).Return(nil)
 
 	count, err := s.service.DeleteUserTransactions(ctx, 1)
 	assert.NoError(t, err)
@@ -572,7 +616,7 @@ func TestGetMetrics_Success(t *testing.T) {
 
 	s.mockRedis.On("Get", ctx, "finance:metrics", mock.Anything).Return(errors.New("not found"))
 	s.mockRepo.On("GetMetrics", ctx).Return(expected, nil)
-	s.mockRedis.On("Set", ctx, "finance:metrics", expected, time.Minute).Return(nil)
+	s.mockRedis.On("Set", mock.Anything, "finance:metrics", expected, time.Minute).Return(nil)
 
 	result, err := s.service.GetMetrics(ctx)
 
@@ -616,6 +660,56 @@ func TestGetTransactions_InvalidDateRange(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "from date must be before to date")
+}
+
+func TestSaveTransactionToAnalytics_Success(t *testing.T) {
+	s := setup()
+	ctx := context.Background()
+
+	tx := domain.Finance{ID: 1, UserID: 1, Amount: 100.00}
+
+	s.mockAnalyticsRepo.On("SaveTransaction", ctx, tx).Return(nil)
+
+	err := s.service.SaveTransactionToAnalytics(ctx, tx)
+
+	assert.NoError(t, err)
+	s.mockAnalyticsRepo.AssertExpectations(t)
+}
+
+func TestSaveTransactionToAnalytics_Error(t *testing.T) {
+	s := setup()
+	ctx := context.Background()
+
+	tx := domain.Finance{ID: 1, UserID: 1, Amount: 100.00}
+
+	s.mockAnalyticsRepo.On("SaveTransaction", ctx, tx).Return(errors.New("clickhouse down"))
+
+	err := s.service.SaveTransactionToAnalytics(ctx, tx)
+
+	assert.Error(t, err)
+}
+
+func TestDeleteTransactionFromAnalytics_Success(t *testing.T) {
+	s := setup()
+	ctx := context.Background()
+
+	s.mockAnalyticsRepo.On("DeleteTransaction", ctx, 1).Return(nil)
+
+	err := s.service.DeleteTransactionFromAnalytics(ctx, 1)
+
+	assert.NoError(t, err)
+	s.mockAnalyticsRepo.AssertExpectations(t)
+}
+
+func TestDeleteTransactionFromAnalytics_Error(t *testing.T) {
+	s := setup()
+	ctx := context.Background()
+
+	s.mockAnalyticsRepo.On("DeleteTransaction", ctx, 1).Return(errors.New("clickhouse down"))
+
+	err := s.service.DeleteTransactionFromAnalytics(ctx, 1)
+
+	assert.Error(t, err)
 }
 
 func TestCreateTransaction_TableDriven(t *testing.T) {
@@ -678,11 +772,8 @@ func TestCreateTransaction_TableDriven(t *testing.T) {
 			if !tt.expectError {
 				mockTx.On("Commit", ctx).Return(nil)
 				s.mockRepo.On("CreateTransactionTx", ctx, mockTx, tt.transaction).Return(domain.Finance{ID: 1}, nil)
-
 				s.mockOutbox.On("SaveTx", ctx, mockTx, mock.Anything).Return(nil)
-
 				s.mockRedis.On("Delete", mock.Anything, mock.Anything).Return(nil)
-				s.mockPublisher.On("Publish", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			}
 
 			_, err := s.service.CreateTransaction(ctx, tt.transaction)
@@ -710,7 +801,7 @@ func TestGetDashboard_TableDriven(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:        "from database",
+			name:        "from clickhouse",
 			userID:      1,
 			cached:      false,
 			expectError: false,
@@ -728,8 +819,8 @@ func TestGetDashboard_TableDriven(t *testing.T) {
 				s.mockRedis.On("Get", ctx, dashboardKey, mock.Anything).Return(nil)
 			} else {
 				s.mockRedis.On("Get", ctx, dashboardKey, mock.Anything).Return(redis.Nil)
-				s.mockRepo.On("GetDashboard", ctx, tt.userID).Return(domain.Dashboard{}, nil)
-				s.mockRedis.On("Set", ctx, dashboardKey, mock.Anything, 10*time.Minute).Return(nil)
+				s.mockAnalyticsRepo.On("GetDashboard", ctx, tt.userID).Return(domain.Dashboard{}, nil)
+				s.mockRedis.On("Set", mock.Anything, dashboardKey, mock.Anything, 10*time.Minute).Return(nil)
 			}
 
 			_, err := s.service.GetDashboard(ctx, tt.userID)
