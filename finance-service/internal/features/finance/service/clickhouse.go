@@ -1,9 +1,10 @@
 package service
 
 import (
+	"context"
+
 	"github.com/daniiiiiiiiiiil/finance-microservices/finance-service/internal/core/domain"
 	"go.uber.org/zap"
-	"golang.org/x/net/context"
 )
 
 func (s *FinanceService) SaveTransactionToAnalytics(ctx context.Context, tx domain.Finance) error {
