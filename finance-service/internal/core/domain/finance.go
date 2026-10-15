@@ -27,7 +27,7 @@ type DailyStat struct {
 }
 
 type RecentTransaction struct {
-	ID        int       `json:"id"`
+	ID        uint64    `json:"id"`
 	Type      string    `json:"type"`
 	Amount    float64   `json:"amount"`
 	Category  string    `json:"category"`

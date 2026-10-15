@@ -15,27 +15,26 @@ func NewWebService(repo *WebRepository) *WebService {
 }
 
 func (s *WebService) GetHTMLFile(filename string) ([]byte, error) {
-	paths := []string{
-		filepath.Join(".", "public", filename),
-		filepath.Join("..", "public", filename),
+	filename = filepath.Clean(filepath.FromSlash(filename))
+	if filename == "." || filepath.IsAbs(filename) || filename == ".." || len(filename) >= 3 && filename[:3] == ".."+string(filepath.Separator) {
+		return nil, fmt.Errorf("invalid public file path")
 	}
-
+	paths := []string{}
 	if projectRoot := os.Getenv("PROJECT_ROOT"); projectRoot != "" {
-		paths = append([]string{filepath.Join(projectRoot, "public", filename)}, paths...)
+		paths = append(paths, filepath.Join(projectRoot, "public", filename))
 	}
-
+	paths = append(paths, filepath.Join("public", filename), filepath.Join("..", "public", filename))
 	var lastErr error
 	for _, path := range paths {
-		html, err := s.repo.GetFile(path)
+		content, err := s.repo.GetFile(path)
 		if err == nil {
-			return html, nil
+			return content, nil
 		}
 		lastErr = err
 	}
-
 	return nil, fmt.Errorf("get file from repository: %w", lastErr)
 }
 
 func (s *WebService) GetMainPage() ([]byte, error) {
-	return s.GetHTMLFile("/index.html")
+	return s.GetHTMLFile("index.html")
 }
