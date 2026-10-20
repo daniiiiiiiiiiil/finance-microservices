@@ -35,6 +35,7 @@ const (
 	FinanceService_ExportTXT_FullMethodName             = "/finance.FinanceService/ExportTXT"
 	FinanceService_ExportPDF_FullMethodName             = "/finance.FinanceService/ExportPDF"
 	FinanceService_DownloadExport_FullMethodName        = "/finance.FinanceService/DownloadExport"
+	FinanceService_GetAnalytics_FullMethodName          = "/finance.FinanceService/GetAnalytics"
 )
 
 // FinanceServiceClient is the client API for FinanceService service.
@@ -55,6 +56,7 @@ type FinanceServiceClient interface {
 	ExportTXT(ctx context.Context, in *ExportRequest, opts ...grpc.CallOption) (*ExportResponse, error)
 	ExportPDF(ctx context.Context, in *ExportRequest, opts ...grpc.CallOption) (*ExportResponse, error)
 	DownloadExport(ctx context.Context, in *DownloadExportRequest, opts ...grpc.CallOption) (*DownloadExportResponse, error)
+	GetAnalytics(ctx context.Context, in *GetAnalyticsRequest, opts ...grpc.CallOption) (*AnalyticsResponse, error)
 }
 
 type financeServiceClient struct {
@@ -205,6 +207,16 @@ func (c *financeServiceClient) DownloadExport(ctx context.Context, in *DownloadE
 	return out, nil
 }
 
+func (c *financeServiceClient) GetAnalytics(ctx context.Context, in *GetAnalyticsRequest, opts ...grpc.CallOption) (*AnalyticsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AnalyticsResponse)
+	err := c.cc.Invoke(ctx, FinanceService_GetAnalytics_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FinanceServiceServer is the server API for FinanceService service.
 // All implementations must embed UnimplementedFinanceServiceServer
 // for forward compatibility.
@@ -223,6 +235,7 @@ type FinanceServiceServer interface {
 	ExportTXT(context.Context, *ExportRequest) (*ExportResponse, error)
 	ExportPDF(context.Context, *ExportRequest) (*ExportResponse, error)
 	DownloadExport(context.Context, *DownloadExportRequest) (*DownloadExportResponse, error)
+	GetAnalytics(context.Context, *GetAnalyticsRequest) (*AnalyticsResponse, error)
 	mustEmbedUnimplementedFinanceServiceServer()
 }
 
@@ -274,6 +287,9 @@ func (UnimplementedFinanceServiceServer) ExportPDF(context.Context, *ExportReque
 }
 func (UnimplementedFinanceServiceServer) DownloadExport(context.Context, *DownloadExportRequest) (*DownloadExportResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DownloadExport not implemented")
+}
+func (UnimplementedFinanceServiceServer) GetAnalytics(context.Context, *GetAnalyticsRequest) (*AnalyticsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetAnalytics not implemented")
 }
 func (UnimplementedFinanceServiceServer) mustEmbedUnimplementedFinanceServiceServer() {}
 func (UnimplementedFinanceServiceServer) testEmbeddedByValue()                        {}
@@ -548,6 +564,24 @@ func _FinanceService_DownloadExport_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FinanceService_GetAnalytics_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAnalyticsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FinanceServiceServer).GetAnalytics(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FinanceService_GetAnalytics_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FinanceServiceServer).GetAnalytics(ctx, req.(*GetAnalyticsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // FinanceService_ServiceDesc is the grpc.ServiceDesc for FinanceService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -610,6 +644,10 @@ var FinanceService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DownloadExport",
 			Handler:    _FinanceService_DownloadExport_Handler,
+		},
+		{
+			MethodName: "GetAnalytics",
+			Handler:    _FinanceService_GetAnalytics_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

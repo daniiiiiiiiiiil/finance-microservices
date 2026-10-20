@@ -114,6 +114,39 @@ func (m *MockAnalyticsRepo) DeleteTransaction(ctx context.Context, transactionID
 	return args.Error(0)
 }
 
+func (m *MockAnalyticsRepo) GetAnalytics(
+	ctx context.Context,
+	userID int,
+	period domain.AnalyticsPeriod,
+) (domain.Analytics, error) {
+	args := m.Called(ctx, userID, period)
+	if args.Get(0) == nil {
+		return domain.Analytics{}, args.Error(1)
+	}
+	return args.Get(0).(domain.Analytics), args.Error(1)
+}
+func (m *MockAnalyticsRepo) GetTransactionAnalytics(
+	ctx context.Context,
+	userID int,
+	period string,
+) (domain.Analytics, error) {
+	args := m.Called(ctx, userID, period)
+
+	if args.Get(0) == nil {
+		return domain.Analytics{}, args.Error(1)
+	}
+
+	return args.Get(0).(domain.Analytics), args.Error(1)
+}
+
+func (m *MockFinanceRepository) GetAnalytics(ctx context.Context, userID int, period string) (domain.Analytics, error) {
+	args := m.Called(ctx, userID, period)
+	if args.Get(0) == nil {
+		return domain.Analytics{}, args.Error(1)
+	}
+	return args.Get(0).(domain.Analytics), args.Error(1)
+}
+
 type MockRedis struct {
 	mock.Mock
 }

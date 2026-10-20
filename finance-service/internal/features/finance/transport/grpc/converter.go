@@ -67,3 +67,34 @@ func convertDashboardToProto(dashboard domain.Dashboard) *gen.DashboardResponse 
 		TopCategories:      topCategories,
 	}
 }
+func convertAnalyticsToProto(analytics domain.Analytics) *gen.AnalyticsResponse {
+	series := make([]*gen.AnalyticsPoint, 0, len(analytics.Series))
+	for _, point := range analytics.Series {
+		series = append(series, &gen.AnalyticsPoint{
+			Period:   timestamppb.New(point.Period),
+			Income:   point.Income,
+			Expenses: point.Expenses,
+		})
+	}
+
+	categories := make([]*gen.CategoryStat, 0, len(analytics.TopCategories))
+	for _, category := range analytics.TopCategories {
+		categories = append(categories, &gen.CategoryStat{
+			Category:   category.Category,
+			Total:      category.Total,
+			Percentage: category.Percentage,
+		})
+	}
+
+	return &gen.AnalyticsResponse{
+		Period:        analytics.Period,
+		From:          timestamppb.New(analytics.From),
+		To:            timestamppb.New(analytics.To),
+		Income:        analytics.Income,
+		Expenses:      analytics.Expenses,
+		Net:           analytics.Net,
+		SavingsRate:   analytics.SavingsRate,
+		Series:        series,
+		TopCategories: categories,
+	}
+}

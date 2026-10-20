@@ -18,6 +18,7 @@ type FinanceServiceInterface interface {
 	DeleteTransaction(ctx context.Context, id int) error
 	GetCategories(ctx context.Context, userID int) ([]string, error)
 	GetDashboard(ctx context.Context, userID int) (domain.Dashboard, error)
+	GetAnalytics(ctx context.Context, userID int, period string) (domain.Analytics, error)
 	DeleteUserTransactions(ctx context.Context, userID int) (int, error)
 	GetMetrics(ctx context.Context) (postgres.Metrics, error)
 }
@@ -30,6 +31,7 @@ type FinanceRepository interface {
 	DeleteTransaction(ctx context.Context, id int) error
 	GetCategories(ctx context.Context, userID int) ([]string, error)
 	GetDashboard(ctx context.Context, userID int) (domain.Dashboard, error)
+	GetAnalytics(ctx context.Context, userID int, period string) (domain.Analytics, error)
 	DeleteUserTransactions(ctx context.Context, userID int) (int, error)
 	GetMetrics(ctx context.Context) (postgres.Metrics, error)
 	GetTransactionsCount(ctx context.Context, userID int, transactionType, category *string, from, to *time.Time) (int, error)

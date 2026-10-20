@@ -1,16 +1,208 @@
 <!doctype html>
-<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f3f5fa"><meta name="description" content="FinGoals — личные финансы"><title>FinGoals — финансовый кабинет</title><link rel="stylesheet" href="./assets/styles.css"><script defer src="./assets/app.js"></script></head>
-<body><div class="app-shell">
-<aside class="sidebar" id="sidebar"><a class="brand" href="#overview"><span class="brand-mark"><i></i><i></i><i></i><i></i></span><b>Fin<span>goals</span></b></a><div class="mobile-close"><button id="closeSidebar" aria-label="Закрыть меню">×</button></div><div class="profile-greeting"><span class="eyebrow">ВАШИ ФИНАНСЫ</span><h2>С возвращением!</h2><p>Данные загружаются из вашего аккаунта.</p></div><nav class="nav-group" aria-label="Главное меню"><span class="nav-caption">РАЗДЕЛЫ</span><a class="nav-link active" href="#overview" data-page="overview"><span class="nav-icon">◫</span>Обзор</a><a class="nav-link" href="#transactions" data-page="transactions"><span class="nav-icon">↕</span>Транзакции</a><a class="nav-link" href="#analytics" data-page="analytics"><span class="nav-icon">▥</span>Аналитика</a><a class="nav-link" href="#currency" data-page="currency"><span class="nav-icon">⇄</span>Курсы валют</a></nav><div class="sidebar-bottom"><span class="online-dot"></span><span id="connectionStatus">Ожидание подключения к API</span></div></aside><div class="sidebar-backdrop" id="backdrop"></div>
-<main class="main-area"><header class="topbar"><button class="mobile-menu" id="openSidebar" aria-label="Открыть меню">☰</button><div class="top-tabs"><button class="top-tab active" data-page="overview">Обзор</button><button class="top-tab" data-page="transactions">Транзакции</button><button class="top-tab" data-page="analytics">Аналитика</button><button class="top-tab" data-page="currency">Курсы валют</button></div><div class="top-actions"><button class="round-btn" id="refreshBtn" title="Обновить данные">↻</button><button class="user-chip" id="userMenu" title="Выйти из аккаунта"><span class="avatar" id="avatar">F</span><span class="user-name"><b id="userName">Мой аккаунт</b><small>Личный аккаунт</small></span><span class="chevron">⌄</span></button></div></header>
-<div class="page-heading"><div><div class="breadcrumb">ЛИЧНЫЙ КАБИНЕТ <span>/</span> ОБЗОР</div><h1 id="pageTitle">Финансовый обзор</h1><p id="pageSubtitle">Только реальные данные из вашего аккаунта.</p></div><div class="heading-actions"><label class="select-wrap"><span class="sr-only">Период</span><select id="period"><option value="week">Эта неделя</option><option value="month" selected>Этот месяц</option><option value="year">Этот год</option><option value="all">Всё время</option></select></label><button class="btn btn-primary" id="addTransactionBtn" type="button">＋ <span>Добавить операцию</span></button><button class="btn btn-outline" id="exportBtn">↧ <span>Экспорт CSV</span></button></div></div>
-<section id="overviewView" class="page-view"><div class="summary-cards overview-summary"><article class="panel summary-card"><small>Общий баланс</small><strong id="balanceAmount">—</strong><span class="summary-caption">По данным финансового сервиса</span></article><article class="panel summary-card"><small>Доходы за период</small><strong id="incomeAmount" class="positive-text">—</strong><span class="summary-caption">По загруженным транзакциям</span></article><article class="panel summary-card"><small>Расходы за период</small><strong id="expenseAmount" class="negative-text">—</strong><span class="summary-caption">По загруженным транзакциям</span></article></div>
-<div class="dashboard-grid charts-grid"><article class="panel chart-panel"><div class="panel-head"><div><h3>Доходы и расходы</h3><p>Расчёт по реальным транзакциям</p></div></div><div id="flowChart" class="real-chart" aria-live="polite"><p class="chart-empty">Загрузка данных…</p></div></article><article class="panel chart-panel"><div class="panel-head"><div><h3>Расходы по категориям</h3><p>Сумма расходов за выбранный период</p></div></div><div id="categoryChart" class="category-chart"><p class="chart-empty">Загрузка данных…</p></div></article></div>
-<section class="panel transactions-panel"><div class="panel-head"><div><h3>Последние операции</h3><p>Данные получены с сервера</p></div><button class="btn btn-outline" data-page="transactions">Все операции ↗</button></div><div class="table-scroll"><table><thead><tr><th>Операция</th><th>Категория</th><th>Дата</th><th>Сумма</th></tr></thead><tbody id="recentRows"><tr><td colspan="4" class="empty-state">Загрузка…</td></tr></tbody></table></div></section></section>
-<section id="transactionsView" class="page-view" hidden><div class="tool-row"><input id="searchRecords" class="control" placeholder="Поиск по категории или типу операции…" aria-label="Поиск по транзакциям"><select id="typeRecords" class="control" aria-label="Тип транзакции"><option value="all">Все операции</option><option value="income">Доходы</option><option value="expense">Расходы</option></select><button class="btn btn-outline" id="clearSearch">Сбросить</button><button class="btn btn-primary" id="addTransactionInline" type="button">＋ Добавить</button></div><div class="summary-cards"><article class="panel summary-card"><small>Доходы за период</small><strong id="txIncome" class="positive-text">—</strong></article><article class="panel summary-card"><small>Расходы за период</small><strong id="txExpense" class="negative-text">—</strong></article><article class="panel summary-card"><small>Разница</small><strong id="txDifference">—</strong></article></div><section class="panel table-panel"><div class="table-scroll"><table><thead><tr><th>Тип</th><th>Категория</th><th>Дата</th><th>Сумма</th><th>Действия</th></tr></thead><tbody id="transactionRows"><tr><td colspan="5" class="empty-state">Загрузка…</td></tr></tbody></table></div></section></section>
-<section id="analyticsView" class="page-view" hidden><div class="summary-cards"><article class="panel summary-card"><small>Всего доходов</small><strong id="analyticsIncome" class="positive-text">—</strong></article><article class="panel summary-card"><small>Всего расходов</small><strong id="analyticsExpense" class="negative-text">—</strong></article><article class="panel summary-card"><small>Разница</small><strong id="analyticsDifference">—</strong></article></div><div class="dashboard-grid charts-grid"><article class="panel chart-panel"><div class="panel-head"><div><h3>Динамика операций</h3><p>По датам из финансового сервиса</p></div></div><div id="analyticsFlowChart" class="real-chart"></div></article><article class="panel chart-panel"><div class="panel-head"><div><h3>Структура расходов</h3><p>Реальные суммы по категориям</p></div></div><div id="analyticsCategoryChart" class="category-chart"></div></article></div></section>
-<section id="currencyView" class="page-view" hidden><div class="currency-layout"><article class="panel currency-panel"><div class="panel-head"><div><h3>Конвертер валют</h3><p>Расчёт выполняется на сервере Currency Service</p></div></div><div class="currency-form"><label>Сумма<input id="currencyAmount" class="control" type="number" min="0.000001" step="any" value="100" inputmode="decimal"></label><div class="currency-pair"><label>Из валюты<select id="currencyFrom" class="control"><option>RUB</option><option>USD</option><option>EUR</option><option>GBP</option><option>CNY</option><option>TRY</option><option>KZT</option></select></label><button id="currencySwap" class="swap-button" type="button" aria-label="Поменять валюты местами">⇄</button><label>В валюту<select id="currencyTo" class="control"><option>USD</option><option>RUB</option><option>EUR</option><option>GBP</option><option>CNY</option><option>TRY</option><option>KZT</option></select></label></div><button class="btn btn-primary" id="currencyConvert" type="button">Конвертировать</button><div class="currency-result" id="currencyResult" aria-live="polite">Введите сумму и нажмите «Конвертировать».</div><p class="currency-stamp" id="currencyStamp"></p></div></article><article class="panel currency-panel"><div class="panel-head"><div><h3>Курсы валют</h3><p>Загрузка через GET /api/v1/currency/{base}</p></div><label class="base-select">Базовая валюта<select id="ratesBase" class="control"><option>RUB</option><option>USD</option><option>EUR</option><option>GBP</option><option>CNY</option><option>TRY</option><option>KZT</option></select></label></div><button class="btn btn-outline" id="loadRates" type="button">Обновить курсы</button><div id="ratesList" class="rates-list"><p class="chart-empty">Курсы будут загружены с сервера после входа.</p></div><p id="ratesStamp" class="currency-stamp"></p></article></div></section>
-<footer class="footer"><span> 2026 FinGoals</span><span>Статистика строится по данным API <b>✦</b></span><a href="#overview" data-page="overview">Наверх ↑</a></footer>
-</main></div>
-<div id="authGate" class="auth-gate" aria-modal="true" role="dialog"><form id="authForm" class="auth-card"><div class="auth-brand"><span class="auth-logo">F</span><span>FinGoals</span></div><div class="auth-eyebrow">ЛИЧНЫЕ ФИНАНСЫ</div><h1 id="authTitle">С возвращением</h1><p id="authSubtitle">Войдите, чтобы загрузить ваши данные с сервера.</p><label id="authNameWrap" class="auth-field" hidden>Имя и фамилия<input id="authName" autocomplete="name" placeholder="Иван Иванов"></label><label class="auth-field">Email<input id="authEmail" type="email" autocomplete="email" required placeholder="you@example.com"></label><label class="auth-field">Пароль<input id="authPassword" type="password" autocomplete="current-password" required minlength="8" placeholder="Не менее 8 символов"></label><label id="authPhoneWrap" class="auth-field" hidden>Телефон (необязательно)<input id="authPhone" type="tel" autocomplete="tel" placeholder="+7…"></label><p id="authError" class="auth-error" role="alert"></p><button id="authSubmit" class="btn btn-primary auth-submit" type="submit">Войти</button><p class="auth-switch"><span id="authSwitchText">Впервые в FinGoals?</span> <button id="authSwitch" type="button">Создать аккаунт</button></p><label class="auth-config">Адрес API <input id="apiBase" type="url" placeholder="http://localhost:8081" value="http://localhost:8081"></label></form></div>
-<div class="toast" id="toast" role="status" aria-live="polite"></div></body></html>
+<html lang="ru">
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f3f5fa">
+    <meta name="description" content="FinGoals — личные финансы"><title>FinGoals — финансовый кабинет</title>
+    <link rel="stylesheet" href="./assets/styles.css">
+    <script defer src="./assets/app.js"></script>
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+        <a class="brand" href="#overview"><span class="brand-mark"><i></i><i></i><i></i><i></i></span><b>Fin<span>goals</span></b></a>
+        <div class="mobile-close"><button id="closeSidebar" aria-label="Закрыть меню">×</button></div>
+        <div class="profile-greeting"><span class="eyebrow">ВАШИ ФИНАНСЫ</span><h2>С возвращением!</h2><p>Данные загружаются из вашего аккаунта.</p></div>
+        <nav class="nav-group" aria-label="Главное меню">
+            <span class="nav-caption">РАЗДЕЛЫ</span>
+            <a class="nav-link active" href="#overview" data-page="overview"><span class="nav-icon">◫</span>Обзор</a>
+            <a class="nav-link" href="#transactions" data-page="transactions"><span class="nav-icon">↕</span>Транзакции</a>
+            <a class="nav-link" href="#goals" data-page="goals"><span class="nav-icon">🎯</span>Мои цели</a>
+            <a class="nav-link" href="#analytics" data-page="analytics"><span class="nav-icon">▥</span>Аналитика</a>
+            <a class="nav-link" href="#currency" data-page="currency"><span class="nav-icon">⇄</span>Курсы валют</a>
+        </nav>
+        <div class="sidebar-bottom"><span class="online-dot"></span><span id="connectionStatus">Ожидание подключения к API</span></div>
+    </aside>
+    <div class="sidebar-backdrop" id="backdrop"></div>
+
+    <main class="main-area">
+        <header class="topbar">
+            <button class="mobile-menu" id="openSidebar" aria-label="Открыть меню">☰</button>
+            <div class="top-tabs">
+                <button class="top-tab active" data-page="overview">Обзор</button>
+                <button class="top-tab" data-page="transactions">Транзакции</button>
+                <button class="top-tab" data-page="goals">Цели</button>
+                <button class="top-tab" data-page="analytics">Аналитика</button>
+                <button class="top-tab" data-page="currency">Курсы валют</button>
+            </div>
+            <div class="top-actions">
+                <button class="round-btn" id="refreshBtn" title="Обновить данные">↻</button>
+                <button class="user-chip" id="userMenu" title="Выйти из аккаунта">
+                    <span class="avatar" id="avatar">F</span>
+                    <span class="user-name"><b id="userName">Мой аккаунт</b><small>Личный аккаунт</small></span>
+                    <span class="chevron">⌄</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="page-heading">
+            <div>
+                <div class="breadcrumb">ЛИЧНЫЙ КАБИНЕТ <span>/</span> ОБЗОР</div>
+                <h1 id="pageTitle">Финансовый обзор</h1>
+                <p id="pageSubtitle">Только реальные данные из вашего аккаунта.</p>
+            </div>
+            <div class="heading-actions">
+                <label class="select-wrap">
+                    <span class="sr-only">Период</span>
+                    <select id="period"><option value="week">Эта неделя</option><option value="month" selected>Этот месяц</option><option value="year">Этот год</option><option value="all">Всё время</option></select>
+                </label>
+                <button class="btn btn-primary" id="addTransactionBtn" type="button">＋ <span>Добавить операцию</span></button>
+                <button class="btn btn-outline" id="exportBtn">↧ <span>Экспорт CSV</span></button>
+            </div>
+        </div>
+
+        <!-- ОБЗОР -->
+        <section id="overviewView" class="page-view">
+            <div class="summary-cards overview-summary">
+                <article class="panel summary-card"><small>Общий баланс</small><strong id="balanceAmount">—</strong><span class="summary-caption">По данным финансового сервиса</span></article>
+                <article class="panel summary-card"><small>Доходы за период</small><strong id="incomeAmount" class="positive-text">—</strong><span class="summary-caption">По загруженным транзакциям</span></article>
+                <article class="panel summary-card"><small>Расходы за период</small><strong id="expenseAmount" class="negative-text">—</strong><span class="summary-caption">По загруженным транзакциям</span></article>
+            </div>
+            <div class="dashboard-grid charts-grid">
+                <article class="panel chart-panel">
+                    <div class="panel-head"><div><h3>Доходы и расходы</h3><p>Расчёт по реальным транзакциям</p></div></div>
+                    <div id="flowChart" class="real-chart" aria-live="polite"><p class="chart-empty">Загрузка данных…</p></div>
+                </article>
+                <article class="panel chart-panel">
+                    <div class="panel-head"><div><h3>Расходы по категориям</h3><p>Сумма расходов за выбранный период</p></div></div>
+                    <div id="categoryChart" class="category-chart"><p class="chart-empty">Загрузка данных…</p></div>
+                </article>
+            </div>
+            <section class="panel transactions-panel">
+                <div class="panel-head"><div><h3>Последние операции</h3><p>Данные получены с сервера</p></div><button class="btn btn-outline" data-page="transactions">Все операции ↗</button></div>
+                <div class="table-scroll"><table><thead><tr><th>Операция</th><th>Категория</th><th>Дата</th><th>Сумма</th></tr></thead><tbody id="recentRows"><tr><td colspan="4" class="empty-state">Загрузка…</td></tr></tbody></table></div>
+            </section>
+        </section>
+
+        <!-- ТРАНЗАКЦИИ -->
+        <section id="transactionsView" class="page-view" hidden>
+            <div class="tool-row">
+                <input id="searchRecords" class="control" placeholder="Поиск по категории или типу…" aria-label="Поиск по транзакциям">
+                <select id="typeRecords" class="control" aria-label="Тип транзакции"><option value="all">Все операции</option><option value="income">Доходы</option><option value="expense">Расходы</option></select>
+                <button class="btn btn-outline" id="clearSearch">Сбросить</button>
+                <button class="btn btn-primary" id="addTransactionInline" type="button">＋ Добавить</button>
+            </div>
+            <div class="summary-cards">
+                <article class="panel summary-card"><small>Доходы за период</small><strong id="txIncome" class="positive-text">—</strong></article>
+                <article class="panel summary-card"><small>Расходы за период</small><strong id="txExpense" class="negative-text">—</strong></article>
+                <article class="panel summary-card"><small>Разница</small><strong id="txDifference">—</strong></article>
+            </div>
+            <section class="panel table-panel">
+                <div class="table-scroll"><table><thead><tr><th>Тип</th><th>Категория</th><th>Дата</th><th>Сумма</th><th>Действия</th></tr></thead><tbody id="transactionRows"><tr><td colspan="5" class="empty-state">Загрузка…</td></tr></tbody></table></div>
+            </section>
+        </section>
+
+        <!-- МОИ ЦЕЛИ -->
+        <section id="goalsView" class="page-view" hidden>
+            <div class="goals-header panel">
+                <div>
+                    <h2>Мои финансовые цели</h2>
+                    <p>Накопления на крупные покупки и мечты</p>
+                </div>
+                <button class="btn btn-primary" id="addGoalBtn" type="button">＋ Новая цель</button>
+            </div>
+            <div id="goalsGrid" class="goals-grid">
+                <div class="chart-empty">Загрузка целей…</div>
+            </div>
+        </section>
+
+        <!-- АНАЛИТИКА -->
+        <section id="analyticsView" class="page-view" hidden>
+            <div class="analytics-toolbar panel">
+                <div>
+                    <span class="analytics-kicker">FINANCE INSIGHTS</span>
+                    <h2>Аналитика финансов</h2>
+                    <p id="analyticsRange">Период и показатели будут загружены из Finance Service.</p>
+                </div>
+                <div class="analytics-controls">
+                    <label for="analyticsPeriod">Период
+                        <select id="analyticsPeriod" class="control">
+                            <option value="day">День</option><option value="week">Неделя</option><option value="month" selected>Месяц</option><option value="year">Год</option>
+                        </select>
+                    </label>
+                    <button id="analyticsRefresh" class="btn btn-primary" type="button">↻ Обновить аналитику</button>
+                </div>
+            </div>
+            <p id="analyticsStatus" class="analytics-status" role="status" aria-live="polite">Аналитика загружается после открытия раздела.</p>
+
+            <div class="analytics-kpi-grid">
+                <article class="panel kpi-card income-kpi"><div class="kpi-head"><span>Поступления</span><span class="kpi-icon income-icon">↘</span></div><strong id="analyticsIncome" class="positive-text">—</strong><div class="kpi-footer"><span class="kpi-trend positive">+ Данные сервера</span><span class="kpi-caption">Доходы за период</span></div></article>
+                <article class="panel kpi-card expense-kpi"><div class="kpi-head"><span>Списания</span><span class="kpi-icon expense-icon">↗</span></div><strong id="analyticsExpense" class="negative-text">—</strong><div class="kpi-footer"><span class="kpi-trend negative">− Данные сервера</span><span class="kpi-caption">Расходы за период</span></div></article>
+                <article class="panel kpi-card net-kpi"><div class="kpi-head"><span>Чистый поток</span><span class="kpi-icon net-icon">≡</span></div><strong id="analyticsDifference">—</strong><div class="kpi-footer"><span class="kpi-caption">Доходы минус расходы</span></div></article>
+                <article class="panel kpi-card savings-kpi"><div class="kpi-head"><span>Норма сбережений</span><span class="kpi-icon savings-icon">%</span></div><strong id="analyticsSavingsRate">—</strong><div class="kpi-footer"><span class="kpi-caption">Процент из ответа API</span></div></article>
+            </div>
+
+            <div class="dashboard-grid charts-grid analytics-charts">
+                <article class="panel chart-panel analytics-chart-panel">
+                    <div class="panel-head"><div><h3>Динамика доходов и расходов</h3><p>Поступления и списания по дням</p></div></div>
+                    <div class="chart-container" style="position: relative; height: 320px; width: 100%;">
+                        <canvas id="analyticsFlowChartCanvas"></canvas>
+                    </div>
+                </article>
+                <article class="panel chart-panel analytics-chart-panel">
+                    <div class="panel-head"><div><h3>Структура расходов</h3><p>Распределение бюджета по категориям</p></div></div>
+                    <div class="chart-container" style="position: relative; height: 320px; width: 100%; display: flex; justify-content: center;">
+                        <canvas id="analyticsCategoryChartCanvas"></canvas>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- КУРСЫ ВАЛЮТ -->
+        <section id="currencyView" class="page-view" hidden>
+            <div class="currency-layout">
+                <article class="panel currency-panel">
+                    <div class="panel-head"><div><h3>Конвертер валют</h3><p>Расчёт выполняется на сервере Currency Service</p></div></div>
+                    <div class="currency-form">
+                        <label>Сумма<input id="currencyAmount" class="control" type="number" min="0.000001" step="any" value="100" inputmode="decimal"></label>
+                        <div class="currency-pair">
+                            <label>Из валюты<select id="currencyFrom" class="control"><option>RUB</option><option>USD</option><option>EUR</option><option>GBP</option><option>CNY</option><option>TRY</option><option>KZT</option></select></label>
+                            <button id="currencySwap" class="swap-button" type="button" aria-label="Поменять валюты местами">⇄</button>
+                            <label>В валюту<select id="currencyTo" class="control"><option>USD</option><option>RUB</option><option>EUR</option><option>GBP</option><option>CNY</option><option>TRY</option><option>KZT</option></select></label>
+                        </div>
+                        <button class="btn btn-primary" id="currencyConvert" type="button">Конвертировать</button>
+                        <div class="currency-result" id="currencyResult" aria-live="polite">Введите сумму и нажмите «Конвертировать».</div>
+                        <p class="currency-stamp" id="currencyStamp"></p>
+                    </div>
+                </article>
+                <article class="panel currency-panel">
+                    <div class="panel-head"><div><h3>Курсы валют</h3><p>Загрузка через GET /api/v1/currency/{base}</p></div><label class="base-select">Базовая валюта<select id="ratesBase" class="control"><option>RUB</option><option>USD</option><option>EUR</option><option>GBP</option><option>CNY</option><option>TRY</option><option>KZT</option></select></label></div>
+                    <button class="btn btn-outline" id="loadRates" type="button">Обновить курсы</button>
+                    <div id="ratesList" class="rates-list"><p class="chart-empty">Курсы будут загружены с сервера после входа.</p></div>
+                    <p id="ratesStamp" class="currency-stamp"></p>
+                </article>
+            </div>
+        </section>
+
+        <footer class="footer"><span>© 2026 FinGoals</span><span>Статистика строится по данным API <b>✦</b></span><a href="#overview" data-page="overview">Наверх ↑</a></footer>
+    </main></div>
+
+<!-- МОДАЛКА АВТОРИЗАЦИИ -->
+<div id="authGate" class="auth-gate" aria-modal="true" role="dialog">
+    <form id="authForm" class="auth-card">
+        <div class="auth-brand"><span class="auth-logo">F</span><span>FinGoals</span></div>
+        <div class="auth-eyebrow">ЛИЧНЫЕ ФИНАНСЫ</div>
+        <h1 id="authTitle">С возвращением</h1><p id="authSubtitle">Войдите, чтобы загрузить ваши данные с сервера.</p>
+        <label id="authNameWrap" class="auth-field" hidden>Имя и фамилия<input id="authName" autocomplete="name" placeholder="Иван Иванов"></label>
+        <label class="auth-field">Email<input id="authEmail" type="email" autocomplete="email" required placeholder="you@example.com"></label>
+        <label class="auth-field">Пароль<input id="authPassword" type="password" autocomplete="current-password" required minlength="8" placeholder="Не менее 8 символов"></label>
+        <label id="authPhoneWrap" class="auth-field" hidden>Телефон (необязательно)<input id="authPhone" type="tel" autocomplete="tel" placeholder="+7…"></label>
+        <p id="authError" class="auth-error" role="alert"></p>
+        <button id="authSubmit" class="btn btn-primary auth-submit" type="submit">Войти</button>
+        <p class="auth-switch"><span id="authSwitchText">Впервые в FinGoals?</span> <button id="authSwitch" type="button">Создать аккаунт</button></p>
+        <label class="auth-config">Адрес API <input id="apiBase" type="url" placeholder="http://localhost:8081" value="http://localhost:8081"></label>
+    </form>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

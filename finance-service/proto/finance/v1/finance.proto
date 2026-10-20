@@ -81,6 +81,33 @@ service FinanceService {
       get: "/api/v1/finance/export/download/{key}"
     };
   }
+  rpc GetAnalytics (GetAnalyticsRequest) returns (AnalyticsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/finance/analytics"
+    };
+  }
+}
+
+message GetAnalyticsRequest {
+  string period = 1;
+}
+
+message AnalyticsResponse {
+  string period = 1;
+  google.protobuf.Timestamp from = 2;
+  google.protobuf.Timestamp to = 3;
+  double income = 4;
+  double expenses = 5;
+  double net = 6;
+  double savings_rate = 7;
+  repeated AnalyticsPoint series = 8;
+  repeated CategoryStat top_categories = 9;
+}
+
+message AnalyticsPoint {
+  google.protobuf.Timestamp period = 1;
+  double income = 2;
+  double expenses = 3;
 }
 
 message GetDashboardRequest {
