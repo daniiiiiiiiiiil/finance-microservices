@@ -18,8 +18,8 @@ func (r *DashboardRepository) GetAnalytics(
 	}
 
 	now := time.Now().UTC()
-	from := time.Time{}
-	bucket := ""
+	var from time.Time
+	var bucket string
 
 	switch period {
 	case domain.AnalyticsPeriodDay:
