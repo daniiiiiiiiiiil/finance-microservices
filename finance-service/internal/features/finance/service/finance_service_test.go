@@ -92,6 +92,62 @@ func (m *MockFinanceRepository) GetTransactionsCount(ctx context.Context, userID
 	return args.Int(0), args.Error(1)
 }
 
+func (m *MockFinanceRepository) CreateBudgetTx(ctx context.Context, tx pool.Tx, b domain.Budget) (domain.Budget, error) {
+	args := m.Called(ctx, tx, b)
+	if args.Get(0) == nil {
+		return domain.Budget{}, args.Error(1)
+	}
+	return args.Get(0).(domain.Budget), args.Error(1)
+}
+
+func (m *MockFinanceRepository) GetBudget(ctx context.Context, id int) (domain.Budget, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return domain.Budget{}, args.Error(1)
+	}
+	return args.Get(0).(domain.Budget), args.Error(1)
+}
+
+func (m *MockFinanceRepository) ListBudgets(ctx context.Context, userID int) ([]domain.Budget, error) {
+	args := m.Called(ctx, userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.Budget), args.Error(1)
+}
+
+func (m *MockFinanceRepository) UpdateBudget(ctx context.Context, b domain.Budget) (domain.Budget, error) {
+	args := m.Called(ctx, b)
+	if args.Get(0) == nil {
+		return domain.Budget{}, args.Error(1)
+	}
+	return args.Get(0).(domain.Budget), args.Error(1)
+}
+
+func (m *MockFinanceRepository) DeleteBudget(ctx context.Context, id int) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockFinanceRepository) GetBudgetSpent(ctx context.Context, b domain.Budget) (float64, error) {
+	args := m.Called(ctx, b)
+	return args.Get(0).(float64), args.Error(1)
+}
+
+func (m *MockFinanceRepository) FindActiveBudget(
+	ctx context.Context,
+	userID int,
+	category string,
+	period domain.BudgetPeriod,
+	now time.Time,
+) (domain.Budget, bool, error) {
+	args := m.Called(ctx, userID, category, period, now)
+	if args.Get(0) == nil {
+		return domain.Budget{}, args.Bool(1), args.Error(2)
+	}
+	return args.Get(0).(domain.Budget), args.Bool(1), args.Error(2)
+}
+
 type MockAnalyticsRepo struct {
 	mock.Mock
 }
@@ -125,17 +181,16 @@ func (m *MockAnalyticsRepo) GetAnalytics(
 	}
 	return args.Get(0).(domain.Analytics), args.Error(1)
 }
+
 func (m *MockAnalyticsRepo) GetTransactionAnalytics(
 	ctx context.Context,
 	userID int,
 	period string,
 ) (domain.Analytics, error) {
 	args := m.Called(ctx, userID, period)
-
 	if args.Get(0) == nil {
 		return domain.Analytics{}, args.Error(1)
 	}
-
 	return args.Get(0).(domain.Analytics), args.Error(1)
 }
 
@@ -346,6 +401,13 @@ func setup() *testSuite {
 	}
 }
 
+func expectInvalidateCache(s *testSuite) {
+	s.mockRedis.
+		On("Delete", mock.Anything, mock.AnythingOfType("string")).
+		Return(nil).
+		Maybe()
+}
+
 func TestCreateTransaction_Success(t *testing.T) {
 	s := setup()
 	ctx := context.Background()
@@ -374,8 +436,7 @@ func TestCreateTransaction_Success(t *testing.T) {
 	mockTx.On("Commit", ctx).Return(nil)
 	s.mockRepo.On("CreateTransactionTx", ctx, mockTx, transaction).Return(expected, nil)
 	s.mockOutbox.On("SaveTx", ctx, mockTx, mock.Anything).Return(nil)
-	s.mockRedis.On("Delete", mock.Anything, "dashboard:1").Return(nil)
-	s.mockRedis.On("Delete", mock.Anything, "categories:1").Return(nil)
+	expectInvalidateCache(s)
 
 	result, err := s.service.CreateTransaction(ctx, transaction)
 
@@ -475,8 +536,7 @@ func TestUpdateTransaction_Success(t *testing.T) {
 		CreatedAt:       existing.CreatedAt,
 	}, nil)
 	s.mockOutbox.On("Save", ctx, mock.Anything).Return(nil)
-	s.mockRedis.On("Delete", mock.Anything, "dashboard:1").Return(nil)
-	s.mockRedis.On("Delete", mock.Anything, "categories:1").Return(nil)
+	expectInvalidateCache(s)
 
 	result, err := s.service.UpdateTransaction(ctx, updated)
 
@@ -513,8 +573,10 @@ func TestDeleteTransaction_Success(t *testing.T) {
 	s.mockRepo.On("GetTransaction", ctx, 1).Return(existing, nil)
 	s.mockRepo.On("DeleteTransaction", ctx, 1).Return(nil)
 	s.mockOutbox.On("Save", ctx, mock.Anything).Return(nil)
-	s.mockRedis.On("Delete", mock.Anything, "dashboard:1").Return(nil)
-	s.mockRedis.On("Delete", mock.Anything, "categories:1").Return(nil)
+
+	s.mockRedis.On("Delete", mock.Anything, "dashboard:1").Return(nil).Maybe()
+	s.mockRedis.On("Delete", mock.Anything, "categories:1").Return(nil).Maybe()
+	s.mockRedis.On("Delete", mock.Anything, "budgets:1").Return(nil).Maybe()
 
 	err := s.service.DeleteTransaction(ctx, 1)
 
@@ -522,7 +584,6 @@ func TestDeleteTransaction_Success(t *testing.T) {
 	s.mockRepo.AssertExpectations(t)
 	s.mockOutbox.AssertExpectations(t)
 }
-
 func TestDeleteTransaction_NotFound(t *testing.T) {
 	s := setup()
 	ctx := context.Background()
@@ -547,7 +608,7 @@ func TestGetDashboard_Success(t *testing.T) {
 	}
 
 	s.mockRedis.On("Get", ctx, "dashboard:1", mock.Anything).Return(redis.Nil)
-	s.mockAnalyticsRepo.On("GetDashboard", ctx, 1).Return(expected, nil) // ← analyticsRepo
+	s.mockAnalyticsRepo.On("GetDashboard", ctx, 1).Return(expected, nil)
 	s.mockRedis.On("Set", ctx, "dashboard:1", expected, 10*time.Minute).Return(nil)
 
 	result, err := s.service.GetDashboard(ctx, 1)
@@ -615,8 +676,7 @@ func TestDeleteUserTransactions_Success(t *testing.T) {
 	s.mockRedis.On("Exists", ctx, "deleted:user_transactions:1").Return(int64(0), nil)
 	s.mockRepo.On("DeleteUserTransactions", ctx, 1).Return(5, nil)
 	s.mockRedis.On("Set", mock.Anything, "deleted:user_transactions:1", true, 24*time.Hour).Return(nil)
-	s.mockRedis.On("Delete", mock.Anything, "dashboard:1").Return(nil)
-	s.mockRedis.On("Delete", mock.Anything, "categories:1").Return(nil)
+	expectInvalidateCache(s)
 	s.mockPublisher.On("Publish", mock.Anything, "user.transactions.deleted", mock.Anything).Return(nil)
 
 	count, err := s.service.DeleteUserTransactions(ctx, 1)
@@ -806,7 +866,7 @@ func TestCreateTransaction_TableDriven(t *testing.T) {
 				mockTx.On("Commit", ctx).Return(nil)
 				s.mockRepo.On("CreateTransactionTx", ctx, mockTx, tt.transaction).Return(domain.Finance{ID: 1}, nil)
 				s.mockOutbox.On("SaveTx", ctx, mockTx, mock.Anything).Return(nil)
-				s.mockRedis.On("Delete", mock.Anything, mock.Anything).Return(nil)
+				expectInvalidateCache(s)
 			}
 
 			_, err := s.service.CreateTransaction(ctx, tt.transaction)
@@ -865,4 +925,609 @@ func TestGetDashboard_TableDriven(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCreateBudget_Success(t *testing.T) {
+	s := setup()
+	ctx := context.Background()
+
+	input := domain.Budget{
+		UserID:      1,
+		Category:    "food",
+		AmountLimit: 10000,
+		Period:      domain.BudgetPeriodMonth,
+	}
+
+	now := time.Now().UTC()
+	periodStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
+	periodEnd := periodStart.AddDate(0, 1, 0)
+
+	expected := domain.Budget{
+		ID:          1,
+		Version:     1,
+		UserID:      1,
+		Category:    "food",
+		AmountLimit: 10000,
+		Period:      domain.BudgetPeriodMonth,
+		PeriodStart: periodStart,
+		PeriodEnd:   periodEnd,
+	}
+
+	mockTx := new(MockTx)
+	s.mockPool.On("Begin", ctx).Return(mockTx, nil)
+	mockTx.On("Rollback", ctx).Return(nil)
+	mockTx.On("Commit", ctx).Return(nil)
+	s.mockRepo.On("CreateBudgetTx", ctx, mockTx, mock.AnythingOfType("domain.Budget")).Return(expected, nil)
+	s.mockOutbox.On("SaveTx", ctx, mockTx, mock.Anything).Return(nil)
+	expectInvalidateCache(s)
+
+	created, err := s.service.CreateBudget(ctx, input)
+
+	assert.NoError(t, err)
+	assert.Equal(t, 1, created.ID)
+	assert.Equal(t, 10000.0, created.AmountLimit)
+	assert.Equal(t, domain.BudgetPeriodMonth, created.Period)
+	assert.False(t, created.PeriodStart.IsZero(), "PeriodStart должен быть вычислен")
+	assert.False(t, created.PeriodEnd.IsZero(), "PeriodEnd должен быть вычислен")
+
+	s.mockRepo.AssertExpectations(t)
+	s.mockPool.AssertExpectations(t)
+	s.mockOutbox.AssertExpectations(t)
+	mockTx.AssertExpectations(t)
+}
+
+func TestCreateBudget_ValidationError(t *testing.T) {
+	tests := []struct {
+		name  string
+		input domain.Budget
+		want  string
+	}{
+		{
+			name: "empty category",
+			input: domain.Budget{
+				UserID:      1,
+				Category:    "",
+				AmountLimit: 1000,
+				Period:      domain.BudgetPeriodMonth,
+			},
+			want: "validation failed",
+		},
+		{
+			name: "zero amount limit",
+			input: domain.Budget{
+				UserID:      1,
+				Category:    "food",
+				AmountLimit: 0,
+				Period:      domain.BudgetPeriodMonth,
+			},
+			want: "validation failed",
+		},
+		{
+			name: "negative amount limit",
+			input: domain.Budget{
+				UserID:      1,
+				Category:    "food",
+				AmountLimit: -100,
+				Period:      domain.BudgetPeriodMonth,
+			},
+			want: "validation failed",
+		},
+		{
+			name: "invalid period",
+			input: domain.Budget{
+				UserID:      1,
+				Category:    "food",
+				AmountLimit: 1000,
+				Period:      "decade",
+			},
+			want: "period range",
+		},
+		{
+			name: "zero user id",
+			input: domain.Budget{
+				UserID:      0,
+				Category:    "food",
+				AmountLimit: 1000,
+				Period:      domain.BudgetPeriodMonth,
+			},
+			want: "validation failed",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := setup()
+			ctx := context.Background()
+
+			_, err := s.service.CreateBudget(ctx, tt.input)
+
+			assert.Error(t, err)
+			assert.Contains(t, err.Error(), tt.want)
+			s.mockPool.AssertNotCalled(t, "Begin", mock.Anything)
+		})
+	}
+}
+
+func TestCreateBudget_RepoError(t *testing.T) {
+	s := setup()
+	ctx := context.Background()
+
+	input := domain.Budget{
+		UserID:      1,
+		Category:    "food",
+		AmountLimit: 10000,
+		Period:      domain.BudgetPeriodMonth,
+	}
+
+	mockTx := new(MockTx)
+	s.mockPool.On("Begin", ctx).Return(mockTx, nil)
+	mockTx.On("Rollback", ctx).Return(nil)
+	s.mockRepo.On("CreateBudgetTx", ctx, mockTx, mock.AnythingOfType("domain.Budget")).Return(domain.Budget{}, errors.New("db down"))
+
+	_, err := s.service.CreateBudget(ctx, input)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "create budget")
+	mockTx.AssertNotCalled(t, "Commit", mock.Anything)
+}
+
+func TestCreateBudget_OutboxError(t *testing.T) {
+	s := setup()
+	ctx := context.Background()
+
+	input := domain.Budget{
+		UserID:      1,
+		Category:    "food",
+		AmountLimit: 10000,
+		Period:      domain.BudgetPeriodMonth,
+	}
+
+	mockTx := new(MockTx)
+	s.mockPool.On("Begin", ctx).Return(mockTx, nil)
+	mockTx.On("Rollback", ctx).Return(nil)
+	s.mockRepo.On("CreateBudgetTx", ctx, mockTx, mock.AnythingOfType("domain.Budget")).Return(domain.Budget{ID: 1, UserID: 1}, nil)
+	s.mockOutbox.On("SaveTx", ctx, mockTx, mock.Anything).Return(errors.New("outbox down"))
+
+	_, err := s.service.CreateBudget(ctx, input)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "save outbox event")
+	mockTx.AssertNotCalled(t, "Commit", mock.Anything)
+}
+
+func TestGetBudget_Success(t *testing.T) {
+	s := setup()
+	ctx := context.Background()
+
+	expected := domain.Budget{
+		ID:          1,
+		UserID:      1,
+		Category:    "food",
+		AmountLimit: 10000,
+		Period:      domain.BudgetPeriodMonth,
+	}
+
+	s.mockRepo.On("GetBudget", ctx, 1).Return(expected, nil)
+
+	result, err := s.service.GetBudget(ctx, 1)
+
+	assert.NoError(t, err)
+	assert.Equal(t, 1, result.ID)
+	assert.Equal(t, 10000.0, result.AmountLimit)
+	s.mockRepo.AssertExpectations(t)
+}
+
+func TestGetBudget_NotFound(t *testing.T) {
+	s := setup()
+	ctx := context.Background()
+
+	s.mockRepo.On("GetBudget", ctx, 999).Return(domain.Budget{}, errors.New("not found"))
+
+	_, err := s.service.GetBudget(ctx, 999)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "get budget")
+}
+
+func TestListBudgetsWithStatus_NoBudgets(t *testing.T) {
+	s := setup()
+	ctx := context.Background()
+
+	s.mockRepo.On("ListBudgets", ctx, 1).Return([]domain.Budget{}, nil)
+
+	statuses, err := s.service.ListBudgetsWithStatus(ctx, 1)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, statuses)
+	assert.Len(t, statuses, 0)
+}
+
+func TestListBudgetsWithStatus_NotExceeded(t *testing.T) {
+	s := setup()
+	ctx := context.Background()
+
+	b := domain.Budget{
+		ID:          1,
+		UserID:      1,
+		Category:    "food",
+		AmountLimit: 1000,
+		Period:      domain.BudgetPeriodMonth,
+	}
+
+	s.mockRepo.On("ListBudgets", ctx, 1).Return([]domain.Budget{b}, nil)
+	s.mockRepo.On("GetBudgetSpent", ctx, b).Return(400.0, nil)
+
+	statuses, err := s.service.ListBudgetsWithStatus(ctx, 1)
+
+	assert.NoError(t, err)
+	assert.Len(t, statuses, 1)
+	assert.False(t, statuses[0].Exceeded)
+	assert.Equal(t, 400.0, statuses[0].Spent)
+	assert.Equal(t, 600.0, statuses[0].Remaining)
+	assert.Equal(t, 40.0, statuses[0].Percentage)
+}
+
+func TestListBudgetsWithStatus_Exceeded(t *testing.T) {
+	s := setup()
+	ctx := context.Background()
+
+	b := domain.Budget{
+		ID:          1,
+		UserID:      1,
+		Category:    "food",
+		AmountLimit: 1000,
+		Period:      domain.BudgetPeriodMonth,
+	}
+
+	s.mockRepo.On("ListBudgets", ctx, 1).Return([]domain.Budget{b}, nil)
+	s.mockRepo.On("GetBudgetSpent", ctx, b).Return(1500.0, nil)
+
+	statuses, err := s.service.ListBudgetsWithStatus(ctx, 1)
+
+	assert.NoError(t, err)
+	assert.Len(t, statuses, 1)
+	assert.True(t, statuses[0].Exceeded)
+	assert.Equal(t, 1500.0, statuses[0].Spent)
+	assert.Equal(t, -500.0, statuses[0].Remaining)
+	assert.Equal(t, 150.0, statuses[0].Percentage)
+}
+
+func TestListBudgetsWithStatus_MultipleBudgets(t *testing.T) {
+	s := setup()
+	ctx := context.Background()
+
+	b1 := domain.Budget{ID: 1, UserID: 1, Category: "food", AmountLimit: 1000, Period: domain.BudgetPeriodMonth}
+	b2 := domain.Budget{ID: 2, UserID: 1, Category: "transport", AmountLimit: 500, Period: domain.BudgetPeriodWeek}
+
+	s.mockRepo.On("ListBudgets", ctx, 1).Return([]domain.Budget{b1, b2}, nil)
+	s.mockRepo.On("GetBudgetSpent", ctx, b1).Return(200.0, nil)
+	s.mockRepo.On("GetBudgetSpent", ctx, b2).Return(700.0, nil)
+
+	statuses, err := s.service.ListBudgetsWithStatus(ctx, 1)
+
+	assert.NoError(t, err)
+	assert.Len(t, statuses, 2)
+	assert.False(t, statuses[0].Exceeded)
+	assert.True(t, statuses[1].Exceeded)
+}
+
+func TestListBudgetsWithStatus_ListError(t *testing.T) {
+	s := setup()
+	ctx := context.Background()
+
+	s.mockRepo.On("ListBudgets", ctx, 1).Return(nil, errors.New("db down"))
+
+	_, err := s.service.ListBudgetsWithStatus(ctx, 1)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "list budgets")
+}
+
+func TestListBudgetsWithStatus_SpentError(t *testing.T) {
+	s := setup()
+	ctx := context.Background()
+
+	b := domain.Budget{ID: 1, UserID: 1, Category: "food", AmountLimit: 1000, Period: domain.BudgetPeriodMonth}
+
+	s.mockRepo.On("ListBudgets", ctx, 1).Return([]domain.Budget{b}, nil)
+	s.mockRepo.On("GetBudgetSpent", ctx, b).Return(0.0, errors.New("db down"))
+
+	_, err := s.service.ListBudgetsWithStatus(ctx, 1)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "get budget spent")
+}
+
+func TestUpdateBudget_Success(t *testing.T) {
+	s := setup()
+	ctx := context.Background()
+
+	existing := domain.Budget{
+		ID:          1,
+		Version:     1,
+		UserID:      1,
+		Category:    "food",
+		AmountLimit: 1000,
+		Period:      domain.BudgetPeriodMonth,
+		PeriodStart: time.Now().AddDate(0, 0, -10),
+		PeriodEnd:   time.Now().AddDate(0, 0, 20),
+	}
+
+	input := domain.Budget{
+		ID:          1,
+		Category:    "food",
+		AmountLimit: 2000,
+		Period:      domain.BudgetPeriodMonth,
+	}
+
+	updated := existing
+	updated.AmountLimit = 2000
+	updated.Version = 2
+
+	s.mockRepo.On("GetBudget", ctx, 1).Return(existing, nil)
+	s.mockRepo.On("UpdateBudget", ctx, mock.Anything).Return(updated, nil)
+	s.mockOutbox.On("Save", ctx, mock.Anything).Return(nil)
+	expectInvalidateCache(s)
+
+	result, err := s.service.UpdateBudget(ctx, input)
+
+	assert.NoError(t, err)
+	assert.Equal(t, 2, result.Version)
+	assert.Equal(t, 2000.0, result.AmountLimit)
+	s.mockRepo.AssertExpectations(t)
+	s.mockOutbox.AssertExpectations(t)
+}
+
+func TestUpdateBudget_NotFound(t *testing.T) {
+	s := setup()
+	ctx := context.Background()
+
+	input := domain.Budget{ID: 999, Category: "food", AmountLimit: 1000, Period: domain.BudgetPeriodMonth}
+
+	s.mockRepo.On("GetBudget", ctx, 999).Return(domain.Budget{}, errors.New("not found"))
+
+	_, err := s.service.UpdateBudget(ctx, input)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "get existing budget")
+}
+
+func TestUpdateBudget_ValidationError(t *testing.T) {
+	s := setup()
+	ctx := context.Background()
+
+	existing := domain.Budget{
+		ID:          1,
+		Version:     1,
+		UserID:      1,
+		Category:    "food",
+		AmountLimit: 1000,
+		Period:      domain.BudgetPeriodMonth,
+		PeriodStart: time.Now().AddDate(0, 0, -10),
+		PeriodEnd:   time.Now().AddDate(0, 0, 20),
+	}
+
+	input := domain.Budget{
+		ID:          1,
+		Category:    "",
+		AmountLimit: 2000,
+		Period:      domain.BudgetPeriodMonth,
+	}
+
+	s.mockRepo.On("GetBudget", ctx, 1).Return(existing, nil)
+
+	_, err := s.service.UpdateBudget(ctx, input)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "validation failed")
+}
+
+func TestDeleteBudget_Success(t *testing.T) {
+	s := setup()
+	ctx := context.Background()
+
+	existing := domain.Budget{
+		ID:          1,
+		UserID:      1,
+		Category:    "food",
+		AmountLimit: 1000,
+		Period:      domain.BudgetPeriodMonth,
+	}
+
+	s.mockRepo.On("GetBudget", ctx, 1).Return(existing, nil)
+	s.mockRepo.On("DeleteBudget", ctx, 1).Return(nil)
+	s.mockOutbox.On("Save", ctx, mock.Anything).Return(nil)
+	expectInvalidateCache(s)
+
+	err := s.service.DeleteBudget(ctx, 1)
+
+	assert.NoError(t, err)
+	s.mockRepo.AssertExpectations(t)
+	s.mockOutbox.AssertExpectations(t)
+}
+
+func TestDeleteBudget_NotFound(t *testing.T) {
+	s := setup()
+	ctx := context.Background()
+
+	s.mockRepo.On("GetBudget", ctx, 999).Return(domain.Budget{}, errors.New("not found"))
+
+	err := s.service.DeleteBudget(ctx, 999)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "get budget")
+}
+
+func TestCheckBudgetExceeded_NotExpense(t *testing.T) {
+	s := setup()
+	ctx := context.Background()
+
+	tx := domain.Finance{ID: 1, UserID: 1, TypeTransaction: "income", Amount: 100}
+
+	err := s.service.CheckBudgetExceeded(ctx, tx)
+
+	assert.NoError(t, err)
+	s.mockRepo.AssertNotCalled(t, "FindActiveBudget", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+}
+
+func TestCheckBudgetExceeded_NoActiveBudget(t *testing.T) {
+	s := setup()
+	ctx := context.Background()
+
+	tx := domain.Finance{
+		ID:              1,
+		UserID:          1,
+		TypeTransaction: "expense",
+		Category:        "food",
+		Amount:          100,
+		CreatedAt:       time.Now(),
+	}
+
+	s.mockRepo.On("FindActiveBudget", ctx, 1, "food", mock.Anything, tx.CreatedAt).Return(domain.Budget{}, false, nil)
+
+	err := s.service.CheckBudgetExceeded(ctx, tx)
+
+	assert.NoError(t, err)
+	s.mockOutbox.AssertNotCalled(t, "Save", mock.Anything, mock.Anything)
+}
+
+func TestCheckBudgetExceeded_NotExceeded(t *testing.T) {
+	s := setup()
+	ctx := context.Background()
+
+	tx := domain.Finance{
+		ID:              1,
+		UserID:          1,
+		TypeTransaction: "expense",
+		Category:        "food",
+		Amount:          100,
+		CreatedAt:       time.Now(),
+	}
+
+	b := domain.Budget{
+		ID:          10,
+		UserID:      1,
+		Category:    "food",
+		AmountLimit: 1000,
+		Period:      domain.BudgetPeriodMonth,
+		PeriodStart: time.Now().AddDate(0, 0, -10),
+		PeriodEnd:   time.Now().AddDate(0, 0, 20),
+	}
+
+	s.mockRepo.On("FindActiveBudget", ctx, 1, "food", domain.BudgetPeriodDay, tx.CreatedAt).Return(domain.Budget{}, false, nil)
+	s.mockRepo.On("FindActiveBudget", ctx, 1, "food", domain.BudgetPeriodWeek, tx.CreatedAt).Return(domain.Budget{}, false, nil)
+	s.mockRepo.On("FindActiveBudget", ctx, 1, "food", domain.BudgetPeriodMonth, tx.CreatedAt).Return(b, true, nil)
+	s.mockRepo.On("FindActiveBudget", ctx, 1, "food", domain.BudgetPeriodYear, tx.CreatedAt).Return(domain.Budget{}, false, nil)
+
+	s.mockRepo.On("GetBudgetSpent", ctx, b).Return(400.0, nil)
+
+	err := s.service.CheckBudgetExceeded(ctx, tx)
+
+	assert.NoError(t, err)
+	s.mockOutbox.AssertNotCalled(t, "Save", mock.Anything, mock.Anything)
+}
+
+func TestCheckBudgetExceeded_Exceeded_PublishesEvent(t *testing.T) {
+	s := setup()
+	ctx := context.Background()
+
+	now := time.Now()
+	tx := domain.Finance{
+		ID:              1,
+		UserID:          1,
+		TypeTransaction: "expense",
+		Category:        "food",
+		Amount:          100,
+		CreatedAt:       now,
+	}
+
+	b := domain.Budget{
+		ID:          10,
+		UserID:      1,
+		Category:    "food",
+		AmountLimit: 1000,
+		Period:      domain.BudgetPeriodMonth,
+		PeriodStart: now.AddDate(0, 0, -10),
+		PeriodEnd:   now.AddDate(0, 0, 20),
+	}
+
+	s.mockRepo.On("FindActiveBudget", ctx, 1, "food", domain.BudgetPeriodDay, tx.CreatedAt).Return(domain.Budget{}, false, nil)
+	s.mockRepo.On("FindActiveBudget", ctx, 1, "food", domain.BudgetPeriodWeek, tx.CreatedAt).Return(domain.Budget{}, false, nil)
+	s.mockRepo.On("FindActiveBudget", ctx, 1, "food", domain.BudgetPeriodMonth, tx.CreatedAt).Return(b, true, nil)
+	s.mockRepo.On("FindActiveBudget", ctx, 1, "food", domain.BudgetPeriodYear, tx.CreatedAt).Return(domain.Budget{}, false, nil)
+
+	s.mockRepo.On("GetBudgetSpent", ctx, b).Return(1500.0, nil)
+
+	alertKey := fmt.Sprintf("budget_alerted:%d:%d:%d", b.UserID, b.ID, b.PeriodStart.Unix())
+	s.mockRedis.On("Exists", ctx, alertKey).Return(int64(0), nil)
+	s.mockRedis.On("Set", ctx, alertKey, true, mock.AnythingOfType("time.Duration")).Return(nil)
+	s.mockOutbox.On("Save", ctx, mock.Anything).Return(nil)
+
+	err := s.service.CheckBudgetExceeded(ctx, tx)
+
+	assert.NoError(t, err)
+	s.mockOutbox.AssertExpectations(t)
+	s.mockRedis.AssertExpectations(t)
+}
+
+func TestCheckBudgetExceeded_AlreadyAlerted_SkipsEvent(t *testing.T) {
+	s := setup()
+	ctx := context.Background()
+
+	now := time.Now()
+	tx := domain.Finance{
+		ID:              1,
+		UserID:          1,
+		TypeTransaction: "expense",
+		Category:        "food",
+		Amount:          100,
+		CreatedAt:       now,
+	}
+
+	b := domain.Budget{
+		ID:          10,
+		UserID:      1,
+		Category:    "food",
+		AmountLimit: 1000,
+		Period:      domain.BudgetPeriodMonth,
+		PeriodStart: now.AddDate(0, 0, -10),
+		PeriodEnd:   now.AddDate(0, 0, 20),
+	}
+
+	s.mockRepo.On("FindActiveBudget", ctx, 1, "food", domain.BudgetPeriodDay, tx.CreatedAt).Return(domain.Budget{}, false, nil)
+	s.mockRepo.On("FindActiveBudget", ctx, 1, "food", domain.BudgetPeriodWeek, tx.CreatedAt).Return(domain.Budget{}, false, nil)
+	s.mockRepo.On("FindActiveBudget", ctx, 1, "food", domain.BudgetPeriodMonth, tx.CreatedAt).Return(b, true, nil)
+	s.mockRepo.On("FindActiveBudget", ctx, 1, "food", domain.BudgetPeriodYear, tx.CreatedAt).Return(domain.Budget{}, false, nil)
+
+	s.mockRepo.On("GetBudgetSpent", ctx, b).Return(1500.0, nil)
+
+	alertKey := fmt.Sprintf("budget_alerted:%d:%d:%d", b.UserID, b.ID, b.PeriodStart.Unix())
+	s.mockRedis.On("Exists", ctx, alertKey).Return(int64(1), nil)
+
+	err := s.service.CheckBudgetExceeded(ctx, tx)
+
+	assert.NoError(t, err)
+	s.mockOutbox.AssertNotCalled(t, "Save", mock.Anything, mock.Anything)
+}
+
+func TestCheckBudgetExceeded_FindActiveBudgetError(t *testing.T) {
+	s := setup()
+	ctx := context.Background()
+
+	tx := domain.Finance{
+		ID:              1,
+		UserID:          1,
+		TypeTransaction: "expense",
+		Category:        "food",
+		Amount:          100,
+		CreatedAt:       time.Now(),
+	}
+
+	s.mockRepo.On("FindActiveBudget", ctx, 1, "food", domain.BudgetPeriodDay, tx.CreatedAt).
+		Return(domain.Budget{}, false, errors.New("db down"))
+
+	err := s.service.CheckBudgetExceeded(ctx, tx)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "find active budget")
 }

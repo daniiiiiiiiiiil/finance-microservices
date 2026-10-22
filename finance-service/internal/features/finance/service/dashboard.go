@@ -1,11 +1,10 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
-
-	"context"
 
 	"github.com/daniiiiiiiiiiil/finance-microservices/finance-service/internal/core/domain"
 	"github.com/redis/go-redis/v9"
@@ -30,7 +29,6 @@ func (s *FinanceService) GetDashboard(ctx context.Context, userID int) (domain.D
 		return domain.Dashboard{}, fmt.Errorf("Failed to get dashboard: %w", err)
 	}
 	return dashboard, nil
-
 }
 
 func (s *FinanceService) GetCategories(ctx context.Context, userID int) ([]string, error) {
@@ -74,5 +72,10 @@ func (s *FinanceService) invalidateCache(ctx context.Context, userID int) {
 	categoriesKey := fmt.Sprintf("categories:%d", userID)
 	if err := s.redis.Delete(ctx, categoriesKey); err != nil {
 		fmt.Printf("failed to invalidate categories cache: %v\n", err)
+	}
+
+	budgetsKey := fmt.Sprintf("budgets:%d", userID)
+	if err := s.redis.Delete(ctx, budgetsKey); err != nil {
+		fmt.Printf("failed to invalidate budgets cache: %v\n", err)
 	}
 }

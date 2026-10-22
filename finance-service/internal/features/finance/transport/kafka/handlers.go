@@ -37,11 +37,9 @@ func (h *FinanceHandlers) RegisterHandlers(consumer *FinanceKafkaConsumer) error
 	if err := consumer.RegisterHandler("transaction.updated", h.handleTransactionUpdated); err != nil {
 		return fmt.Errorf("register transaction.updated: %w", err)
 	}
-
 	if err := consumer.RegisterHandler("transaction.deleted", h.handleTransactionDeleted); err != nil {
 		return fmt.Errorf("register transaction.deleted: %w", err)
 	}
-
 	return nil
 }
 
@@ -85,6 +83,10 @@ func (h *FinanceHandlers) handleTransactionCreated(ctx context.Context, event po
 		return fmt.Errorf("save to clickhouse: %w", err)
 	}
 
+	if err := h.service.CheckBudgetExceeded(ctx, tx); err != nil {
+		h.logger.Warn("check budget exceeded failed", zap.Error(err))
+	}
+
 	return nil
 }
 
@@ -105,6 +107,11 @@ func (h *FinanceHandlers) handleTransactionUpdated(ctx context.Context, event po
 	if err := h.service.SaveTransactionToAnalytics(ctx, tx); err != nil {
 		return fmt.Errorf("save to clickhouse: %w", err)
 	}
+
+	if err := h.service.CheckBudgetExceeded(ctx, tx); err != nil {
+		h.logger.Warn("check budget exceeded failed", zap.Error(err))
+	}
+
 	return nil
 }
 

@@ -19,14 +19,6 @@ func convertFinanceToProto(finance domain.Finance) *gen.TransactionResponse {
 	}
 }
 
-//func ConvertFinanceToProto(finance []domain.Finance) []*gen.TransactionResponse {
-//	result := make([]*gen.TransactionResponse, len(finance))
-//	for i, fin := range finance {
-//		result[i] = convertFinanceToProto(fin)
-//	}
-//	return result
-//}
-
 func convertDashboardToProto(dashboard domain.Dashboard) *gen.DashboardResponse {
 	dailyStats := make([]*gen.DailyStat, len(dashboard.DailyStats))
 	for i, stat := range dashboard.DailyStats {
@@ -67,6 +59,7 @@ func convertDashboardToProto(dashboard domain.Dashboard) *gen.DashboardResponse 
 		TopCategories:      topCategories,
 	}
 }
+
 func convertAnalyticsToProto(analytics domain.Analytics) *gen.AnalyticsResponse {
 	series := make([]*gen.AnalyticsPoint, 0, len(analytics.Series))
 	for _, point := range analytics.Series {
@@ -96,5 +89,28 @@ func convertAnalyticsToProto(analytics domain.Analytics) *gen.AnalyticsResponse 
 		SavingsRate:   analytics.SavingsRate,
 		Series:        series,
 		TopCategories: categories,
+	}
+}
+
+func convertBudgetToProto(b domain.Budget) *gen.Budget {
+	return &gen.Budget{
+		Id:          int32(b.ID),
+		Version:     int32(b.Version),
+		UserId:      int32(b.UserID),
+		Category:    b.Category,
+		AmountLimit: b.AmountLimit,
+		Period:      string(b.Period),
+		PeriodStart: timestamppb.New(b.PeriodStart),
+		PeriodEnd:   timestamppb.New(b.PeriodEnd),
+	}
+}
+
+func convertBudgetStatusToProto(st domain.BudgetStatus) *gen.BudgetStatus {
+	return &gen.BudgetStatus{
+		Budget:     convertBudgetToProto(st.Budget),
+		Spent:      st.Spent,
+		Remaining:  st.Remaining,
+		Percentage: st.Percentage,
+		Exceeded:   st.Exceeded,
 	}
 }

@@ -20,6 +20,14 @@ type FinanceRepositoryInterface interface {
 	DeleteUserTransactions(ctx context.Context, userID int) (int, error)
 	GetMetrics(ctx context.Context) (postgres.Metrics, error)
 	GetTransactionsCount(ctx context.Context, userID int, transactionType, category *string, from, to *time.Time) (int, error)
+
+	CreateBudgetTx(ctx context.Context, tx pool.Tx, b domain.Budget) (domain.Budget, error)
+	GetBudget(ctx context.Context, id int) (domain.Budget, error)
+	ListBudgets(ctx context.Context, userID int) ([]domain.Budget, error)
+	UpdateBudget(ctx context.Context, b domain.Budget) (domain.Budget, error)
+	DeleteBudget(ctx context.Context, id int) error
+	GetBudgetSpent(ctx context.Context, b domain.Budget) (float64, error)
+	FindActiveBudget(ctx context.Context, userID int, category string, period domain.BudgetPeriod, now time.Time) (domain.Budget, bool, error)
 }
 
 type FinanceServiceInterface interface {
@@ -41,6 +49,12 @@ type FinanceServiceInterface interface {
 	ExportPDF(ctx context.Context, userID int) (string, error)
 	DownloadExport(ctx context.Context, key string) ([]byte, error)
 	GetExportURL(ctx context.Context, key string) (string, error)
+
+	CreateBudget(ctx context.Context, b domain.Budget) (domain.Budget, error)
+	GetBudget(ctx context.Context, id int) (domain.Budget, error)
+	ListBudgetsWithStatus(ctx context.Context, userID int) ([]domain.BudgetStatus, error)
+	UpdateBudget(ctx context.Context, b domain.Budget) (domain.Budget, error)
+	DeleteBudget(ctx context.Context, id int) error
 }
 
 type PoolInterface interface {

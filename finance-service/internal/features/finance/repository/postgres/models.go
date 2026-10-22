@@ -16,6 +16,19 @@ type FinanceModel struct {
 	UserID          int
 }
 
+type BudgetModel struct {
+	ID          int
+	Version     int
+	UserID      int
+	Category    string
+	AmountLimit float64
+	Period      string
+	PeriodStart time.Time
+	PeriodEnd   time.Time
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
 func financeDomainFromModel(model FinanceModel) domain.Finance {
 	return domain.Finance{
 		ID:              model.ID,
@@ -28,18 +41,17 @@ func financeDomainFromModel(model FinanceModel) domain.Finance {
 	}
 }
 
-//func financeModelsFromDomains(transactions []domain.Finance) []FinanceModel {
-//	models := make([]FinanceModel, len(transactions))
-//	for i, t := range transactions {
-//		models[i] = FinanceModel{
-//			ID:              t.ID,
-//			Version:         t.Version,
-//			TypeTransaction: t.TypeTransaction,
-//			Amount:          t.Amount,
-//			Category:        t.Category,
-//			CreatedAt:       t.CreatedAt,
-//			UserID:          t.UserID,
-//		}
-//	}
-//	return models
-//}
+func budgetDomainFromModel(m BudgetModel) domain.Budget {
+	return domain.Budget{
+		ID:          m.ID,
+		Version:     m.Version,
+		UserID:      m.UserID,
+		Category:    m.Category,
+		AmountLimit: m.AmountLimit,
+		Period:      domain.BudgetPeriod(m.Period),
+		PeriodStart: m.PeriodStart,
+		PeriodEnd:   m.PeriodEnd,
+		CreatedAt:   m.CreatedAt,
+		UpdatedAt:   m.UpdatedAt,
+	}
+}

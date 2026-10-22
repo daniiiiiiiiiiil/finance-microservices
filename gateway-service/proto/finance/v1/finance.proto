@@ -86,6 +86,30 @@ service FinanceService {
       get: "/api/v1/finance/analytics"
     };
   }
+
+  // ADDED — Budgets
+  rpc CreateBudget (CreateBudgetRequest) returns (CreateBudgetResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/finance/budget"
+      body: "*"
+    };
+  }
+  rpc ListBudgets (ListBudgetsRequest) returns (ListBudgetsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/finance/budgets"
+    };
+  }
+  rpc UpdateBudget (UpdateBudgetRequest) returns (UpdateBudgetResponse) {
+    option (google.api.http) = {
+      put: "/api/v1/finance/budget/{id}"
+      body: "*"
+    };
+  }
+  rpc DeleteBudget (DeleteBudgetRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/api/v1/finance/budget/{id}"
+    };
+  }
 }
 
 message GetAnalyticsRequest {
@@ -229,4 +253,56 @@ message DownloadExportResponse {
   bytes data = 1;
   string filename = 2;
   string content_type = 3;
+}
+
+message Budget {
+  int32  id           = 1;
+  int32  version      = 2;
+  int32  user_id      = 3;
+  string category     = 4;
+  double amount_limit = 5;
+  string period       = 6;
+  google.protobuf.Timestamp period_start = 7;
+  google.protobuf.Timestamp period_end   = 8;
+  google.protobuf.Timestamp created_at   = 9;
+  google.protobuf.Timestamp updated_at   = 10;
+}
+
+message BudgetStatus {
+  Budget budget     = 1;
+  double spent      = 2;
+  double remaining  = 3;
+  double percentage = 4;
+  bool   exceeded   = 5;
+}
+
+message CreateBudgetRequest {
+  string category     = 1;
+  double amount_limit = 2;
+  string period       = 3;
+}
+
+message CreateBudgetResponse {
+  Budget budget = 1;
+}
+
+message ListBudgetsRequest {}
+
+message ListBudgetsResponse {
+  repeated BudgetStatus budgets = 1;
+}
+
+message UpdateBudgetRequest {
+  int32  id           = 1;
+  string category     = 2;
+  double amount_limit = 3;
+  string period       = 4;
+}
+
+message UpdateBudgetResponse {
+  Budget budget = 1;
+}
+
+message DeleteBudgetRequest {
+  int32 id = 1;
 }

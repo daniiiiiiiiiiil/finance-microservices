@@ -36,6 +36,10 @@ const (
 	FinanceService_ExportPDF_FullMethodName             = "/finance.FinanceService/ExportPDF"
 	FinanceService_DownloadExport_FullMethodName        = "/finance.FinanceService/DownloadExport"
 	FinanceService_GetAnalytics_FullMethodName          = "/finance.FinanceService/GetAnalytics"
+	FinanceService_CreateBudget_FullMethodName          = "/finance.FinanceService/CreateBudget"
+	FinanceService_ListBudgets_FullMethodName           = "/finance.FinanceService/ListBudgets"
+	FinanceService_UpdateBudget_FullMethodName          = "/finance.FinanceService/UpdateBudget"
+	FinanceService_DeleteBudget_FullMethodName          = "/finance.FinanceService/DeleteBudget"
 )
 
 // FinanceServiceClient is the client API for FinanceService service.
@@ -57,6 +61,11 @@ type FinanceServiceClient interface {
 	ExportPDF(ctx context.Context, in *ExportRequest, opts ...grpc.CallOption) (*ExportResponse, error)
 	DownloadExport(ctx context.Context, in *DownloadExportRequest, opts ...grpc.CallOption) (*DownloadExportResponse, error)
 	GetAnalytics(ctx context.Context, in *GetAnalyticsRequest, opts ...grpc.CallOption) (*AnalyticsResponse, error)
+	// ADDED — Budgets
+	CreateBudget(ctx context.Context, in *CreateBudgetRequest, opts ...grpc.CallOption) (*CreateBudgetResponse, error)
+	ListBudgets(ctx context.Context, in *ListBudgetsRequest, opts ...grpc.CallOption) (*ListBudgetsResponse, error)
+	UpdateBudget(ctx context.Context, in *UpdateBudgetRequest, opts ...grpc.CallOption) (*UpdateBudgetResponse, error)
+	DeleteBudget(ctx context.Context, in *DeleteBudgetRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type financeServiceClient struct {
@@ -217,6 +226,46 @@ func (c *financeServiceClient) GetAnalytics(ctx context.Context, in *GetAnalytic
 	return out, nil
 }
 
+func (c *financeServiceClient) CreateBudget(ctx context.Context, in *CreateBudgetRequest, opts ...grpc.CallOption) (*CreateBudgetResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateBudgetResponse)
+	err := c.cc.Invoke(ctx, FinanceService_CreateBudget_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *financeServiceClient) ListBudgets(ctx context.Context, in *ListBudgetsRequest, opts ...grpc.CallOption) (*ListBudgetsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListBudgetsResponse)
+	err := c.cc.Invoke(ctx, FinanceService_ListBudgets_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *financeServiceClient) UpdateBudget(ctx context.Context, in *UpdateBudgetRequest, opts ...grpc.CallOption) (*UpdateBudgetResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateBudgetResponse)
+	err := c.cc.Invoke(ctx, FinanceService_UpdateBudget_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *financeServiceClient) DeleteBudget(ctx context.Context, in *DeleteBudgetRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, FinanceService_DeleteBudget_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FinanceServiceServer is the server API for FinanceService service.
 // All implementations must embed UnimplementedFinanceServiceServer
 // for forward compatibility.
@@ -236,6 +285,11 @@ type FinanceServiceServer interface {
 	ExportPDF(context.Context, *ExportRequest) (*ExportResponse, error)
 	DownloadExport(context.Context, *DownloadExportRequest) (*DownloadExportResponse, error)
 	GetAnalytics(context.Context, *GetAnalyticsRequest) (*AnalyticsResponse, error)
+	// ADDED — Budgets
+	CreateBudget(context.Context, *CreateBudgetRequest) (*CreateBudgetResponse, error)
+	ListBudgets(context.Context, *ListBudgetsRequest) (*ListBudgetsResponse, error)
+	UpdateBudget(context.Context, *UpdateBudgetRequest) (*UpdateBudgetResponse, error)
+	DeleteBudget(context.Context, *DeleteBudgetRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedFinanceServiceServer()
 }
 
@@ -290,6 +344,18 @@ func (UnimplementedFinanceServiceServer) DownloadExport(context.Context, *Downlo
 }
 func (UnimplementedFinanceServiceServer) GetAnalytics(context.Context, *GetAnalyticsRequest) (*AnalyticsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetAnalytics not implemented")
+}
+func (UnimplementedFinanceServiceServer) CreateBudget(context.Context, *CreateBudgetRequest) (*CreateBudgetResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateBudget not implemented")
+}
+func (UnimplementedFinanceServiceServer) ListBudgets(context.Context, *ListBudgetsRequest) (*ListBudgetsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListBudgets not implemented")
+}
+func (UnimplementedFinanceServiceServer) UpdateBudget(context.Context, *UpdateBudgetRequest) (*UpdateBudgetResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateBudget not implemented")
+}
+func (UnimplementedFinanceServiceServer) DeleteBudget(context.Context, *DeleteBudgetRequest) (*emptypb.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteBudget not implemented")
 }
 func (UnimplementedFinanceServiceServer) mustEmbedUnimplementedFinanceServiceServer() {}
 func (UnimplementedFinanceServiceServer) testEmbeddedByValue()                        {}
@@ -582,6 +648,78 @@ func _FinanceService_GetAnalytics_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FinanceService_CreateBudget_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateBudgetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FinanceServiceServer).CreateBudget(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FinanceService_CreateBudget_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FinanceServiceServer).CreateBudget(ctx, req.(*CreateBudgetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FinanceService_ListBudgets_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListBudgetsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FinanceServiceServer).ListBudgets(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FinanceService_ListBudgets_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FinanceServiceServer).ListBudgets(ctx, req.(*ListBudgetsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FinanceService_UpdateBudget_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateBudgetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FinanceServiceServer).UpdateBudget(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FinanceService_UpdateBudget_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FinanceServiceServer).UpdateBudget(ctx, req.(*UpdateBudgetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FinanceService_DeleteBudget_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteBudgetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FinanceServiceServer).DeleteBudget(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FinanceService_DeleteBudget_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FinanceServiceServer).DeleteBudget(ctx, req.(*DeleteBudgetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // FinanceService_ServiceDesc is the grpc.ServiceDesc for FinanceService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -648,6 +786,22 @@ var FinanceService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAnalytics",
 			Handler:    _FinanceService_GetAnalytics_Handler,
+		},
+		{
+			MethodName: "CreateBudget",
+			Handler:    _FinanceService_CreateBudget_Handler,
+		},
+		{
+			MethodName: "ListBudgets",
+			Handler:    _FinanceService_ListBudgets_Handler,
+		},
+		{
+			MethodName: "UpdateBudget",
+			Handler:    _FinanceService_UpdateBudget_Handler,
+		},
+		{
+			MethodName: "DeleteBudget",
+			Handler:    _FinanceService_DeleteBudget_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

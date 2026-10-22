@@ -13,6 +13,10 @@ const (
 	EventTypeUserDeleted             = "user.deleted"
 	EventTypeAdminMetrics            = "admin.metrics"
 	EventTypeUserTransactionsDeleted = "user.transactions.deleted"
+	EventTypeBudgetCreated           = "budget.created"
+	EventTypeBudgetUpdated           = "budget.updated"
+	EventTypeBudgetDeleted           = "budget.deleted"
+	EventTypeBudgetExceeded          = "budget.exceeded"
 )
 
 type Event struct {

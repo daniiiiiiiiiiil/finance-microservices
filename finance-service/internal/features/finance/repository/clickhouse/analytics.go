@@ -18,26 +18,34 @@ func (r *DashboardRepository) GetAnalytics(
 	}
 
 	now := time.Now().UTC()
-	var from time.Time
-	var bucket string
 
+	var budgetPeriod domain.BudgetPeriod
 	switch period {
 	case domain.AnalyticsPeriodDay:
-		from = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
-		bucket = "toStartOfHour(created_at)"
+		budgetPeriod = domain.BudgetPeriodDay
 	case domain.AnalyticsPeriodWeek:
-		daysSinceMonday := (int(now.Weekday()) + 6) % 7
-		monday := now.AddDate(0, 0, -daysSinceMonday)
-		from = time.Date(monday.Year(), monday.Month(), monday.Day(), 0, 0, 0, 0, time.UTC)
-		bucket = "toStartOfDay(created_at)"
+		budgetPeriod = domain.BudgetPeriodWeek
 	case domain.AnalyticsPeriodMonth:
-		from = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
-		bucket = "toStartOfDay(created_at)"
+		budgetPeriod = domain.BudgetPeriodMonth
 	case domain.AnalyticsPeriodYear:
-		from = time.Date(now.Year(), time.January, 1, 0, 0, 0, 0, time.UTC)
-		bucket = "toStartOfMonth(created_at)"
+		budgetPeriod = domain.BudgetPeriodYear
 	default:
 		return domain.Analytics{}, fmt.Errorf("unsupported analytics period %q", period)
+	}
+
+	from, _, err := domain.PeriodRange(now, budgetPeriod)
+	if err != nil {
+		return domain.Analytics{}, fmt.Errorf("period range: %w", err)
+	}
+
+	var bucket string
+	switch period {
+	case domain.AnalyticsPeriodDay:
+		bucket = "toStartOfHour(created_at)"
+	case domain.AnalyticsPeriodWeek, domain.AnalyticsPeriodMonth:
+		bucket = "toStartOfDay(created_at)"
+	case domain.AnalyticsPeriodYear:
+		bucket = "toStartOfMonth(created_at)"
 	}
 
 	result := domain.Analytics{
