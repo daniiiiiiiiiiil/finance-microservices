@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.2
 // - protoc             v7.35.1
-// source: admin/admin.proto
+// source: admin/v1/admin.proto
 
 package gen
 
@@ -271,5 +271,5 @@ var AdminService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "admin/admin.proto",
+	Metadata: "admin/v1/admin.proto",
 }
