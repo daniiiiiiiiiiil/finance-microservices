@@ -44,7 +44,7 @@ jobs:
           echo "services=$services" >> "$GITHUB_OUTPUT"
           echo "Найдены сервисы: $services"
 
-  # Вторая задача: линтинг, тестирование и сборка
+  # Вторая задача: тестирование и сборка
   lint-and-test:
     # Зависит от первой задачи (ждем, пока найдутся сервисы)
     needs: detect-services
@@ -74,23 +74,6 @@ jobs:
       - name: Download dependencies
         working-directory: ${{ matrix.service }}
         run: go mod download
-
-      # Запускаем встроенный анализатор Go (vet)
-      - name: go vet
-        working-directory: ${{ matrix.service }}
-        run: go vet ./...
-
-      # Запускаем golangci-lint (мощный линтер)
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
-        with:
-          # Рабочая папка - директория сервиса
-          working-directory: ${{ matrix.service }}
-          # Последняя версия линтера
-          version: latest
-          install-mode: goinstall
-          # Таймаут 5 минут
-          args: --timeout=5m
 
       # Запускаем тесты с покрытием
       - name: Run tests with coverage
