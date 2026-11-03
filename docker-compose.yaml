@@ -12,10 +12,11 @@ services:
       - ./out/pgdata/finance:/var/lib/postgresql/data:rw
     restart: always
     healthcheck:
-       test: [ "CMD-SHELL", "pg_isready -U ${FINANCE_POSTGRES_USER} -d ${FINANCE_POSTGRES_DB}" ]
-       interval: 10s
-       timeout: 5s
-       retries: 5
+      test: [ "CMD-SHELL", "pg_isready -U ${FINANCE_POSTGRES_USER} -d ${FINANCE_POSTGRES_DB}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
 
   auth-postgres:
     image: postgres:15-alpine
@@ -31,9 +32,10 @@ services:
     restart: always
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${AUTH_POSTGRES_USER} -d ${AUTH_POSTGRES_DB}" ]
-      interval: 10s
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 5s
 
   users-postgres:
     image: postgres:15-alpine
@@ -49,9 +51,10 @@ services:
     restart: always
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${USERS_POSTGRES_USER} -d ${USERS_POSTGRES_DB}" ]
-      interval: 10s
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 5s
 
   shopping-postgres:
     image: postgres:15-alpine
@@ -67,9 +70,10 @@ services:
     restart: always
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${SHOPPING_POSTGRES_USER} -d ${SHOPPING_POSTGRES_DB}" ]
-      interval: 10s
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 5s
 
   saga-postgres:
     image: postgres:15-alpine
@@ -85,10 +89,10 @@ services:
     restart: always
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${SAGA_POSTGRES_USER} -d ${SAGA_POSTGRES_DB}" ]
-      interval: 10s
+      interval: 5s
       timeout: 5s
-      retries: 5
-
+      retries: 10
+      start_period: 5s
 
   ai-postgres:
     image: postgres:15-alpine
@@ -104,9 +108,10 @@ services:
     restart: always
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${AI_POSTGRES_USER} -d ${AI_POSTGRES_DB}" ]
-      interval: 10s
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 5s
 
   finance-redis:
     image: redis:7-alpine
@@ -123,7 +128,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-
 
   kafka:
     image: confluentinc/cp-kafka:latest
@@ -148,7 +152,8 @@ services:
       test: [ "CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092" ]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 20s
 
   minio:
     image: pgsty/minio:latest
@@ -162,10 +167,9 @@ services:
     volumes:
       - ./minio-data:/data
     ports:
-      - "9000:9000"   # S3 API
-      - "9001:9001"   # Web Console
+      - "9000:9000"
+      - "9001:9001"
     restart: always
-
 
   clickhouse:
     image: clickhouse/clickhouse-server:24-alpine
@@ -193,6 +197,153 @@ services:
       retries: 10
       start_period: 60s
     restart: always
+
+
+  auth-postgres-migrate:
+    image: migrate/migrate:latest
+    networks:
+      - finance-net
+    volumes:
+      - ./auth-service/migrations:/migrations
+    environment:
+      - AUTH_POSTGRES_USER=${AUTH_POSTGRES_USER}
+      - AUTH_POSTGRES_PASSWORD=${AUTH_POSTGRES_PASSWORD}
+      - AUTH_POSTGRES_DB=${AUTH_POSTGRES_DB}
+    depends_on:
+      auth-postgres:
+        condition: service_healthy
+    entrypoint: |
+      sh -c "
+        echo 'Applying auth migrations...' &&
+        migrate -path /migrations -database postgres://${AUTH_POSTGRES_USER}:${AUTH_POSTGRES_PASSWORD}@auth-postgres:5432/${AUTH_POSTGRES_DB}?sslmode=disable up
+      "
+    restart: "no"
+
+  users-postgres-migrate:
+    image: migrate/migrate:latest
+    networks:
+      - finance-net
+    volumes:
+      - ./users-service/migrations:/migrations
+    environment:
+      - USERS_POSTGRES_USER=${USERS_POSTGRES_USER}
+      - USERS_POSTGRES_PASSWORD=${USERS_POSTGRES_PASSWORD}
+      - USERS_POSTGRES_DB=${USERS_POSTGRES_DB}
+    depends_on:
+      users-postgres:
+        condition: service_healthy
+    entrypoint: |
+      sh -c "
+        echo 'Applying users migrations...' &&
+        migrate -path /migrations -database postgres://${USERS_POSTGRES_USER}:${USERS_POSTGRES_PASSWORD}@users-postgres:5432/${USERS_POSTGRES_DB}?sslmode=disable up
+      "
+    restart: "no"
+
+  finance-postgres-migrate:
+    image: migrate/migrate:latest
+    networks:
+      - finance-net
+    volumes:
+      - ./finance-service/migrations:/migrations
+    environment:
+      - FINANCE_POSTGRES_USER=${FINANCE_POSTGRES_USER}
+      - FINANCE_POSTGRES_PASSWORD=${FINANCE_POSTGRES_PASSWORD}
+      - FINANCE_POSTGRES_DB=${FINANCE_POSTGRES_DB}
+    depends_on:
+      finance-postgres:
+        condition: service_healthy
+    entrypoint: |
+      sh -c "
+        echo 'Applying finance migrations...' &&
+        migrate -path /migrations -database postgres://${FINANCE_POSTGRES_USER}:${FINANCE_POSTGRES_PASSWORD}@finance-postgres:5432/${FINANCE_POSTGRES_DB}?sslmode=disable up
+      "
+    restart: "no"
+
+  shopping-list-migrate:
+    image: migrate/migrate:latest
+    networks:
+      - finance-net
+    volumes:
+      - ./shopping-list-service/migrations:/migrations
+    environment:
+      - SHOPPING_POSTGRES_USER=${SHOPPING_POSTGRES_USER}
+      - SHOPPING_POSTGRES_PASSWORD=${SHOPPING_POSTGRES_PASSWORD}
+      - SHOPPING_POSTGRES_DB=${SHOPPING_POSTGRES_DB}
+    depends_on:
+      shopping-postgres:
+        condition: service_healthy
+    entrypoint:
+      sh -c "
+      echo 'Applying shopping-list migrations' &&
+      migrate -path /migrations -database postgres://${SHOPPING_POSTGRES_USER}:${SHOPPING_POSTGRES_PASSWORD}@shopping-postgres:5432/${SHOPPING_POSTGRES_DB}?sslmode=disable up
+      "
+    restart: "no"
+
+  saga-postgres-migrate:
+    image: migrate/migrate:latest
+    networks:
+      - finance-net
+    volumes:
+      - ./saga-orchestrator-service/migrations:/migrations
+    environment:
+      - SAGA_POSTGRES_USER=${SAGA_POSTGRES_USER}
+      - SAGA_POSTGRES_PASSWORD=${SAGA_POSTGRES_PASSWORD}
+      - SAGA_POSTGRES_DB=${SAGA_POSTGRES_DB}
+    depends_on:
+      saga-postgres:
+        condition: service_healthy
+    entrypoint:
+      sh -c "
+      echo 'Applying saga migrations' &&
+      migrate -path /migrations -database postgres://${SAGA_POSTGRES_USER}:${SAGA_POSTGRES_PASSWORD}@saga-postgres:5432/${SAGA_POSTGRES_DB}?sslmode=disable up
+      "
+    restart: "no"
+
+  ai-postgres-migrate:
+    image: migrate/migrate:latest
+    networks:
+      - finance-net
+    volumes:
+      - ./ai-service/migrations:/migrations
+    environment:
+      - AI_POSTGRES_USER=${AI_POSTGRES_USER}
+      - AI_POSTGRES_PASSWORD=${AI_POSTGRES_PASSWORD}
+      - AI_POSTGRES_DB=${AI_POSTGRES_DB}
+    depends_on:
+      ai-postgres:
+        condition: service_healthy
+    entrypoint:
+      sh -c "
+      echo 'Applying ai migrations' &&
+      migrate -path /migrations -database postgres://${AI_POSTGRES_USER}:${AI_POSTGRES_PASSWORD}@ai-postgres:5432/${AI_POSTGRES_DB}?sslmode=disable up
+      "
+    restart: "no"
+
+  clickhouse-migrate:
+    image: clickhouse/clickhouse-server:24-alpine
+    container_name: finance-clickhouse-migrate
+    networks:
+      - finance-net
+    volumes:
+      - ./finance-service/clickhouse-migrations:/migrations
+    environment:
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-finance_user}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-finance_pass}
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    entrypoint: |
+      sh -c "
+        echo 'Applying ClickHouse migrations...'
+        for f in /migrations/*.sql; do
+          echo \"Applying $$f...\"
+          clickhouse-client --host $$CLICKHOUSE_HOST --user $$CLICKHOUSE_USER --password $$CLICKHOUSE_PASSWORD --multiquery < $$f
+        done
+        echo 'ClickHouse migrations applied.'
+      "
+    restart: "no"
+
 
   auth:
     build:
@@ -229,9 +380,14 @@ services:
       - "9091:9091"
     restart: always
     depends_on:
-      - auth-postgres
-      - finance-redis
-      - kafka
+      auth-postgres:
+        condition: service_healthy
+      auth-postgres-migrate:
+        condition: service_completed_successfully
+      finance-redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
 
   users:
     build:
@@ -267,9 +423,14 @@ services:
       - "9096:9096"
     restart: always
     depends_on:
-      - users-postgres
-      - finance-redis
-      - kafka
+      users-postgres:
+        condition: service_healthy
+      users-postgres-migrate:
+        condition: service_completed_successfully
+      finance-redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
 
   finance:
     build:
@@ -316,11 +477,20 @@ services:
       - "9093:9093"
     restart: always
     depends_on:
-      - finance-postgres
-      - finance-redis
-      - kafka
-      - minio
-      - clickhouse
+      finance-postgres:
+        condition: service_healthy
+      finance-postgres-migrate:
+        condition: service_completed_successfully
+      clickhouse:
+        condition: service_healthy
+      clickhouse-migrate:
+        condition: service_completed_successfully
+      finance-redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      minio:
+        condition: service_started
 
   admin:
     build:
@@ -349,8 +519,10 @@ services:
       - "9094:9094"
     restart: always
     depends_on:
-      - finance-redis
-      - kafka
+      finance-redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
 
   currency:
     build:
@@ -380,8 +552,10 @@ services:
       - "9095:9095"
     restart: always
     depends_on:
-      - finance-redis
-      - kafka
+      finance-redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
 
   shopping-list:
     build:
@@ -426,10 +600,16 @@ services:
       - "8090:8090"
     restart: always
     depends_on:
-      - shopping-postgres
-      - finance-redis
-      - minio
-      - kafka
+      shopping-postgres:
+        condition: service_healthy
+      shopping-list-migrate:
+        condition: service_completed_successfully
+      finance-redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      minio:
+        condition: service_started
 
   saga:
     build:
@@ -466,8 +646,12 @@ services:
       - "9098:9098"
     restart: always
     depends_on:
-      - saga-postgres
-      - kafka
+      saga-postgres:
+        condition: service_healthy
+      saga-postgres-migrate:
+        condition: service_completed_successfully
+      kafka:
+        condition: service_healthy
 
   ai:
     build:
@@ -533,139 +717,6 @@ services:
       kafka:
         condition: service_healthy
 
-  auth-postgres-migrate:
-    image: migrate/migrate:latest
-    networks:
-      - finance-net
-    volumes:
-      - ./auth-service/migrations:/migrations
-    environment:
-      - AUTH_POSTGRES_USER=${AUTH_POSTGRES_USER}
-      - AUTH_POSTGRES_PASSWORD=${AUTH_POSTGRES_PASSWORD}
-      - AUTH_POSTGRES_DB=${AUTH_POSTGRES_DB}
-    depends_on:
-      - auth-postgres
-    entrypoint: |
-      sh -c "
-        echo 'Applying auth migrations...' &&
-        migrate -path /migrations -database postgres://${AUTH_POSTGRES_USER}:${AUTH_POSTGRES_PASSWORD}@auth-postgres:5432/${AUTH_POSTGRES_DB}?sslmode=disable up
-      "
-
-  users-postgres-migrate:
-      image: migrate/migrate:latest
-      networks:
-        - finance-net
-      volumes:
-        - ./users-service/migrations:/migrations
-      environment:
-        - USERS_POSTGRES_USER=${USERS_POSTGRES_USER}
-        - USERS_POSTGRES_PASSWORD=${USERS_POSTGRES_PASSWORD}
-        - USERS_POSTGRES_DB=${USERS_POSTGRES_DB}
-      depends_on:
-        - users-postgres
-      entrypoint: |
-        sh -c "
-          echo 'Applying users migrations...' &&
-          migrate -path /migrations -database postgres://${USERS_POSTGRES_USER}:${USERS_POSTGRES_PASSWORD}@users-postgres:5432/${USERS_POSTGRES_DB}?sslmode=disable up
-        "
-
-  finance-postgres-migrate:
-      image: migrate/migrate:latest
-      networks:
-        - finance-net
-      volumes:
-        - ./finance-service/migrations:/migrations
-      environment:
-        - FINANCE_POSTGRES_USER=${FINANCE_POSTGRES_USER}
-        - FINANCE_POSTGRES_PASSWORD=${FINANCE_POSTGRES_PASSWORD}
-        - FINANCE_POSTGRES_DB=${FINANCE_POSTGRES_DB}
-      depends_on:
-        - finance-postgres
-      entrypoint: |
-        sh -c "
-          echo 'Applying finance migrations...' &&
-          migrate -path /migrations -database postgres://${FINANCE_POSTGRES_USER}:${FINANCE_POSTGRES_PASSWORD}@finance-postgres:5432/${FINANCE_POSTGRES_DB}?sslmode=disable up
-        "
-
-  shopping-list-migrate:
-    image: migrate/migrate:latest
-    networks:
-      - finance-net
-    volumes:
-      - ./shopping-list-service/migrations:/migrations
-    environment:
-      - SHOPPING_POSTGRES_USER=${SHOPPING_POSTGRES_USER}
-      - SHOPPING_POSTGRES_PASSWORD=${SHOPPING_POSTGRES_PASSWORD}
-      - SHOPPING_POSTGRES_DB=${SHOPPING_POSTGRES_DB}
-    depends_on:
-      - shopping-postgres
-    entrypoint:
-      sh -c "
-      echo 'Applying shopping-list migrations' &&
-      migrate -path /migrations -database postgres://${SHOPPING_POSTGRES_USER}:${SHOPPING_POSTGRES_PASSWORD}@shopping-postgres:5432/${SHOPPING_POSTGRES_DB}?sslmode=disable up
-      "
-
-  saga-postgres-migrate:
-    image: migrate/migrate:latest
-    networks:
-      - finance-net
-    volumes:
-      - ./saga-orchestrator-service/migrations:/migrations
-    environment:
-      - SAGA_POSTGRES_USER=${SAGA_POSTGRES_USER}
-      - SAGA_POSTGRES_PASSWORD=${SAGA_POSTGRES_PASSWORD}
-      - SAGA_POSTGRES_DB=${SAGA_POSTGRES_DB}
-    depends_on:
-      - saga-postgres
-    entrypoint:
-      sh -c "
-      echo 'Applying saga migrations' &&
-      migrate -path /migrations -database postgres://${SAGA_POSTGRES_USER}:${SAGA_POSTGRES_PASSWORD}@saga-postgres:5432/${SAGA_POSTGRES_DB}?sslmode=disable up
-      "
-
-  ai-postgres-migrate:
-    image: migrate/migrate:latest
-    networks:
-      - finance-net
-    volumes:
-      - ./ai-service/migrations:/migrations
-    environment:
-      - AI_POSTGRES_USER=${AI_POSTGRES_USER}
-      - AI_POSTGRES_PASSWORD=${AI_POSTGRES_PASSWORD}
-      - AI_POSTGRES_DB=${AI_POSTGRES_DB}
-    depends_on:
-      - ai-postgres
-    entrypoint:
-      sh -c "
-      echo 'Applying ai migrations' &&
-      migrate -path /migrations -database postgres://${AI_POSTGRES_USER}:${AI_POSTGRES_PASSWORD}@ai-postgres:5432/${AI_POSTGRES_DB}?sslmode=disable up
-      "
-
-  clickhouse-migrate:
-    image: clickhouse/clickhouse-server:24-alpine
-    container_name: finance-clickhouse-migrate
-    networks:
-      - finance-net
-    volumes:
-      - ./finance-service/clickhouse-migrations:/migrations
-    environment:
-      CLICKHOUSE_HOST: clickhouse
-      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-finance_user}
-      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-finance_pass}
-    depends_on:
-      clickhouse:
-        condition: service_healthy
-    entrypoint: |
-      sh -c "
-        echo 'Applying ClickHouse migrations...'
-        for f in /migrations/*.sql; do
-          echo \"Applying $$f...\"
-          clickhouse-client --host $$CLICKHOUSE_HOST --user $$CLICKHOUSE_USER --password $$CLICKHOUSE_PASSWORD --multiquery < $$f
-        done
-        echo 'ClickHouse migrations applied.'
-      "
-    restart: "no"
-
   gateway:
     build:
       context: .
@@ -690,15 +741,22 @@ services:
       - "8081:8081"
     restart: always
     depends_on:
-      - auth
-      - users
-      - finance
-      - admin
-      - currency
-      - shopping-list
-      - saga
-      - ai
-
+      auth:
+        condition: service_started
+      users:
+        condition: service_started
+      finance:
+        condition: service_started
+      admin:
+        condition: service_started
+      currency:
+        condition: service_started
+      shopping-list:
+        condition: service_started
+      saga:
+        condition: service_started
+      ai:
+        condition: service_started
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
@@ -706,7 +764,8 @@ services:
     networks:
       - finance-net
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
     ports:
       - "8080:8080"
     environment:
