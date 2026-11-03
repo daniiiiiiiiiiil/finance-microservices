@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package ai.v1;
 
-option go_package = "github.com/daniiiiiiiiiiil/finance-microservices/ai-service/proto/gen/ai/v1;ai";
+option go_package = "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/ai;v1";
 
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";

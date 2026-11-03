@@ -20,13 +20,14 @@ import (
 	grpcclient "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/internal/core/grpc"
 	"github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/pkg/logger"
 	http2 "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/pkg/middleware/http"
-	adminpb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/admin/gen"
-	aipb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/ai/gen/v1"
-	authpb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/auth/gen"
-	currencypb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/currency/gen"
-	financepb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/finance/gen"
-	shoppingpb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/shopping/gen"
-	userpb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/users/gen"
+
+	adminpb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/admin"
+	aipb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/ai"
+	authpb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/auth"
+	currencypb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/currency"
+	financepb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/finance"
+	shoppingpb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/shopping"
+	userpb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/users"
 )
 
 func main() {
