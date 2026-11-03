@@ -1,0 +1,145 @@
+syntax = "proto3";
+
+package ai.v1;
+
+option go_package = "github.com/daniiiiiiiiiiil/finance-microservices/ai-service/proto/gen/ai/v1;ai";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+service AIService {
+  rpc PlanShopping(PlanShoppingRequest) returns (PlanShoppingResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/ai/plan"
+      body: "*"
+    };
+  }
+
+  rpc ListPlans(ListPlansRequest) returns (ListPlansResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/ai/plans"
+    };
+  }
+
+  rpc GetPlan(GetPlanRequest) returns (PlanShoppingResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/ai/plans/{id}"
+    };
+  }
+
+  rpc DeletePlan(DeletePlanRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/api/v1/ai/plans/{id}"
+    };
+  }
+}
+
+message PlanShoppingRequest {
+  string request_id    = 1;
+  string text          = 2;
+  string start_address = 3;
+}
+
+message Item {
+  string name     = 1;
+  int32  quantity = 2;
+  string unit     = 3;
+}
+
+message Store {
+  string id         = 1;
+  string name       = 2;
+  string address    = 3;
+  double latitude   = 4;
+  double longitude  = 5;
+  repeated ItemPrice prices = 6;
+  Delivery delivery = 7;
+  string source_url = 8;
+}
+
+message ItemPrice {
+  string item_name = 1;
+  double price     = 2;
+  string currency  = 3;
+  bool   in_stock  = 4;
+}
+
+message Delivery {
+  bool   available    = 1;
+  double price        = 2;
+  double free_from    = 3;
+  double min_order    = 4;
+  int32  duration_min = 5;
+}
+
+message RouteLeg {
+  int32  from_index       = 1;
+  int32  to_index         = 2;
+  double distance_meters  = 3;
+  double duration_seconds = 4;
+}
+
+message Route {
+  repeated int32 order    = 1;
+  double distance_meters  = 2;
+  double duration_seconds = 3;
+  string geometry_geojson = 4;
+  repeated RouteLeg legs  = 5;
+}
+
+message CostBreakdown {
+  double items_total    = 1;
+  double travel_cost    = 2;
+  double delivery_cost  = 3;
+  double total          = 4;
+}
+
+message Recommendation {
+  string mode   = 1;
+  double total  = 2;
+  string reason = 3;
+}
+
+message PlanShoppingResponse {
+  string request_id    = 1;
+  int32  user_id       = 2;
+  repeated Item items  = 3;
+  repeated Store stores = 4;
+  Route route          = 5;
+  CostBreakdown cost   = 6;
+  Recommendation recommendation = 7;
+  google.protobuf.Timestamp created_at = 8;
+}
+
+message ListPlansRequest {
+  int32 limit  = 1;
+  int32 offset = 2;
+}
+
+message PlanSummary {
+  int32  id           = 1;
+  string request_id   = 2;
+  string text         = 3;
+  string address      = 4;
+  int32  items_count  = 5;
+  int32  stores_count = 6;
+  double total_cost   = 7;
+  string recommended  = 8;
+  google.protobuf.Timestamp created_at = 9;
+}
+
+message ListPlansResponse {
+  repeated PlanSummary plans = 1;
+  int32 total  = 2;
+  int32 limit  = 3;
+  int32 offset = 4;
+}
+
+message GetPlanRequest {
+  int32 id = 1;
+}
+
+message DeletePlanRequest {
+  int32 id = 1;
+}

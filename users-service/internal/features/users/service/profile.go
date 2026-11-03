@@ -70,8 +70,6 @@ func (s *UsersService) CreateProfile(ctx context.Context, req *CreateProfileRequ
 		return domain.User{}, fmt.Errorf("commit transaction: %w", err)
 	}
 
-	go s.publishUserEvent(context.Background(), "user.created", created.ID, created.Email, created.FullName, created.IsAdmin, created.Status)
-
 	return created, nil
 }
 

@@ -89,6 +89,25 @@ services:
       timeout: 5s
       retries: 5
 
+
+  ai-postgres:
+    image: postgres:15-alpine
+    container_name: ai-env-postgres
+    networks:
+      - finance-net
+    environment:
+      - POSTGRES_USER=${AI_POSTGRES_USER}
+      - POSTGRES_PASSWORD=${AI_POSTGRES_PASSWORD}
+      - POSTGRES_DB=${AI_POSTGRES_DB}
+    volumes:
+      - ./out/pgdata/ai:/var/lib/postgresql/data:rw
+    restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${AI_POSTGRES_USER} -d ${AI_POSTGRES_DB}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   finance-redis:
     image: redis:7-alpine
     container_name: finance-redis
@@ -450,6 +469,70 @@ services:
       - saga-postgres
       - kafka
 
+  ai:
+    build:
+      context: .
+      dockerfile: build/ai/Dockerfile
+    container_name: ai-service
+    networks:
+      - finance-net
+    environment:
+      - POSTGRES_USER=${AI_POSTGRES_USER}
+      - POSTGRES_PASSWORD=${AI_POSTGRES_PASSWORD}
+      - POSTGRES_DB=${AI_POSTGRES_DB}
+      - POSTGRES_HOST=ai-postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_TIMEOUT=${POSTGRES_TIMEOUT}
+      - TIME_ZONE=${TIME_ZONE}
+      - LOGGER_LEVEL=${LOGGER_LEVEL}
+      - LOGGER_FOLDER=${LOGGER_FOLDER}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_DURATION=${JWT_DURATION}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - GROQ_BASE_URL=${GROQ_BASE_URL}
+      - GROQ_MODEL=${GROQ_MODEL}
+      - GROQ_TIMEOUT=${GROQ_TIMEOUT}
+      - GROQ_MAX_RETRIES=${GROQ_MAX_RETRIES}
+      - TAVILY_API_KEY=${TAVILY_API_KEY}
+      - TAVILY_BASE_URL=${TAVILY_BASE_URL}
+      - TAVILY_TIMEOUT=${TAVILY_TIMEOUT}
+      - NOMINATIM_URL=${NOMINATIM_URL}
+      - NOMINATIM_USER_AGENT=${NOMINATIM_USER_AGENT}
+      - NOMINATIM_TIMEOUT=${NOMINATIM_TIMEOUT}
+      - OSRM_URL=${OSRM_URL}
+      - OSRM_TIMEOUT=${OSRM_TIMEOUT}
+      - FUEL_CONSUMPTION_L_PER_100KM=${FUEL_CONSUMPTION_L_PER_100KM}
+      - FUEL_PRICE_PER_LITER=${FUEL_PRICE_PER_LITER}
+      - TAXI_PRICE_PER_KM=${TAXI_PRICE_PER_KM}
+      - TRAVEL_COST_MODE=${TRAVEL_COST_MODE}
+      - AI_GRPC_PORT=${AI_GRPC_PORT}
+      - AI_METRICS_PORT=${AI_METRICS_PORT}
+      - REDIS_ADDR=${REDIS_ADDR}
+      - CACHE_TTL=${CACHE_TTL}
+      - KAFKA_BROKERS=${KAFKA_BROKERS}
+      - KAFKA_CONSUMER_GROUP=ai-service
+      - KAFKA_TOPIC=finance-events
+      - TLS_ENABLED=${TLS_ENABLED}
+      - TLS_CERT_FILE=${TLS_CERT_FILE}
+      - TLS_KEY_FILE=${TLS_KEY_FILE}
+      - TLS_CA_FILE=${TLS_CA_FILE}
+    volumes:
+      - ./logs:/out/logs
+      - ./certs:/certs:ro
+    ports:
+      - "${AI_GRPC_PORT:-50056}:${AI_GRPC_PORT:-50056}"
+      - "${AI_METRICS_PORT:-9099}:${AI_METRICS_PORT:-9099}"
+    restart: always
+    depends_on:
+      ai-postgres:
+        condition: service_healthy
+      ai-postgres-migrate:
+        condition: service_completed_successfully
+      finance-redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
   auth-postgres-migrate:
     image: migrate/migrate:latest
     networks:
@@ -540,6 +623,24 @@ services:
       migrate -path /migrations -database postgres://${SAGA_POSTGRES_USER}:${SAGA_POSTGRES_PASSWORD}@saga-postgres:5432/${SAGA_POSTGRES_DB}?sslmode=disable up
       "
 
+  ai-postgres-migrate:
+    image: migrate/migrate:latest
+    networks:
+      - finance-net
+    volumes:
+      - ./ai-service/migrations:/migrations
+    environment:
+      - AI_POSTGRES_USER=${AI_POSTGRES_USER}
+      - AI_POSTGRES_PASSWORD=${AI_POSTGRES_PASSWORD}
+      - AI_POSTGRES_DB=${AI_POSTGRES_DB}
+    depends_on:
+      - ai-postgres
+    entrypoint:
+      sh -c "
+      echo 'Applying ai migrations' &&
+      migrate -path /migrations -database postgres://${AI_POSTGRES_USER}:${AI_POSTGRES_PASSWORD}@ai-postgres:5432/${AI_POSTGRES_DB}?sslmode=disable up
+      "
+
   clickhouse-migrate:
     image: clickhouse/clickhouse-server:24-alpine
     container_name: finance-clickhouse-migrate
@@ -596,6 +697,7 @@ services:
       - currency
       - shopping-list
       - saga
+      - ai
 
 
   kafka-ui:
@@ -638,9 +740,23 @@ services:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
 
+  nominatim:
+    image: mediagis/nominatim:4.4
+    container_name: finance-nominatim
+    networks:
+      - finance-net
+    environment:
+      PBF_URL: https://download.geofabrik.de/russia-latest.osm.pbf
+      REPLICATION_URL: https://download.geofabrik.de/europe/monaco-updates/
+      NOMINATIM_PASSWORD: nominatim
+    ports:
+      - "8088:8080"
+    volumes:
+      - nominatim-data:/var/lib/postgresql/14/main
+
 volumes:
   clickhouse-data:
-
+  nominatim-data:
 
 networks:
   finance-net:

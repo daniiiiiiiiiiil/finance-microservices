@@ -15,8 +15,15 @@
     let flowChartInstance = null;
     let categoryChartInstance = null;
 
+    // AI Map state
+    let leafletMap = null;
+    let mapMarkers = [];
+    let mapRouteLayer = null;
+    let currentAIPlan = null;
+
     const pages = {
         overview: ['Финансовый обзор', 'Сводка по данным вашего аккаунта.'],
+        ai: ['AI-покупки', 'Умное планирование списков покупок и маршрутов по магазинам.'],
         transactions: ['Транзакции', 'Операции, загруженные из финансового сервиса.'],
         goals: ['Мои цели', 'Накопления на крупные покупки и мечты.'],
         analytics: ['Аналитика', 'Диаграммы рассчитываются по реальным операциям.'],
@@ -76,6 +83,7 @@
             renderAll();
             if (!$('#currencyView').hidden) loadRates().catch(e => ratesError(e.message));
             if (!$('#goalsView').hidden) loadGoals().catch(e => notify(e.message));
+            if (!$('#aiView').hidden) loadAIPlansHistory().catch(e => console.warn(e));
         } catch (error) {
             $('#connectionStatus').textContent = 'Ошибка подключения';
             showAuth();
@@ -116,6 +124,7 @@
     $('#refreshBtn').addEventListener('click', () => loadData().then(async () => {
         if (page === 'analytics') await loadAnalytics();
         if (page === 'goals') await loadGoals();
+        if (page === 'ai') await loadAIPlansHistory();
         notify('Данные обновлены');
     }).catch(e => notify(e.message)));
 
@@ -236,6 +245,289 @@
         root.innerHTML = rows.length ? rows.map(([name, amount]) => `<div class="category-row"><div class="category-row-head"><span>${safe(name)}</span><b>${money(amount)}</b></div><div class="progress-track"><div class="progress-value" style="width:${amount / max * 100}%"></div></div></div>`).join('') : '<p class="chart-empty">Нет расходов за выбранный период.</p>';
     }
 
+    /* ==========================================================================
+       AI SHOPPING PLANNER LOGIC & LEAFLET MAP
+       ========================================================================== */
+
+    async function planShopping(queryText, startAddress) {
+        if (!token) {
+            showAuth();
+            throw new Error('Авторизуйтесь для использования AI-планировщика');
+        }
+
+        // Переключаем UI в состояние загрузки
+        $('#aiEmptyState').hidden = true;
+        $('#aiResultsContent').hidden = true;
+        $('#aiErrorState').hidden = true;
+        $('#aiLoadingState').hidden = false;
+
+        const payload = {
+            requestId: 'req_' + Date.now(),
+            text: queryText,
+            startAddress: startAddress
+        };
+
+        try {
+            const data = await api('/api/v1/ai/plan', {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+
+            currentAIPlan = data;
+            renderAIResults(data);
+            loadAIPlansHistory().catch(e => console.warn(e));
+        } catch (error) {
+            $('#aiLoadingState').hidden = true;
+            $('#aiErrorState').hidden = false;
+            $('#aiErrorMessage').textContent = error.message || 'Ошибка планирования покупок';
+            throw error;
+        } finally {
+            $('#aiLoadingState').hidden = true;
+        }
+    }
+
+    async function loadAIPlansHistory() {
+        const historyContainer = $('#aiPlansHistoryList');
+        if (!historyContainer) return;
+
+        try {
+            const res = await api('/api/v1/ai/plans?limit=10&offset=0');
+            const plans = res.plans || res.items || (Array.isArray(res) ? res : []);
+
+            if (!plans.length) {
+                historyContainer.innerHTML = '<div class="chart-empty">Нет сохраненных планов</div>';
+                return;
+            }
+
+            historyContainer.innerHTML = plans.map(plan => `
+                <div class="ai-history-item" data-plan-id="${safe(plan.id || plan.requestId)}">
+                    <b>${safe(plan.text || 'Запрос покупок')}</b>
+                    <small>
+                        <span>${plan.storesCount || 0} магазинов</span>
+                        <strong>${money(plan.totalCost || 0)}</strong>
+                    </small>
+                </div>
+            `).join('');
+
+            // При клике на историю загружаем план по ID
+            $$('.ai-history-item', historyContainer).forEach(item => {
+                item.addEventListener('click', async () => {
+                    const planId = item.dataset.planId;
+                    try {
+                        $('#aiEmptyState').hidden = true;
+                        $('#aiResultsContent').hidden = true;
+                        $('#aiLoadingState').hidden = false;
+                        const fullPlan = await api(`/api/v1/ai/plans/${planId}`);
+                        currentAIPlan = fullPlan;
+                        renderAIResults(fullPlan);
+                    } catch (err) {
+                        notify('Не удалось загрузить план: ' + err.message);
+                    } finally {
+                        $('#aiLoadingState').hidden = true;
+                    }
+                });
+            });
+        } catch (err) {
+            historyContainer.innerHTML = `<div class="chart-empty">Ошибка загрузки истории</div>`;
+        }
+    }
+
+    function renderAIResults(data) {
+        $('#aiEmptyState').hidden = true;
+        $('#aiErrorState').hidden = true;
+        $('#aiLoadingState').hidden = true;
+        $('#aiResultsContent').hidden = false;
+
+        // 1. AI Рекомендация и стоимости
+        const rec = data.recommendation || {};
+        $('#aiRecModeTitle').textContent = rec.mode ? `Режим: ${rec.mode}` : 'Оптимальный подбор';
+        $('#aiRecReasonText').textContent = rec.reason || 'AI составил оптимальный маршрут для покупки всех товаров с минимальными затратами.';
+
+        const cost = data.cost || {};
+        const total = cost.total || rec.total || 0;
+        $('#aiTotalCostVal').textContent = money(total);
+        $('#aiCostItems').textContent = money(cost.itemsTotal || 0);
+        $('#aiCostTravel').textContent = money(cost.travelCost || 0);
+        $('#aiCostDelivery').textContent = money(cost.deliveryCost || 0);
+
+        // 2. Список товаров
+        const items = data.items || [];
+        $('#aiItemsCount').textContent = `Найдено ${items.length} наименований`;
+        $('#aiItemsList').innerHTML = items.length ? items.map(item => `
+            <li class="ai-item-row">
+                <span>${safe(item.name)}</span>
+                <small>${item.quantity || 1} ${safe(item.unit || 'шт.')}</small>
+            </li>
+        `).join('') : '<li class="empty-state">Список товаров пуст</li>';
+
+        // 3. Список магазинов
+        const stores = data.stores || [];
+        $('#aiStoresCount').textContent = `Магазинов в маршруте: ${stores.length}`;
+        $('#aiStoresList').innerHTML = stores.length ? stores.map((store, index) => {
+            const prices = store.prices || [];
+            return `
+                <div class="ai-store-card" data-store-id="${safe(store.id || index)}">
+                    <div class="ai-store-head">
+                        <div>
+                            <h4>${index + 1}. ${safe(store.name || 'Магазин')}</h4>
+                            <p>${safe(store.address || 'Адрес не указан')}</p>
+                        </div>
+                    </div>
+                    ${prices.length ? `
+                        <div class="ai-store-prices">
+                            ${prices.map(p => `
+                                <div class="ai-store-price-item">
+                                    <span>${safe(p.itemName)}</span>
+                                    <b class="${p.inStock ? 'instock' : 'outstock'}">${p.inStock ? money(p.price) : 'Нет в наличии'}</b>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }).join('') : '<div class="empty-state">Магазины не найдены</div>';
+
+        // Клик на магазин выделяет его на карте
+        $$('.ai-store-card').forEach((card, idx) => {
+            card.addEventListener('click', () => {
+                $$('.ai-store-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                highlightStoreMarker(idx);
+            });
+        });
+
+        // 4. Отрисовка интерактивной карты Leaflet
+        initOrUpdateMap(stores, data.route);
+    }
+
+    function initOrUpdateMap(stores, route) {
+        const mapContainer = $('#aiMapContainer');
+        if (!mapContainer) return;
+
+        // Инициализация карты если еще не создана
+        if (!leafletMap) {
+            leafletMap = L.map('aiMapContainer').setView([55.7558, 37.6173], 12); // Default Moscow
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap'
+            }).addTo(leafletMap);
+        }
+
+        // Очищаем существующие маркеры и маршруты
+        mapMarkers.forEach(m => leafletMap.removeLayer(m));
+        mapMarkers = [];
+        if (mapRouteLayer) {
+            leafletMap.removeLayer(mapRouteLayer);
+            mapRouteLayer = null;
+        }
+
+        const bounds = [];
+
+        // Добавляем маркеры магазинов из ответа API
+        stores.forEach((store, idx) => {
+            if (store.latitude && store.longitude) {
+                const latLng = [store.latitude, store.longitude];
+                bounds.push(latLng);
+
+                const customIcon = L.divIcon({
+                    className: 'custom-pin-wrap',
+                    html: `<div class="custom-map-pin">${idx + 1}</div>`,
+                    iconSize: [28, 28],
+                    iconAnchor: [14, 14]
+                });
+
+                const marker = L.marker(latLng, { icon: customIcon })
+                    .addTo(leafletMap)
+                    .bindPopup(`<b>${idx + 1}. ${safe(store.name)}</b><br>${safe(store.address)}`);
+
+                marker.on('click', () => {
+                    $$('.ai-store-card').forEach(c => c.classList.remove('selected'));
+                    const card = $(`[data-store-id="${store.id || idx}"]`);
+                    if (card) card.classList.add('selected');
+                });
+
+                mapMarkers.push(marker);
+            }
+        });
+
+        // Отрисовка GeoJSON маршрута из API
+        if (route && route.geometryGeojson) {
+            try {
+                const geojson = JSON.parse(route.geometryGeojson);
+                mapRouteLayer = L.geoJSON(geojson, {
+                    style: {
+                        color: '#2f79f6',
+                        weight: 4,
+                        opacity: 0.8
+                    }
+                }).addTo(leafletMap);
+
+                bounds.push(...mapRouteLayer.getBounds());
+            } catch (e) {
+                console.warn('Ошибка парсинга GeoJSON маршрута:', e);
+            }
+        }
+
+        // Масштабируем карту под маркеры
+        if (bounds.length > 0) {
+            leafletMap.fitBounds(bounds, { padding: [30, 30] });
+        }
+
+        // Принудительный пересчет размера карты Leaflet при отображении
+        setTimeout(() => {
+            leafletMap.invalidateSize();
+        }, 200);
+    }
+
+    function highlightStoreMarker(index) {
+        if (mapMarkers[index]) {
+            mapMarkers[index].openPopup();
+            leafletMap.panTo(mapMarkers[index].getLatLng());
+        }
+    }
+
+    // Слушатель формы на главной странице AI-блока
+    const aiOverviewForm = $('#aiOverviewForm');
+    if (aiOverviewForm) {
+        aiOverviewForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const query = $('#aiOverviewQuery').value.trim();
+            const address = $('#aiOverviewAddress').value.trim();
+            if (!query || !address) return;
+
+            // Переключаемся на вкладку AI и копируем значения
+            setPage('ai');
+            $('#aiQueryInput').value = query;
+            $('#aiAddressInput').value = address;
+
+            try {
+                await planShopping(query, address);
+            } catch (err) {
+                notify(err.message);
+            }
+        });
+    }
+
+    // Слушатель формы на странице AI-покупок
+    const aiPlannerForm = $('#aiPlannerForm');
+    if (aiPlannerForm) {
+        aiPlannerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const query = $('#aiQueryInput').value.trim();
+            const address = $('#aiAddressInput').value.trim();
+            if (!query || !address) return;
+
+            try {
+                await planShopping(query, address);
+            } catch (err) {
+                notify(err.message);
+            }
+        });
+    }
+
+    /* ==========================================================================
+       GOALS LOGIC
+       ========================================================================== */
 
     async function loadGoals() {
         const grid = $('#goalsGrid');
@@ -313,31 +605,28 @@
         } catch(e) { notify('Ошибка удаления: ' + e.message); }
     };
 
-    // Пополнение цели (Изменение AmountNow через JSON)
     window.editGoalProgress = async (id, currentNow, finish) => {
         const val = prompt(`Сколько вы накопили на эту цель? (Текущая сумма: ${currentNow} ₽)`, currentNow);
         if (val === null) return;
 
-        // Убираем все лишние символы, оставляем только цифры и точку
         const cleanVal = val.replace(',', '.').replace(/[^0-9.]/g, '');
         const newAmount = Number(cleanVal);
 
         if (isNaN(newAmount) || newAmount < 0) return notify('Введите корректную сумму');
 
         try {
-            // Отправляем как чистый JSON! Бэкенд (gRPC-gateway) отлично его парсит.
             const payload = {
                 id: id,
                 amount_now: newAmount,
                 amount_finish: finish,
-                title: 'Обновление цели', // Обязательное поле для валидации
+                title: 'Обновление цели',
                 description: '',
                 completed: false
             };
 
             await api(`/api/v1/shopping/${id}`, {
                 method: 'PUT',
-                body: JSON.stringify(payload), // Отправляем JSON
+                body: JSON.stringify(payload),
                 headers: { 'Content-Type': 'application/json' }
             });
 
@@ -387,22 +676,19 @@
             const errorBox = form.querySelector('.transaction-modal-error');
             btn.disabled = true; btn.textContent = 'Сохраняем...'; errorBox.textContent = '';
 
-            // 1. Формируем JSON (без файла, чтобы избежать ошибки парсинга)
             const payload = {
                 title: fd.get('title'),
                 description: fd.get('description'),
-                amount_now: Number(fd.get('now')), // Принудительно в число
-                amount_finish: Number(fd.get('finish')), // Принудительно в число
+                amount_now: Number(fd.get('now')),
+                amount_finish: Number(fd.get('finish')),
             };
 
             const dateVal = fd.get('date');
             if (dateVal) {
-                // Отправляем в формате ISO (YYYY-MM-DDTHH:mm:ssZ), который ждет gRPC
                 payload.completion_date = new Date(dateVal).toISOString();
             }
 
             try {
-                // Шаг 1: Отправляем JSON (Картинку сюда не пихаем, чтобы не ломать парсер)
                 const createdData = await api('/api/v1/shopping', {
                     method: 'POST',
                     body: JSON.stringify(payload),
@@ -411,7 +697,6 @@
 
                 const newGoalId = createdData.id || createdData.data?.id;
 
-                // Шаг 2: Если прикрепили картинку, загружаем её отдельно
                 const file = fd.get('image');
                 if (file && file.size > 0 && newGoalId) {
                     const imageData = new FormData();
@@ -419,12 +704,9 @@
                     imageData.append('image_data', file);
                     imageData.append('filename', file.name);
 
-                    // ВАЖНО: В вашем сервисе (UpdateShopping) роут для обновления обычно PUT /api/v1/shopping/{id}
-                    // Отправляем multipart, но только для картинки
                     await api(`/api/v1/shopping/${newGoalId}`, {
                         method: 'PUT',
                         body: imageData
-                        // Заголовок Content-Type ставится автоматически браузером для FormData
                     }).catch(imgErr => {
                         console.warn('Цель создана, но картинка не загрузилась:', imgErr);
                         notify('Цель создана, но обложку загрузить не удалось');
@@ -442,7 +724,10 @@
         dialog.showModal();
     });
 
-    // --- АНАЛИТИКА ---
+    /* ==========================================================================
+       ANALYTICS LOGIC
+       ========================================================================== */
+
     function unwrapAnalytics(data) {
         let value = data || {};
         for (let i = 0; i < 3; i++) {
@@ -623,12 +908,23 @@
         if (!pages[next]) next = 'overview'; page = next;
         Object.keys(pages).forEach(key => { const el = $('#' + key + 'View'); if (el) el.hidden = key !== page; });
         $('#pageTitle').textContent = pages[page][0]; $('#pageSubtitle').textContent = pages[page][1];
-        $('.breadcrumb').innerHTML = 'ЛИЧНЫЙ КАБИНЕТ <span>/</span> ' + pages[page][0].toLocaleUpperCase('ru-RU');
+
+        const breadcrumb = $('#breadcrumbNav');
+        if (breadcrumb) {
+            breadcrumb.innerHTML = 'ЛИЧНЫЙ КАБИНЕТ <span>/</span> ' + pages[page][0].toLocaleUpperCase('ru-RU');
+        }
+
         $$('[data-page]').forEach(el => el.classList.toggle('active', el.dataset.page === page));
         $('#sidebar').classList.remove('open'); $('#backdrop').classList.remove('visible'); history.replaceState(null, '', '#' + page);
         if (page === 'currency' && token) loadRates().catch(e => ratesError(e.message));
         if (page === 'analytics' && token) loadAnalytics();
         if (page === 'goals' && token) loadGoals();
+        if (page === 'ai' && token) {
+            loadAIPlansHistory().catch(e => console.warn(e));
+            if (leafletMap) {
+                setTimeout(() => leafletMap.invalidateSize(), 200);
+            }
+        }
     }
 
     $$('[data-page]').forEach(el => el.addEventListener('click', event => { event.preventDefault(); setPage(el.dataset.page); }));

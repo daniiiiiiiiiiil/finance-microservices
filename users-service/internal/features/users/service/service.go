@@ -1,12 +1,8 @@
 package service_user
 
 import (
-	"context"
-
-	"github.com/daniiiiiiiiiiil/finance-microservices/users-service/internal/core/domain"
 	"github.com/daniiiiiiiiiiil/finance-microservices/users-service/internal/core/ports"
 	"github.com/daniiiiiiiiiiil/finance-microservices/users-service/pkg/logger"
-	"go.uber.org/zap"
 )
 
 type UsersService struct {
@@ -48,17 +44,4 @@ type CreateProfileRequest struct {
 	PhoneNumber  *string
 	IsAdmin      bool
 	PasswordHash string
-}
-
-func (s *UsersService) publishUserEvent(ctx context.Context, eventType string, userID int, email, fullName string, isAdmin bool, status string) {
-	eventData := domain.UserEvent{
-		UserID:   userID,
-		Email:    email,
-		FullName: fullName,
-		IsAdmin:  isAdmin,
-		Status:   status,
-	}
-	if err := s.eventPublisher.Publish(ctx, eventType, eventData); err != nil {
-		s.logger.Warn("failed to publish user event", zap.Error(err))
-	}
 }

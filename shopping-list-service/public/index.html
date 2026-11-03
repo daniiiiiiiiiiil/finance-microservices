@@ -2,8 +2,16 @@
 <html lang="ru">
 <head>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f3f5fa">
-    <meta name="description" content="FinGoals — личные финансы"><title>FinGoals — финансовый кабинет</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="theme-color" content="#f3f5fa">
+    <meta name="description" content="FinGoals — личные финансы и AI-покупки">
+    <title>FinGoals — финансовый кабинет и AI-покупки</title>
+
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
     <link rel="stylesheet" href="./assets/styles.css">
     <script defer src="./assets/app.js"></script>
 </head>
@@ -16,6 +24,7 @@
         <nav class="nav-group" aria-label="Главное меню">
             <span class="nav-caption">РАЗДЕЛЫ</span>
             <a class="nav-link active" href="#overview" data-page="overview"><span class="nav-icon">◫</span>Обзор</a>
+            <a class="nav-link" href="#ai" data-page="ai"><span class="nav-icon">✨</span>AI-покупки</a>
             <a class="nav-link" href="#transactions" data-page="transactions"><span class="nav-icon">↕</span>Транзакции</a>
             <a class="nav-link" href="#goals" data-page="goals"><span class="nav-icon">🎯</span>Мои цели</a>
             <a class="nav-link" href="#analytics" data-page="analytics"><span class="nav-icon">▥</span>Аналитика</a>
@@ -30,6 +39,7 @@
             <button class="mobile-menu" id="openSidebar" aria-label="Открыть меню">☰</button>
             <div class="top-tabs">
                 <button class="top-tab active" data-page="overview">Обзор</button>
+                <button class="top-tab" data-page="ai">AI-покупки</button>
                 <button class="top-tab" data-page="transactions">Транзакции</button>
                 <button class="top-tab" data-page="goals">Цели</button>
                 <button class="top-tab" data-page="analytics">Аналитика</button>
@@ -47,7 +57,7 @@
 
         <div class="page-heading">
             <div>
-                <div class="breadcrumb">ЛИЧНЫЙ КАБИНЕТ <span>/</span> ОБЗОР</div>
+                <div class="breadcrumb" id="breadcrumbNav">ЛИЧНЫЙ КАБИНЕТ <span>/</span> ОБЗОР</div>
                 <h1 id="pageTitle">Финансовый обзор</h1>
                 <p id="pageSubtitle">Только реальные данные из вашего аккаунта.</p>
             </div>
@@ -63,6 +73,23 @@
 
         <!-- ОБЗОР -->
         <section id="overviewView" class="page-view">
+            <!-- AI-блок на главной -->
+            <article class="panel ai-overview-widget">
+                <div class="panel-head">
+                    <div>
+                        <h3>✨ AI-Планировщик покупок</h3>
+                        <p>Быстрый подбор товаров, цен и оптимального маршрута по магазинам</p>
+                    </div>
+                </div>
+                <form id="aiOverviewForm" class="ai-overview-form">
+                    <div class="ai-overview-inputs">
+                        <input id="aiOverviewQuery" class="control" placeholder="Что вы хотите купить? (напр. продукты на ужин, ингредиенты для пиццы)..." required>
+                        <input id="aiOverviewAddress" class="control" placeholder="Адрес отправления (напр. Москва, ул. Тверская 1)" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="aiOverviewSubmit">✨ Подобрать покупки</button>
+                </form>
+            </article>
+
             <div class="summary-cards overview-summary">
                 <article class="panel summary-card"><small>Общий баланс</small><strong id="balanceAmount">—</strong><span class="summary-caption">По данным финансового сервиса</span></article>
                 <article class="panel summary-card"><small>Доходы за период</small><strong id="incomeAmount" class="positive-text">—</strong><span class="summary-caption">По загруженным транзакциям</span></article>
@@ -82,6 +109,132 @@
                 <div class="panel-head"><div><h3>Последние операции</h3><p>Данные получены с сервера</p></div><button class="btn btn-outline" data-page="transactions">Все операции ↗</button></div>
                 <div class="table-scroll"><table><thead><tr><th>Операция</th><th>Категория</th><th>Дата</th><th>Сумма</th></tr></thead><tbody id="recentRows"><tr><td colspan="4" class="empty-state">Загрузка…</td></tr></tbody></table></div>
             </section>
+        </section>
+
+        <!-- AI ПОКУПКИ (ОТДЕЛЬНАЯ ВКЛАДКА) -->
+        <section id="aiView" class="page-view" hidden>
+            <div class="ai-planner-layout">
+                <!-- Форма ввода и История -->
+                <div class="ai-sidebar-column">
+                    <article class="panel ai-form-card">
+                        <div class="panel-head">
+                            <div>
+                                <h3>Умный поиск покупок</h3>
+                                p>Введите список покупок и ваш адрес отправления</p>
+                            </div>
+                        </div>
+                        <form id="aiPlannerForm" class="ai-form">
+                            <label class="field-label">
+                                Что хотите купить?
+                                <textarea id="aiQueryInput" class="control ai-textarea" rows="3" placeholder="Например: Купить яблоки 1кг, молоко 1л, хлеб и кофе..." required></textarea>
+                            </label>
+                            <label class="field-label">
+                                Адрес отправления
+                                <input id="aiAddressInput" class="control" placeholder="город, улица, дом..." required />
+                            </label>
+                            <button type="submit" class="btn btn-primary full" id="aiSubmitBtn">
+                                <span>✨ Сформировать маршрут</span>
+                            </button>
+                        </form>
+                    </article>
+
+                    <!-- Блок истории сохраненных планов -->
+                    <article class="panel ai-history-card">
+                        <div class="panel-head">
+                            <div>
+                                <h3>История планов</h3>
+                                <p>Ранее созданные запросы</p>
+                            </div>
+                        </div>
+                        <div id="aiPlansHistoryList" class="ai-history-list">
+                            <div class="chart-empty">История загружается…</div>
+                        </div>
+                    </article>
+                </div>
+
+                <!-- Результаты поиска и Карта -->
+                <div class="ai-results-column">
+                    <!-- Загрузка / Ошибка -->
+                    <div id="aiLoadingState" class="panel ai-status-state" hidden>
+                        <div class="spinner"></div>
+                        <h4>AI анализирует ваш запрос...</h4>
+                        <p>Ищем доступные товары в магазинах, сравниваем цены и прокладываем оптимальный маршрут.</p>
+                    </div>
+
+                    <div id="aiErrorState" class="panel ai-status-state ai-error-state" hidden>
+                        <span class="status-icon-err">⚠️</span>
+                        <h4 id="aiErrorMessage">Произошла ошибка при обработке запроса</h4>
+                        <p>Проверьте параметры подключения к серверу и повторите попытку.</p>
+                    </div>
+
+                    <!-- Пустое состояние -->
+                    <div id="aiEmptyState" class="panel ai-status-state">
+                        <span class="status-icon-empty">🛒</span>
+                        <h4>Маршрут покупок пока не создан</h4>
+                        <p>Заполните форму слева или используйте AI-блок на главной странице, чтобы получить подборку товаров и магазинов.</p>
+                    </div>
+
+                    <!-- Блок результатов от AI -->
+                    <div id="aiResultsContent" class="ai-results-container" hidden>
+                        <!-- AI Рекомендации и стоимость -->
+                        <article class="panel ai-recommendation-card">
+                            <div class="ai-rec-header">
+                                <div>
+                                    <span class="ai-badge">AI Рекомендация</span>
+                                    <h3 id="aiRecModeTitle">Оптимальный выбор</h3>
+                                </div>
+                                <div class="ai-total-price">
+                                    <small>Общая стоимость</small>
+                                    <strong id="aiTotalCostVal">0 ₽</strong>
+                                </div>
+                            </div>
+                            <p id="aiRecReasonText" class="ai-rec-reason"></p>
+
+                            <div class="ai-cost-breakdown" id="aiCostBreakdown">
+                                <span>Товары: <b id="aiCostItems">0 ₽</b></span>
+                                <span>Проезд: <b id="aiCostTravel">0 ₽</b></span>
+                                <span>Доставка: <b id="aiCostDelivery">0 ₽</b></span>
+                            </div>
+                        </article>
+
+                        <!-- Интерактивная карта -->
+                        <article class="panel ai-map-panel">
+                            <div class="panel-head">
+                                <div>
+                                    <h3>Маршрут на карте</h3>
+                                    <p>Порядок посещения магазинов и локации</p>
+                                </div>
+                            </div>
+                            <div id="aiMapContainer" class="ai-map"></div>
+                        </article>
+
+                        <!-- Список найденого (Товары + Группировка по магазинам) -->
+                        <div class="ai-details-grid">
+                            <!-- Искомые товары -->
+                            <article class="panel ai-items-panel">
+                                <div class="panel-head">
+                                    <div>
+                                        <h3>Список товаров</h3>
+                                        <p id="aiItemsCount">Найдено 0 шт.</p>
+                                    </div>
+                                </div>
+                                <ul id="aiItemsList" class="ai-items-list"></ul>
+                            </article>
+
+                            <!-- Магазины и цены -->
+                            <article class="panel ai-stores-panel">
+                                <div class="panel-head">
+                                    <div>
+                                        <h3>Магазины и цены</h3>
+                                        <p id="aiStoresCount">Найдено 0 магазинов</p>
+                                    </div>
+                                </div>
+                                <div id="aiStoresList" class="ai-stores-list"></div>
+                            </article>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <!-- ТРАНЗАКЦИИ -->

@@ -9,7 +9,7 @@
       "type": "apiKey",
       "name": "Authorization",
       "in": "header",
-      "description": "JWT Bearer token. Example: 'Bearer your-token-here'"
+      "description": "JWT token. Формат: `Bearer <token>`"
     }
   },
   "security": [
@@ -35,6 +35,9 @@
     },
     {
       "name": "ShoppingService"
+    },
+    {
+      "name": "AIService"
     }
   ],
   "consumes": [
@@ -188,10 +191,140 @@
         ]
       }
     },
+    "/api/v1/ai/plan": {
+      "post": {
+        "operationId": "AIService_PlanShopping",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1PlanShoppingResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1PlanShoppingRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AIService"
+        ]
+      }
+    },
+    "/api/v1/ai/plans": {
+      "get": {
+        "operationId": "AIService_ListPlans",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListPlansResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "AIService"
+        ]
+      }
+    },
+    "/api/v1/ai/plans/{id}": {
+      "get": {
+        "operationId": "AIService_GetPlan",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1PlanShoppingResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "AIService"
+        ]
+      },
+      "delete": {
+        "operationId": "AIService_DeletePlan",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "AIService"
+        ]
+      }
+    },
     "/api/v1/auth/login": {
       "post": {
         "operationId": "AuthService_Login",
-        "security": [],
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -257,7 +390,6 @@
     },
     "/api/v1/auth/register": {
       "post": {
-        "security": [],
         "operationId": "AuthService_Register",
         "responses": {
           "200": {
@@ -410,6 +542,160 @@
         ],
         "tags": [
           "CurrencyService"
+        ]
+      }
+    },
+    "/api/v1/finance/analytics": {
+      "get": {
+        "operationId": "FinanceService_GetAnalytics",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/financeAnalyticsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "FinanceService"
+        ]
+      }
+    },
+    "/api/v1/finance/budget": {
+      "post": {
+        "summary": "ADDED — Budgets",
+        "operationId": "FinanceService_CreateBudget",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/financeCreateBudgetResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/financeCreateBudgetRequest"
+            }
+          }
+        ],
+        "tags": [
+          "FinanceService"
+        ]
+      }
+    },
+    "/api/v1/finance/budget/{id}": {
+      "delete": {
+        "operationId": "FinanceService_DeleteBudget",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "FinanceService"
+        ]
+      },
+      "put": {
+        "operationId": "FinanceService_UpdateBudget",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/financeUpdateBudgetResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/FinanceServiceUpdateBudgetBody"
+            }
+          }
+        ],
+        "tags": [
+          "FinanceService"
+        ]
+      }
+    },
+    "/api/v1/finance/budgets": {
+      "get": {
+        "operationId": "FinanceService_ListBudgets",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/financeListBudgetsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "FinanceService"
         ]
       }
     },
@@ -1466,6 +1752,21 @@
         }
       }
     },
+    "FinanceServiceUpdateBudgetBody": {
+      "type": "object",
+      "properties": {
+        "category": {
+          "type": "string"
+        },
+        "amountLimit": {
+          "type": "number",
+          "format": "double"
+        },
+        "period": {
+          "type": "string"
+        }
+      }
+    },
     "FinanceServiceUpdateTransactionBody": {
       "type": "object",
       "properties": {
@@ -1779,6 +2080,135 @@
         }
       }
     },
+    "financeAnalyticsPoint": {
+      "type": "object",
+      "properties": {
+        "period": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "income": {
+          "type": "number",
+          "format": "double"
+        },
+        "expenses": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "financeAnalyticsResponse": {
+      "type": "object",
+      "properties": {
+        "period": {
+          "type": "string"
+        },
+        "from": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "to": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "income": {
+          "type": "number",
+          "format": "double"
+        },
+        "expenses": {
+          "type": "number",
+          "format": "double"
+        },
+        "net": {
+          "type": "number",
+          "format": "double"
+        },
+        "savingsRate": {
+          "type": "number",
+          "format": "double"
+        },
+        "series": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/financeAnalyticsPoint"
+          }
+        },
+        "topCategories": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/financeCategoryStat"
+          }
+        }
+      }
+    },
+    "financeBudget": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "version": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "category": {
+          "type": "string"
+        },
+        "amountLimit": {
+          "type": "number",
+          "format": "double"
+        },
+        "period": {
+          "type": "string"
+        },
+        "periodStart": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "periodEnd": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "financeBudgetStatus": {
+      "type": "object",
+      "properties": {
+        "budget": {
+          "$ref": "#/definitions/financeBudget"
+        },
+        "spent": {
+          "type": "number",
+          "format": "double"
+        },
+        "remaining": {
+          "type": "number",
+          "format": "double"
+        },
+        "percentage": {
+          "type": "number",
+          "format": "double"
+        },
+        "exceeded": {
+          "type": "boolean"
+        }
+      }
+    },
     "financeCategoryStat": {
       "type": "object",
       "properties": {
@@ -1792,6 +2222,29 @@
         "percentage": {
           "type": "number",
           "format": "double"
+        }
+      }
+    },
+    "financeCreateBudgetRequest": {
+      "type": "object",
+      "properties": {
+        "category": {
+          "type": "string"
+        },
+        "amountLimit": {
+          "type": "number",
+          "format": "double"
+        },
+        "period": {
+          "type": "string"
+        }
+      }
+    },
+    "financeCreateBudgetResponse": {
+      "type": "object",
+      "properties": {
+        "budget": {
+          "$ref": "#/definitions/financeBudget"
         }
       }
     },
@@ -1941,6 +2394,18 @@
         }
       }
     },
+    "financeListBudgetsResponse": {
+      "type": "object",
+      "properties": {
+        "budgets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/financeBudgetStatus"
+          }
+        }
+      }
+    },
     "financeMetricsResponse": {
       "type": "object",
       "properties": {
@@ -2008,6 +2473,14 @@
         }
       }
     },
+    "financeUpdateBudgetResponse": {
+      "type": "object",
+      "properties": {
+        "budget": {
+          "$ref": "#/definitions/financeBudget"
+        }
+      }
+    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -2015,7 +2488,7 @@
           "type": "string"
         }
       },
-      "additionalProperties": {}
+      "additionalProperties": true
     },
     "rpcStatus": {
       "type": "object",
@@ -2381,6 +2854,51 @@
         }
       }
     },
+    "v1CostBreakdown": {
+      "type": "object",
+      "properties": {
+        "itemsTotal": {
+          "type": "number",
+          "format": "double"
+        },
+        "travelCost": {
+          "type": "number",
+          "format": "double"
+        },
+        "deliveryCost": {
+          "type": "number",
+          "format": "double"
+        },
+        "total": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "v1Delivery": {
+      "type": "object",
+      "properties": {
+        "available": {
+          "type": "boolean"
+        },
+        "price": {
+          "type": "number",
+          "format": "double"
+        },
+        "freeFrom": {
+          "type": "number",
+          "format": "double"
+        },
+        "minOrder": {
+          "type": "number",
+          "format": "double"
+        },
+        "durationMin": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
     "v1GetUsersResponse": {
       "type": "object",
       "properties": {
@@ -2402,6 +2920,254 @@
         "page": {
           "type": "integer",
           "format": "int32"
+        }
+      }
+    },
+    "v1Item": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "quantity": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "unit": {
+          "type": "string"
+        }
+      }
+    },
+    "v1ItemPrice": {
+      "type": "object",
+      "properties": {
+        "itemName": {
+          "type": "string"
+        },
+        "price": {
+          "type": "number",
+          "format": "double"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "inStock": {
+          "type": "boolean"
+        }
+      }
+    },
+    "v1ListPlansResponse": {
+      "type": "object",
+      "properties": {
+        "plans": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1PlanSummary"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "offset": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1PlanShoppingRequest": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "startAddress": {
+          "type": "string"
+        }
+      }
+    },
+    "v1PlanShoppingResponse": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Item"
+          }
+        },
+        "stores": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Store"
+          }
+        },
+        "route": {
+          "$ref": "#/definitions/v1Route"
+        },
+        "cost": {
+          "$ref": "#/definitions/v1CostBreakdown"
+        },
+        "recommendation": {
+          "$ref": "#/definitions/v1Recommendation"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1PlanSummary": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "requestId": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "itemsCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "storesCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "totalCost": {
+          "type": "number",
+          "format": "double"
+        },
+        "recommended": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1Recommendation": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "type": "string"
+        },
+        "total": {
+          "type": "number",
+          "format": "double"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "v1Route": {
+      "type": "object",
+      "properties": {
+        "order": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "distanceMeters": {
+          "type": "number",
+          "format": "double"
+        },
+        "durationSeconds": {
+          "type": "number",
+          "format": "double"
+        },
+        "geometryGeojson": {
+          "type": "string"
+        },
+        "legs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1RouteLeg"
+          }
+        }
+      }
+    },
+    "v1RouteLeg": {
+      "type": "object",
+      "properties": {
+        "fromIndex": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "toIndex": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "distanceMeters": {
+          "type": "number",
+          "format": "double"
+        },
+        "durationSeconds": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "v1Store": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "latitude": {
+          "type": "number",
+          "format": "double"
+        },
+        "longitude": {
+          "type": "number",
+          "format": "double"
+        },
+        "prices": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1ItemPrice"
+          }
+        },
+        "delivery": {
+          "$ref": "#/definitions/v1Delivery"
+        },
+        "sourceUrl": {
+          "type": "string"
         }
       }
     }

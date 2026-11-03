@@ -110,8 +110,6 @@ func (s *UsersService) FinalizeDelete(ctx context.Context, id int) error {
 		return fmt.Errorf("commit transaction: %w", err)
 	}
 
-	go s.publishUserEvent(context.Background(), "user.deleted", user.ID, user.Email, user.FullName, user.IsAdmin, user.Status)
-
 	return nil
 }
 

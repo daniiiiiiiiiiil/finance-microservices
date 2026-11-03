@@ -153,7 +153,13 @@ func (r *OutboxRepository) MarkFailed(ctx context.Context, id string, errMsg str
 
 	query := `
 		UPDATE outbox.outbox_messages 
-		SET status = 'failed', last_error = $2, retry_count = retry_count + 1, version = version + 1
+		SET last_error = $2,
+		    retry_count = retry_count + 1,
+		    status = CASE
+		        WHEN retry_count + 1 >= max_retries THEN 'dead'
+		        ELSE 'pending'
+		    END,
+		    version = version + 1
 		WHERE id = $1`
 
 	_, err := r.pool.Exec(ctx, query, id, errMsg)

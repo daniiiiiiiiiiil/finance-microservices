@@ -21,6 +21,7 @@ import (
 	"github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/pkg/logger"
 	http2 "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/pkg/middleware/http"
 	adminpb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/admin/gen"
+	aipb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/ai/gen/v1"
 	authpb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/auth/gen"
 	currencypb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/currency/gen"
 	financepb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/finance/gen"
@@ -82,6 +83,12 @@ func main() {
 	}
 	defer shoppingConn.Close()
 
+	aiConn, err := grpcclient.NewGRPCClient("ai:50056", cfg)
+	if err != nil {
+		logger.Fatal("fail to dial ai", zap.Error(err))
+	}
+	defer aiConn.Close()
+
 	mux := runtime.NewServeMux(
 		runtime.WithMetadata(func(ctx context.Context, r *http.Request) metadata.MD {
 			md := metadata.MD{}
@@ -113,6 +120,10 @@ func main() {
 
 	if err := shoppingpb.RegisterShoppingServiceHandler(ctx, mux, shoppingConn); err != nil {
 		logger.Fatal("fail to register shopping service", zap.Error(err))
+	}
+
+	if err := aipb.RegisterAIServiceHandler(ctx, mux, aiConn); err != nil {
+		logger.Fatal("fail to register ai service", zap.Error(err))
 	}
 
 	otelMux := otelhttp.NewHandler(mux, "gateway-http")
