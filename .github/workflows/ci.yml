@@ -113,36 +113,42 @@ jobs:
 
   # Третья задача: smoke-тест через Docker Compose
   compose-smoke-test:
-    # Запускается только после успешного lint-and-test
     needs: lint-and-test
     runs-on: ubuntu-latest
     steps:
-      # Клонируем код
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Копируем пример env-файла в настоящий .env
       - name: Prepare env file
         run: cp env.example .env
 
-      # Собираем и запускаем все контейнеры в фоне
+      # Чистим старые данные и контейнеры (важно!)
+      - name: Clean stale data and containers
+        run: |
+          docker compose down -v --remove-orphans || true
+          rm -rf out/pgdata out/redisdata minio-data
+          docker rm -f $(docker ps -aq) 2>/dev/null || true
+          docker volume prune -f
+
       - name: Build and start stack
-        run: docker compose up -d --build
+        run: docker compose up -d --build --wait --wait-timeout 300
 
-      # Ждем 60 секунд, чтобы сервисы успели запуститься
-      - name: Wait for services to become healthy
-        run: sleep 60
-
-      # Проверяем статус контейнеров
       - name: Check running containers
         run: docker compose ps
 
-      # Если что-то упало - показываем логи
       - name: Dump logs on failure
         if: failure()
-        run: docker compose logs
+        run: |
+          docker compose ps -a
+          for svc in finance-postgres auth-postgres users-postgres shopping-postgres saga-postgres ai-postgres; do
+            echo "===== $svc ====="
+            docker compose logs "$svc" --tail=100 || true
+            echo "----- health -----"
+            docker inspect --format='{{json .State.Health}}' $(docker compose ps -q "$svc") 2>/dev/null | jq || true
+          done
+          echo "===== all logs ====="
+          docker compose logs --tail=50
 
-      # В конце всегда останавливаем и удаляем контейнеры
       - name: Tear down
         if: always()
-        run: docker compose down -v
+        run: docker compose down -v --remove-orphans
