@@ -65,7 +65,3 @@ func (p *Producer) SendEvent(ctx context.Context, eventType string, data any) er
 func (p *Producer) Close() error {
 	return p.writer.Close()
 }
-
-func generateEventID() string {
-	return fmt.Sprintf("%d-%d", time.Now().UnixNano(), time.Now().Nanosecond())
-}

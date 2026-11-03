@@ -229,15 +229,3 @@ func extractDelivery(content string) *domain.Delivery {
 	}
 	return nil
 }
-
-func parseURL(raw string) (*urlParts, error) {
-	u, err := url.Parse(raw)
-	if err != nil {
-		return nil, err
-	}
-	return &urlParts{Host: u.Host}, nil
-}
-
-type urlParts struct {
-	Host string
-}
