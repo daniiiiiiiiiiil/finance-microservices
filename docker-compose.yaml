@@ -1,7 +1,6 @@
 services:
   finance-postgres:
     image: postgres:15-alpine
-    container_name: finance-env-postgres
     networks:
       - finance-net
     environment:
@@ -12,15 +11,14 @@ services:
       - ./out/pgdata/finance:/var/lib/postgresql/data:rw
     restart: always
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${FINANCE_POSTGRES_USER} -d ${FINANCE_POSTGRES_DB}" ]
+      test: [ "CMD-SHELL", "pg_isready -h 127.0.0.1 -U ${FINANCE_POSTGRES_USER} -d ${FINANCE_POSTGRES_DB}" ]
       interval: 5s
       timeout: 5s
       retries: 30
-      start_period: 35s
+      start_period: 120s
 
   auth-postgres:
     image: postgres:15-alpine
-    container_name: auth-env-postgres
     networks:
       - finance-net
     environment:
@@ -31,15 +29,14 @@ services:
       - ./out/pgdata/auth:/var/lib/postgresql/data:rw
     restart: always
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${AUTH_POSTGRES_USER} -d ${AUTH_POSTGRES_DB}" ]
+      test: [ "CMD-SHELL", "pg_isready -h 127.0.0.1 -U ${AUTH_POSTGRES_USER} -d ${AUTH_POSTGRES_DB}" ]
       interval: 5s
       timeout: 5s
       retries: 30
-      start_period: 35s
+      start_period: 120s
 
   users-postgres:
     image: postgres:15-alpine
-    container_name: users-env-postgres
     networks:
       - finance-net
     environment:
@@ -50,15 +47,14 @@ services:
       - ./out/pgdata/users:/var/lib/postgresql/data:rw
     restart: always
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${USERS_POSTGRES_USER} -d ${USERS_POSTGRES_DB}" ]
+      test: [ "CMD-SHELL", "pg_isready -h 127.0.0.1 -U ${USERS_POSTGRES_USER} -d ${USERS_POSTGRES_DB}" ]
       interval: 5s
       timeout: 5s
       retries: 30
-      start_period: 35s
+      start_period: 120s
 
   shopping-postgres:
     image: postgres:15-alpine
-    container_name: shopping-env-postgres
     networks:
       - finance-net
     environment:
@@ -69,15 +65,14 @@ services:
       - ./out/pgdata/shopping:/var/lib/postgresql/data:rw
     restart: always
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${SHOPPING_POSTGRES_USER} -d ${SHOPPING_POSTGRES_DB}" ]
+      test: [ "CMD-SHELL", "pg_isready -h 127.0.0.1 -U ${SHOPPING_POSTGRES_USER} -d ${SHOPPING_POSTGRES_DB}" ]
       interval: 5s
       timeout: 5s
       retries: 30
-      start_period: 35s
+      start_period: 120s
 
   saga-postgres:
     image: postgres:15-alpine
-    container_name: saga-env-postgres
     networks:
       - finance-net
     environment:
@@ -88,15 +83,14 @@ services:
       - ./out/pgdata/saga:/var/lib/postgresql/data:rw
     restart: always
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${SAGA_POSTGRES_USER} -d ${SAGA_POSTGRES_DB}" ]
+      test: [ "CMD-SHELL", "pg_isready -h 127.0.0.1 -U ${SAGA_POSTGRES_USER} -d ${SAGA_POSTGRES_DB}" ]
       interval: 5s
       timeout: 5s
       retries: 30
-      start_period: 35s
+      start_period: 120s
 
   ai-postgres:
     image: postgres:15-alpine
-    container_name: ai-env-postgres
     networks:
       - finance-net
     environment:
@@ -107,15 +101,14 @@ services:
       - ./out/pgdata/ai:/var/lib/postgresql/data:rw
     restart: always
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${AI_POSTGRES_USER} -d ${AI_POSTGRES_DB}" ]
+      test: [ "CMD-SHELL", "pg_isready -h 127.0.0.1 -U ${AI_POSTGRES_USER} -d ${AI_POSTGRES_DB}" ]
       interval: 5s
       timeout: 5s
       retries: 30
-      start_period: 35s
+      start_period: 120s
 
   finance-redis:
     image: redis:7-alpine
-    container_name: finance-redis
     networks:
       - finance-net
     ports:
@@ -131,7 +124,6 @@ services:
 
   kafka:
     image: confluentinc/cp-kafka:latest
-    container_name: finance-kafka
     networks:
       - finance-net
     environment:
@@ -153,11 +145,10 @@ services:
       interval: 10s
       timeout: 5s
       retries: 30
-      start_period: 35s
+      start_period: 120s
 
   minio:
     image: pgsty/minio:latest
-    container_name: finance-minio
     networks:
       - finance-net
     environment:
@@ -173,7 +164,6 @@ services:
 
   clickhouse:
     image: clickhouse/clickhouse-server:24-alpine
-    container_name: finance-clickhouse
     networks:
       - finance-net
     ports:
@@ -195,9 +185,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 30
-      start_period: 100s
+      start_period: 120s
     restart: always
-
 
   auth-postgres-migrate:
     image: migrate/migrate:latest
@@ -321,7 +310,6 @@ services:
 
   clickhouse-migrate:
     image: clickhouse/clickhouse-server:24-alpine
-    container_name: finance-clickhouse-migrate
     networks:
       - finance-net
     volumes:
@@ -344,12 +332,10 @@ services:
       "
     restart: "no"
 
-
   auth:
     build:
       context: .
       dockerfile: build/auth/Dockerfile
-    container_name: auth-service
     networks:
       - finance-net
     environment:
@@ -393,7 +379,6 @@ services:
     build:
       context: .
       dockerfile: build/users/Dockerfile
-    container_name: users-service
     networks:
       - finance-net
     environment:
@@ -436,7 +421,6 @@ services:
     build:
       context: .
       dockerfile: build/finance/Dockerfile
-    container_name: finance-service
     networks:
       - finance-net
     environment:
@@ -496,7 +480,6 @@ services:
     build:
       context: .
       dockerfile: build/admin/Dockerfile
-    container_name: admin-service
     networks:
       - finance-net
     environment:
@@ -528,7 +511,6 @@ services:
     build:
       context: .
       dockerfile: build/currency/Dockerfile
-    container_name: currency-service
     networks:
       - finance-net
     environment:
@@ -561,7 +543,6 @@ services:
     build:
       context: .
       dockerfile: build/shopping/Dockerfile
-    container_name: shopping-service
     networks:
       - finance-net
     environment:
@@ -615,7 +596,6 @@ services:
     build:
       context: .
       dockerfile: build/saga/Dockerfile
-    container_name: saga-service
     networks:
       - finance-net
     environment:
@@ -657,7 +637,6 @@ services:
     build:
       context: .
       dockerfile: build/ai/Dockerfile
-    container_name: ai-service
     networks:
       - finance-net
     environment:
@@ -721,7 +700,6 @@ services:
     build:
       context: .
       dockerfile: build/gateway/Dockerfile
-    container_name: gateway-service
     networks:
       - finance-net
     environment:
@@ -760,7 +738,6 @@ services:
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
-    container_name: finance-kafka-ui
     networks:
       - finance-net
     depends_on:
@@ -774,7 +751,6 @@ services:
 
   jaeger:
     image: jaegertracing/all-in-one:latest
-    container_name: finance-jaeger
     networks:
       - finance-net
     ports:
@@ -786,7 +762,6 @@ services:
 
   prometheus:
     image: prom/prometheus:latest
-    container_name: finance-prometheus
     networks:
       - finance-net
     ports:
@@ -801,7 +776,6 @@ services:
 
   nominatim:
     image: mediagis/nominatim:4.4
-    container_name: finance-nominatim
     networks:
       - finance-net
     environment:
