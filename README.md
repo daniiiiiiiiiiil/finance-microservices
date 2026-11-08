@@ -1,300 +1,545 @@
 # Finance Microservices
 
-Платформа для учёта личных финансов на микросервисной архитектуре (Go). Клиенты обращаются к системе только через gateway-service по REST/JSON, а он уже проксирует запросы во внутренние gRPC-вызовы к доменным сервисам. Между собой сервисы общаются синхронно через gRPC и асинхронно через Kafka.
+Микросервисная платформа для учёта личных финансов, построенная на Go. Система разделена на независимые сервисы с собственными зонами ответственности. Внешние HTTP-запросы принимает `gateway-service`, который преобразует REST/JSON-запросы в gRPC-вызовы. Для синхронного взаимодействия между сервисами используется gRPC, для асинхронного обмена событиями — Apache Kafka.
 
-Репозиторий — Go multi-module монорепо, каждый сервис имеет свой go.mod, свой Dockerfile и запускается отдельным процессом.
+Репозиторий организован как Go multi-module monorepo: каждый микросервис имеет собственный `go.mod`, Dockerfile и запускается отдельным процессом.
 
+## Содержание
 
-## Стек технологий
-Язык и основная экосистема
+- [Возможности](#возможности)
+- [Технологический стек](#технологический-стек)
+- [Архитектура](#архитектура)
+- [Микросервисы](#микросервисы)
+- [Межсервисное взаимодействие](#межсервисное-взаимодействие)
+- [Инфраструктура](#инфраструктура)
+- [Наблюдаемость](#наблюдаемость)
+- [Структура микросервиса](#структура-микросервиса)
+- [Порты](#порты)
+- [Переменные окружения](#переменные-окружения)
+- [Запуск](#запуск)
+- [Полезные команды](#полезные-команды)
 
-Go 1.26.4
+## Возможности
 
-Коммуникация
+- Регистрация, аутентификация и авторизация пользователей с использованием JWT.
+- Управление профилями пользователей и ролями `user` / `admin`.
+- Учёт финансовых операций: доходов и расходов.
+- Получение сводной статистики и данных для финансового дашборда.
+- Управление категориями транзакций.
+- Экспорт финансовых отчётов в JSON, CSV, TXT и PDF.
+- Хранение экспортированных файлов в S3-совместимом хранилище MinIO.
+- Конвертация сумм между валютами и пересчёт транзакций в USD.
+- Административное управление пользователями и агрегированной статистикой.
+- Распределённое удаление пользовательских данных с использованием Saga.
+- Асинхронное обновление read-моделей через Kafka.
 
-gRPC — синхронное взаимодействие между сервисами
+## Технологический стек
 
-REST/JSON (через gRPC-Gateway) — для внешних клиентов
-
-Apache Kafka (через segmentio/kafka-go) — асинхронные события
-
-Базы данных и хранилища
-
-PostgreSQL 15 (три изолированные БД: auth, users, finance)
-
-Redis 7 — кэш и read-модели
-
-MinIO (S3-совместимое хранилище) — для экспортированных файлов
-
-Инфраструктура и оркестрация
-
-Docker и Docker Compose
-
-GitHub Actions — CI/CD
-
-Наблюдаемость
-
-Prometheus — метрики
-
-Jaeger — распределённая трассировка (OpenTelemetry)
-
-Zap — структурированное логирование
-
-Kafka UI — просмотр событий
-
-Документация и тестирование
-
-Swagger / OpenAPI (через grpc-gateway)
-
-Testify + mock — юнит-тесты
-
-Внешние API
-
-Frankfurter API — курсы валют
-
-Хостинг
-
-Timeweb Cloud (РФ, Санкт-Петербург)
-
-SSH - безопастность
-
-## Хостинг
-Проект запущен на сервере Timeweb Cloud в Санкт-Петербурге. Конфигурация: 8 vCPU, 8 ГБ RAM, 100 ГБ NVMe. Публичный IP: 185.125.200.63.
-
-Доступ по SSH через ключи. Вся инфраструктура поднимается через Docker Compose на одном хосте. Все шесть микросервисов работают стабильно.
-
-Проект оплачен до 05.09.2026 после его снимат с хостинга
-
-Публичные эндпоинты:
-
-API Gateway — http://185.125.200.63:8081
-
-Swagger — http://185.125.200.63:8081/swagger/
-
-Kafka UI — порт 8080
-
-MinIO Console — порт 9001
-
-Jaeger — порт 16686
-
-Prometheus — порт 9090
-
-Настроен CI/CD через GitHub Actions. При пуше в master запускаются проверки и тесты, затем код автоматически обновляется на сервере через docker compose up -d --build.
-
-Безопасность: JWT для API, секреты хранятся в .env на сервере. Логи пишутся в ./logs, метрики в Prometheus, трейсы в Jaeger.
+| Область | Технологии |
+|---|---|
+| Язык | Go 1.26.4 |
+| Межсервисное взаимодействие | gRPC, Protocol Buffers |
+| Внешний API | REST/JSON, gRPC-Gateway |
+| Брокер сообщений | Apache Kafka, `segmentio/kafka-go` |
+| Основные БД | PostgreSQL 15 |
+| Кэш и read-модели | Redis 7 |
+| Объектное хранилище | MinIO, S3 API |
+| Контейнеризация | Docker, Docker Compose |
+| Аутентификация | JWT, bcrypt |
+| Метрики | Prometheus |
+| Трейсинг | OpenTelemetry, Jaeger |
+| Логирование | Zap |
+| API-документация | Swagger / OpenAPI |
+| Тестирование | Testify, mocks |
+| Миграции | golang-migrate |
+| Внешний API курсов валют | Frankfurter API |
+| CI/CD | GitHub Actions |
 
 ## Архитектура
 
-Клиент ходит только в gateway-service по HTTP. Gateway валидирует JWT и проксирует запросы по gRPC в пять доменных сервисов: auth, users, finance, admin, currency. У auth, users и finance есть собственная база PostgreSQL (database-per-service, у каждого своя изолированная база). admin и currency своей базы не имеют — они читают данные через gRPC-вызовы к другим сервисам и слушают Kafka, а всё что им нужно хранить (агрегаты, кэш, курсы валют) держат в Redis.
+Клиент обращается к системе через `gateway-service` по HTTP. Gateway проверяет JWT и перенаправляет запросы в соответствующие доменные сервисы по gRPC.
 
-Все сервисы завязаны на общий Kafka-топик finance-events — через него сервисы узнают об изменениях в других доменах, не завязываясь друг на друга напрямую. Redis общий для всех сервисов (кэш профилей, списков, курсов, метрик). MinIO используется только в finance-service — туда складываются экспортированные отчёты.
+В системе выделены следующие микросервисы:
 
-Структура кода у каждого Go-сервиса одинаковая:
-- cmd/<service> — точка входа main.go
-- config — конфиг из переменных окружения через envconfig
-- internal/core — инфраструктурные адаптеры: пул postgres, redis, kafka, grpc-клиенты/серверы, метрики, логгер, трейсинг,domain
-- internal/features/<domain>/service — бизнес-логика
-- internal/features/<domain>/repository/postgres и /redis — доступ к данным
-- internal/features/<domain>/transport/grpc и /kafka — gRPC-хендлеры и Kafka-продюсеры/консюмеры
-- proto — сгенерированный protobuf/gRPC код
-- migrations — SQL-миграции через golang-migrate
-- pkg — общие утилиты: errors, logger, pagination, grpcutil, types,middelware
+1. `gateway-service` — единая внешняя точка входа.
+2. `auth-service` — регистрация, аутентификация и учётные данные.
+3. `users-service` — профили пользователей и роли.
+4. `finance-service` — финансовые операции и отчёты.
+5. `admin-service` — административные операции и системная статистика.
+6. `currency-service` — курсы валют и конвертация.
+7. `ai-service` — отдельный сервис AI-обработки запросов с интеграцией Groq API.
 
-## Сервисы
+### Основные архитектурные решения
+
+- **Database per Service.** `auth-service`, `users-service` и `finance-service` используют отдельные PostgreSQL-базы. Сервисы не обращаются напрямую к чужим таблицам.
+- **Синхронное взаимодействие.** Для запросов между сервисами используется gRPC.
+- **Асинхронное взаимодействие.** События предметной области передаются через Kafka.
+- **CQRS / Read Model.** `admin-service` и `currency-service` поддерживают собственные представления данных, обновляемые на основе событий и сохраняемые в Redis.
+- **Saga.** Для удаления пользователя используется оркестрируемая сага с компенсирующим действием.
+- **Observability.** Сервисы экспортируют метрики, формируют распределённые трейсы и пишут структурированные логи.
+
+### Схема взаимодействия
+
+```mermaid
+flowchart TB
+    Client[External Client]
+    Gateway[gateway-service]
+
+    Auth[auth-service]
+    Users[users-service]
+    Finance[finance-service]
+    Admin[admin-service]
+    Currency[currency-service]
+    AI[ai-service]
+
+    Kafka[(Apache Kafka)]
+    Redis[(Redis)]
+    AuthDB[(Auth PostgreSQL)]
+    UsersDB[(Users PostgreSQL)]
+    FinanceDB[(Finance PostgreSQL)]
+    AIDB[(AI PostgreSQL)]
+    ClickHouse[(ClickHouse)]
+    MinIO[(MinIO / S3)]
+    Frankfurter[Frankfurter API]
+
+    Client -->|REST / JSON| Gateway
+    Gateway -->|gRPC| Auth
+    Gateway -->|gRPC| Users
+    Gateway -->|gRPC| Finance
+    Gateway -->|gRPC| Admin
+    Gateway -->|gRPC| Currency
+    Gateway -->|gRPC| AI
+
+    Auth --> AuthDB
+    Users --> UsersDB
+    Finance --> FinanceDB
+    AI --> AIDB
+    Finance --> MinIO
+
+    Auth <--> Kafka
+    Users --> Kafka
+    Finance --> Kafka
+    Admin <--> Kafka
+    Currency --> Kafka
+
+    Auth --> Redis
+    Users --> Redis
+    Finance --> Redis
+    Admin --> Redis
+    Currency --> Redis
+
+    Currency --> Frankfurter
+    Admin -->|gRPC clients| Users
+    Admin -->|gRPC clients| Finance
+```
+
+## Микросервисы
 
 ### gateway-service
 
-Единая точка входа для внешних клиентов. HTTP-сервер на базе grpc-gateway, который автоматически строит REST-роуты /api/v1/... из аннотаций в proto-файлах и проксирует их как gRPC-вызовы к auth, users, finance, admin, currency.
+Единая точка входа для внешних клиентов. HTTP-сервер построен на `grpc-gateway`: REST-маршруты формируются на основе аннотаций в `.proto`-файлах, а запросы преобразуются в gRPC-вызовы.
 
-Что делает: проверяет JWT (Bearer-заголовок или cookie token) на всех маршрутах кроме /healthz, /metrics, /swagger/*, /api/v1/auth/register, /api/v1/auth/login, /api/v1/auth/logout; прокидывает заголовок Authorization в метаданные gRPC-вызова, чтобы доменные сервисы сами проверяли токен и роль; отдаёт отдельный HTTP-эндпоинт для скачивания экспортированных файлов из S3 (/api/v1/finance/export/download?key=...); раздаёт Swagger UI и сгенерированную OpenAPI-спеку; отдаёт метрики Prometheus на /metrics; есть /healthz для healthcheck. Цепочка middleware: CORS → Auth (JWT) → RequestID → Logger → OpenTelemetry Trace → Panic recovery.
+Основные задачи:
+
+- Маршрутизация запросов в `auth`, `users`, `finance`, `admin` и `currency`.
+- Проверка JWT из заголовка `Authorization: Bearer` или cookie `token`.
+- Пропуск публичных маршрутов: healthcheck, метрики, Swagger, регистрация, вход и выход.
+- Передача `Authorization` в gRPC metadata.
+- Выдача Swagger UI и OpenAPI-спецификации.
+- Предоставление endpoint для скачивания экспортированных файлов из MinIO.
+- Экспорт метрик Prometheus и endpoint `/healthz`.
+
+Middleware-цепочка: CORS → Auth → RequestID → Logger → OpenTelemetry Trace → Panic Recovery.
 
 ### auth-service
 
-Отвечает за аутентификацию и хранение учётных данных — email и bcrypt-хэш пароля, отдельно от профиля пользователя.
+Отвечает за аутентификацию и хранение учётных данных пользователя. Email и bcrypt-хэш пароля хранятся отдельно от пользовательского профиля.
 
-gRPC-методы: Login (проверка пароля, выдача JWT), Register (создаёт credential у себя, потом вызывает users-service.CreateProfile для создания профиля, выдаёт JWT), Logout.
+Основные операции:
 
-Своя PostgreSQL-база с таблицей credentials, у записи есть статус pending/active/failed. Redis используется для кэша/сессий. Публикует и потребляет события через общий топик finance-events. JWT генерируется и валидируется через golang-jwt/jwt.
+- `Register` — создаёт учётные данные, вызывает `users-service.CreateProfile`, после успешного создания профиля активирует credential и выдаёт JWT.
+- `Login` — проверяет пароль и выдаёт JWT.
+- `Logout` — завершает пользовательскую сессию согласно реализации сервиса.
+
+Хранилища и интеграции:
+
+- Собственная PostgreSQL-база с таблицей `credentials`.
+- Статусы учётной записи: `pending`, `active`, `failed`.
+- Redis для кэша / сессионных данных.
+- Kafka для публикации и получения событий.
+- JWT на базе `golang-jwt/jwt`.
 
 ### users-service
 
-Хранилище профилей пользователей — email, имя, телефон, роль admin/user. Источник истины о пользователях.
+Источник истины о пользовательских профилях. Хранит email, имя, телефон и роль пользователя (`user` или `admin`).
 
-gRPC-методы: GetUser, GetUserByEmail, ListUsers, PatchUser, DeleteUser, CreateProfile (создание профиля, вызывается из auth-service.Register), UpdateRole (назначение/снятие роли администратора), AdminExists (проверка что в системе есть хотя бы один админ), GetMetrics, а также MarkDeleting, FinalizeDelete, RestoreUser — это шаги саги удаления пользователя, подробнее ниже.
+Основные gRPC-операции:
 
-Своя PostgreSQL-база с миграциями. Кэш профиля и кэш списка пользователей в Redis. При создании/удалении пользователя публикует события user.created и user.deleted в Kafka, чтобы admin и currency держали свой read-model в актуальном состоянии.
+- `GetUser`, `GetUserByEmail`, `ListUsers`.
+- `CreateProfile`, `PatchUser`, `DeleteUser`.
+- `UpdateRole`, `AdminExists`.
+- `GetMetrics`.
+- `MarkDeleting`, `RestoreUser`, `FinalizeDelete` — операции жизненного цикла пользователя для саги удаления.
+
+Хранилища и интеграции:
+
+- Собственная PostgreSQL-база и SQL-миграции.
+- Redis-кэш профилей и списков пользователей.
+- Публикация `user.created` и `user.deleted` в Kafka.
+- gRPC-взаимодействие с другими сервисами.
 
 ### finance-service
 
-Основной сервис финансового учёта — транзакции (доходы/расходы), дашборд, категории, экспорт отчётов.
+Основной доменный сервис финансового учёта. Отвечает за транзакции, категории, сводную статистику и экспорт отчётов.
 
-gRPC-методы: CreateTransaction, GetTransaction, GetTransactions, UpdateTransaction, DeleteTransaction, DeleteUserTransaction (массовое удаление всех транзакций пользователя, это шаг саги удаления пользователя, вызывается из admin-service), GetDashboard (сводная статистика по доходам/расходам), GetCategories, GetMetrics, ExportJSON/ExportCSV/ExportTXT/ExportPDF (генерируют отчёт в нужном формате и заливают файл в MinIO по ключу вида exports/user_<id>/export_<date>.<ext>), DownloadExport (забирает файл обратно из S3 чтобы отдать клиенту через gateway).
+Основные gRPC-операции:
 
-Своя PostgreSQL-база с транзакциями пользователей. Redis-кэш. S3/MinIO через aws-sdk-go-v2/service/s3 — используется исключительно для хранения экспортированных отчётов, транзакционные данные там не хранятся. PDF генерируется через gofpdf. При создании/изменении/удалении транзакции публикует события transaction.created, transaction.updated, transaction.deleted в Kafka, чтобы admin (агрегированная статистика) и currency (конвертация в USD) обновляли свои read-модели.
+- `CreateTransaction`, `GetTransaction`, `GetTransactions`.
+- `UpdateTransaction`, `DeleteTransaction`.
+- `DeleteUserTransaction` — удаление всех транзакций пользователя в рамках саги.
+- `GetDashboard` — агрегированная статистика доходов и расходов.
+- `GetCategories`, `GetMetrics`.
+- `ExportJSON`, `ExportCSV`, `ExportTXT`, `ExportPDF`.
+- `DownloadExport` — получение ранее сформированного файла.
+
+Хранилища и интеграции:
+
+- Собственная PostgreSQL-база с транзакциями пользователей.
+- Redis-кэш.
+- MinIO используется для экспортированных отчётов, а не для хранения транзакционных данных.
+- PDF-отчёты формируются с помощью `gofpdf`.
+- S3 API используется через AWS SDK for Go v2.
+- Публикует Kafka-события `transaction.created`, `transaction.updated`, `transaction.deleted`.
 
 ### admin-service
 
-Административная панель — управление пользователями, статистика по системе, удаление пользователей вместе со всеми их данными в других сервисах.
+Сервис административных операций. Управляет пользователями, предоставляет агрегированную системную статистику и координирует удаление пользовательских данных в нескольких сервисах.
 
-gRPC-методы: GetUsers, GetUser (проксирует данные из users-service по gRPC), DeleteUser (запускает сагу удаления пользователя, координируя users-service и finance-service), UpdateUserRole, GetMetrics (агрегированная статистика, строится по событиям Kafka и кэшируется в Redis).
+Основные gRPC-операции:
 
-Своей PostgreSQL-базы нет — использует Redis как хранилище агрегированных метрик и кэша. Является Kafka-консюмером: слушает transaction.created, transaction.updated, transaction.deleted, user.created, user.deleted из finance-events и обновляет свои агрегаты — счётчики, дашборд администратора. Это классический CQRS/read-model на событиях. Является и Kafka-продюсером: публикует admin.metrics и user.transactions.deleted. Реализует оркестрацию саги удаления пользователя с явной компенсацией при ошибке.
+- `GetUsers` — получение списка пользователей через `users-service`.
+- `GetUser` — получение данных пользователя через `users-service`.
+- `DeleteUser` — запуск саги удаления пользователя.
+- `UpdateUserRole` — изменение роли пользователя.
+- `GetMetrics` — получение агрегированной статистики.
+
+Хранилища и интеграции:
+
+- Собственной PostgreSQL-базы нет.
+- Redis используется для агрегированных метрик и кэширования read-модели.
+- gRPC-клиенты для `users-service` и `finance-service`.
+- Kafka consumer обрабатывает `transaction.created`, `transaction.updated`, `transaction.deleted`, `user.created`, `user.deleted`.
+- Kafka producer публикует `admin.metrics` и событие завершения удаления транзакций пользователя.
+- Метрики Prometheus экспортируются отдельно от gRPC-сервера.
+- gRPC-сервер использует interceptors для Request ID, логирования, JWT-аутентификации, метрик и трейсинга.
+- Поддерживается опциональная TLS-конфигурация для gRPC-соединений.
+
+### ai-service
+
+Отдельный микросервис для обработки AI-запросов. Сервис интегрируется с Groq API и изолирован от остальных доменов на уровне процесса и собственной PostgreSQL-базы. Известные точки подключения: HTTP `9099` и gRPC `50056`.
+
+AI-функциональность вынесена в отдельный сервис, чтобы не смешивать интеграцию с внешней языковой моделью с бизнес-логикой финансовых сервисов. Конкретные gRPC-методы, HTTP-маршруты и структуру хранимых данных следует сверять с актуальными `.proto`-файлами и реализацией `ai-service`.
 
 ### currency-service
 
-Конвертация валют и приведение сумм транзакций к USD.
+Сервис получения курсов валют и конвертации финансовых сумм. Используется для пересчёта транзакций в USD.
 
-gRPC-методы: GetRates (текущие курсы валют), Convert и ConvertBatch (конвертация суммы/пакета сумм между валютами), GetTransactionUSD (сумма транзакции в пересчёте на USD).
+Основные gRPC-операции:
 
-Своей PostgreSQL-базы нет, курсы валют и рассчитанные суммы хранятся в Redis. Актуальные курсы берутся из внешнего REST API Frankfurter (https://api.frankfurter.app/latest) — бесплатный сервис курсов валют ЕЦБ. Является Kafka-консюмером: слушает transaction.created и transaction.deleted из finance-events, чтобы пересчитывать и кэшировать сумму транзакции в USD сразу при её появлении или удалении, без похода в finance-service на каждый запрос.
+- `GetRates` — получение актуальных курсов.
+- `Convert` — конвертация одной суммы.
+- `ConvertBatch` — пакетная конвертация.
+- `GetTransactionUSD` — получение суммы транзакции в USD.
+
+Хранилища и интеграции:
+
+- Собственной PostgreSQL-базы нет.
+- Redis хранит курсы валют и рассчитанные суммы.
+- Актуальные курсы загружаются из Frankfurter API: `https://api.frankfurter.app/latest`.
+- Kafka consumer обрабатывает `transaction.created` и `transaction.deleted`, чтобы обновлять или инвалидировать USD read-model.
 
 ## Межсервисное взаимодействие
 
-### Паттерн Saga
+### Kafka
 
-В системе используется оркестрируемая saga — распределённая транзакция, затрагивающая несколько сервисов с собственными базами данных, где согласованность достигается последовательностью локальных транзакций и компенсирующими действиями при сбое, вместо распределённого 2PC.
+Сервисы используют общий топик `finance-events`. Kafka обеспечивает асинхронное распространение изменений между доменами и позволяет обновлять read-модели без синхронных запросов к исходному сервису.
 
-Saga удаления пользователя, оркестратор — admin-service, метод DeleteUser:
+| Событие | Producer | Consumers | Назначение |
+|---|---|---|---|
+| `transaction.created` | finance | admin, currency | Обновление статистики и суммы в USD |
+| `transaction.updated` | finance | admin | Пересчёт агрегированной статистики |
+| `transaction.deleted` | finance | admin, currency | Обновление статистики и USD read-model |
+| `user.created` | users | admin | Обновление счётчиков пользователей |
+| `user.deleted` | users | admin | Обновление счётчиков пользователей |
+| `user.transactions.deleted` | finance | — | Сигнал о завершении шага саги удаления |
+| `admin.metrics` | admin | — | Публикация обновлённых агрегированных метрик |
 
-Сначала admin-service вызывает users-service.MarkDeleting(id) — помечает пользователя как "в процессе удаления", это мягкая блокировка чтобы не потерять данные при частичном сбое. Дальше admin-service вызывает finance-service.DeleteUserTransactions(id) — удаляет все транзакции пользователя. Если этот шаг падает, выполняется компенсация: вызывается users-service.RestoreUser(id), чтобы откатить пользователя из состояния "удаляется" обратно в нормальное, и сага прерывается с ошибкой — состояние системы остаётся консистентным. Если удаление транзакций прошло успешно, admin-service вызывает users-service.FinalizeDelete(id), который окончательно удаляет пользователя. Вся сага логируется целиком (Starting DeleteUser saga / saga completed successfully), что позволяет отследить весь процесс в логах и в трейсинге через Jaeger.
+Для просмотра топиков, сообщений и consumer groups используется Kafka UI.
 
-Специально под этот сценарий в users-service выделены три отдельных gRPC-метода жизненного цикла — MarkDeleting, RestoreUser, FinalizeDelete, а не один общий DeleteUser — это и есть техническая реализация шагов саги с возможностью компенсации.
+### Saga: удаление пользователя
 
-Кроме этого регистрация пользователя через auth-service.Register тоже по сути мини-сага с двумя локальными транзакциями в разных базах: сначала создаётся запись credential в auth-service со статусом pending, потом вызывается users-service.CreateProfile, и в зависимости от результата статус credential переводится в active либо failed.
+Удаление пользователя затрагивает данные как минимум в `users-service` и `finance-service`. Для координации используется оркестрируемая Saga, оркестратор — `admin-service`.
 
-### События Kafka
+Последовательность:
 
-Единый топик finance-events используется как шина событийного взаимодействия между сервисами, реализовано через segmentio/kafka-go. Каждый сервис поднимает продюсера и/или консюмера в зависимости от роли.
+1. `admin-service` вызывает `users-service.MarkDeleting(id)`. Пользователь переводится в состояние удаления.
+2. `admin-service` вызывает `finance-service.DeleteUserTransaction(id)` для удаления транзакций пользователя.
+3. Если удаление транзакций завершается ошибкой, `admin-service` вызывает `users-service.RestoreUser(id)`. Это компенсирующее действие возвращает пользователя в рабочее состояние.
+4. Если удаление транзакций прошло успешно, вызывается `users-service.FinalizeDelete(id)` для окончательного удаления пользователя.
 
-transaction.created публикует finance-service, слушают admin-service и currency-service — обновление статистики и пересчёт суммы в USD. transaction.updated публикует finance-service, слушает admin-service — обновление статистики. transaction.deleted публикует finance-service, слушают admin-service и currency-service — обновление статистики и инвалидация USD-кэша. user.created и user.deleted публикует users-service, слушает admin-service — обновление счётчиков пользователей. user.transactions.deleted публикует finance-service как сигнал о завершении шага саги удаления транзакций. admin.metrics публикует admin-service после пересчёта агрегированных метрик.
+Таким образом, вместо распределённой транзакции 2PC используются локальные операции и компенсация при ошибке. Шаги саги логируются и доступны для анализа через распределённый трейсинг.
 
-Просмотр и отладка сообщений в топике доступны через веб-интерфейс Kafka UI.
+### Регистрация пользователя
+
+Регистрация в `auth-service` также состоит из последовательных локальных операций:
+
+1. Создаётся credential со статусом `pending`.
+2. Вызывается `users-service.CreateProfile`.
+3. При успехе credential переводится в `active`, при ошибке — в `failed`.
 
 ## Инфраструктура
 
-Полное описание в docker-compose.yaml, поднимается одной командой docker compose up -d.
+Инфраструктура описана в `docker-compose.yaml`. Компоненты запускаются в общей Docker bridge-сети `finance-net`.
 
-finance-postgres, auth-postgres, users-postgres — по одной изолированной базе postgres:15-alpine на каждый домен, database-per-service.
+| Компонент | Назначение |
+|---|---|
+| `auth-postgres` | База учётных данных |
+| `users-postgres` | База пользовательских профилей |
+| `finance-postgres` | База финансовых транзакций |
+| `ai-postgres` | База данных AI-сервиса |
+| `clickhouse` | Аналитическое хранилище / аналитические запросы |
+| `finance-redis` | Общий кэш и read-модели |
+| `kafka` | Брокер событий в режиме KRaft |
+| `kafka-ui` | Веб-интерфейс Kafka |
+| `minio` | S3-совместимое хранилище экспортов |
+| `jaeger` | Сбор и просмотр трейсов |
+| `prometheus` | Сбор метрик |
+| `auth-postgres-migrate` | Миграции auth PostgreSQL |
+| `users-postgres-migrate` | Миграции users PostgreSQL |
+| `finance-postgres-migrate` | Миграции finance PostgreSQL |
 
-finance-redis на redis:7-alpine — общий кэш и хранилище для всех сервисов: профили, списки, курсы валют, метрики. kafka на confluentinc/cp-kafka — брокер событий в режиме KRaft без Zookeeper, топик finance-events. kafka-ui на provectuslabs/kafka-ui — веб-интерфейс для просмотра топиков и сообщений Kafka, http://localhost:8080. minio на minio/minio — S3-совместимое объектное хранилище для экспортированных финансовых отчётов в JSON/CSV/TXT/PDF, S3 API на порту 9000, веб-консоль на http://localhost:9001.
-
-jaeger на jaegertracing/all-in-one — распределённый трейсинг через OpenTelemetry/OTLP, UI на http://localhost:16686. prometheus на prom/prometheus — сбор метрик со всех сервисов, http://localhost:9090. auth-postgres-migrate, users-postgres-migrate, finance-postgres-migrate на migrate/migrate — одноразовые job-контейнеры для прогона SQL-миграций. auth, users, finance, admin, currency, gateway — доменные сервисы приложения, каждый собирается из своего Dockerfile в build/<service>/.
-
-Все сервисы объединены в одну bridge-сеть Docker finance-net.
+PostgreSQL-базы изолированы и доступны сервисам внутри Docker-сети. Redis используется сервисами для кэширования и хранения read-моделей. Kafka работает в режиме KRaft без Zookeeper. MinIO предоставляет S3 API и отдельную веб-консоль.
 
 ## Наблюдаемость
 
-Метрики: каждый сервис отдаёт метрики Prometheus на своём порту через /metrics, Prometheus их собирает по конфигу prometheus.yml. Смотреть агрегированные метрики: http://localhost:9090.
+- **Prometheus.** Каждый сервис экспортирует метрики на отдельном HTTP-порту через `/metrics`. Prometheus собирает метрики согласно `prometheus.yml`.
+- **OpenTelemetry + Jaeger.** gRPC- и HTTP-вызовы инструментированы для распределённого трейсинга. Трейсы передаются по OTLP/gRPC.
+- **Zap.** Структурированные логи. Путь и уровень логирования настраиваются переменными окружения.
+- **Kafka UI.** Просмотр сообщений, топиков и consumer groups.
+- **Swagger UI.** Интерактивная документация REST API gateway.
+- **MinIO Console.** Просмотр экспортированных файлов.
 
-Трейсинг: все сервисы инструментированы через OpenTelemetry (gRPC- и HTTP-инструментация), трейсы уходят по OTLP/gRPC в Jaeger. Смотреть трейсы запросов между сервисами: http://localhost:16686.
+## Структура микросервиса
 
-Логирование: структурированные логи через zap, пишутся в файлы в папку ./logs, уровень настраивается через LOGGER_LEVEL.
+В каждом Go-сервисе используется собственный модуль и отдельная точка входа. Общая структура по исходному устройству сервисов:
 
-Kafka UI — просмотр сообщений и consumer group'ов в топике finance-events: http://localhost:8080.
+```text
+<service>/
+├── cmd/
+│   └── <service>/
+│       └── main.go
+├── config/
+├── internal/
+│   ├── core/
+│   │   ├── auth/
+│   │   ├── cache/
+│   │   ├── clients/
+│   │   ├── grpc/
+│   │   ├── kafka/
+│   │   ├── metrics/
+│   │   ├── ports/
+│   │   └── telemetry/
+│   └── features/
+│       └── <domain>/
+│           ├── service/
+│           ├── repository/
+│           └── transport/
+├── migrations/
+├── pkg/
+├── proto/
+├── Dockerfile
+├── go.mod
+└── go.sum
+```
 
-MinIO Console — просмотр загруженных файлов экспорта отчётов: http://localhost:9001, S3 API на http://localhost:9000.
+Назначение основных директорий:
 
-Swagger UI — интерактивная документация REST API gateway: http://localhost:8081/swagger/.
+- `cmd` — запуск приложения.
+- `config` — конфигурация из переменных окружения.
+- `internal/core` — инфраструктурные компоненты и адаптеры.
+- `internal/features` — доменная бизнес-логика, репозитории и транспорт.
+- `migrations` — SQL-миграции.
+- `pkg` — переиспользуемые вспомогательные пакеты.
+- `proto` — Protocol Buffers и сгенерированный gRPC-код.
 
-## Внешние библиотеки
+## Порты
 
-Общие для всех или большинства Go-сервисов:
+### Сервисы приложения
 
-google.golang.org/grpc — gRPC-сервер и клиент, основной протокол межсервисного взаимодействия.
+| Сервис | Протокол | Порт |
+|---|---|---:|
+| `gateway-service` | HTTP / REST | `8081` |
+| `auth-service` | gRPC | `50051` |
+| `users-service` | gRPC | `50052` |
+| `finance-service` | gRPC | `50053` |
+| `admin-service` | gRPC | `50054` |
+| `currency-service` | gRPC | `50055` |
+| `ai-service` | gRPC | `50056` |
+| `ai-service` | HTTP | `9099` |
 
-google.golang.org/protobuf — работа с Protocol Buffers.
+### Метрики
 
-grpc-ecosystem/grpc-gateway/v2 — генерация REST-прослойки JSON↔gRPC из proto-аннотаций, используется в gateway. 
+| Сервис | Порт |
+|---|---:|
+| `auth-service` | `9091` |
+| `finance-service` | `9093` |
+| `admin-service` | `9094` |
+| `currency-service` | `9095` |
+| `users-service` | `9096` |
 
-jackc/pgx/v5 — драйвер и пул соединений PostgreSQL.
+### Инфраструктура
 
-redis/go-redis/v9 — клиент Redis.
+| Компонент | Порт |
+|---|---:|
+| Kafka | `9092` |
+| Redis | `6379` |
+| Kafka UI | `8080` |
+| MinIO S3 API | `9000` |
+| MinIO Console | `9001` |
+| Prometheus | `9090` |
+| Jaeger UI | `16686` |
+| Jaeger OTLP gRPC | `4317` |
 
-segmentio/kafka-go — продюсер и консюмер Apache Kafka.
-
-golang-jwt/jwt/v5 — генерация и валидация JWT.
-
-golang.org/x/crypto (bcrypt) — хэширование паролей.
-
-google/uuid — генерация UUID.
-
-kelseyhightower/envconfig — маппинг переменных окружения в конфиг-структуры.
-
-uber-go/zap — структурированное логирование.
-
-prometheus/client_golang — экспорт метрик Prometheus.
-
-open-telemetry/opentelemetry-go (otel, otel/sdk, otlptracegrpc, otelgrpc, otelhttp) — распределённый трейсинг и экспорт в Jaeger по OTLP.
-
-stretchr/testify и golang/mock — юнит-тестирование и моки. golang-migrate/migrate — версионирование и прогон SQL-миграций, используется как отдельный сервис в docker-compose.
-
-Специфичные для отдельных сервисов:
-
-aws/aws-sdk-go-v2 (service/s3) — клиент S3 API, используется finance-service для загрузки и чтения файлов экспорта в MinIO.
-
-jung-kurt/gofpdf — генерация PDF-отчётов в finance-service.
-
-go-playground/validator/v10 — валидация входящих HTTP-запросов в gateway.
-
-swaggo/http-swagger и swaggo/swag — генерация и раздача Swagger UI и OpenAPI-спеки в gateway. Frankfurter API (https://api.frankfurter.app/latest) — внешний REST-источник курсов валют для currency-service.
-
-## Порты сервисов
-
-gateway-service — HTTP на 8081 (REST API и Swagger), gRPC не используется.
-
-auth-service — gRPC на 50051, метрики на 9091.
-
-users-service — gRPC на 50052, метрики на 9096.
-
-finance-service — gRPC на 50053, метрики на 9093.
-
-admin-service — gRPC на 50054, метрики на 9094.
-
-currency-service — gRPC на 50055, метрики на 9095.
-
-Инфраструктура: PostgreSQL (auth/users/finance) доступны только внутри docker-сети без внешнего проброса. Redis на 6379. Kafka на 9092. Kafka UI на 8080. MinIO S3 API на 9000, MinIO Console на 9001. Jaeger UI на 16686, Jaeger OTLP gRPC на 4317. Prometheus на 9090.
+Фактические опубликованные порты и адреса зависят от конфигурации `docker-compose.yaml`. Для `ai-service` HTTP-порт `9099` и gRPC-порт `50056` указаны по текущей конфигурации проекта.
 
 ## Переменные окружения
 
-Полный список — в env.example.
+Полный перечень переменных и примеры значений находятся в `env.example`. Перед запуском необходимо создать `.env` и заполнить обязательные секреты и адреса сервисов.
+
 Основные группы:
 
-POSTGRES_*,
+| Переменная | Назначение |
+|---|---|
+| `POSTGRES_*` | Общие параметры PostgreSQL |
+| `AUTH_POSTGRES_*` | Подключение auth-service к PostgreSQL |
+| `USERS_POSTGRES_*` | Подключение users-service к PostgreSQL |
+| `FINANCE_POSTGRES_*` | Подключение finance-service к PostgreSQL |
+| `JWT_SECRET` | Секрет подписи JWT |
+| `JWT_DURATION` | Срок действия JWT |
+| `REDIS_ADDR` | Адрес Redis |
+| `KAFKA_BROKERS` | Адреса Kafka broker |
+| `S3_ENDPOINT_URL` | Endpoint MinIO / S3 |
+| `S3_REGION` | Регион S3 |
+| `S3_BUCKET` | Bucket для экспортированных файлов |
+| `S3_ACCESS_KEY`, `S3_SECRET_KEY` | Учётные данные S3 |
+| `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD` | Учётные данные MinIO |
+| `TLS_ENABLED` | Включение TLS для gRPC |
+| `TLS_CERT_FILE`, `TLS_KEY_FILE`, `TLS_CA_FILE` | TLS-сертификаты |
+| `LOGGER_LEVEL` | Уровень логирования |
+| `LOGGER_FOLDER` | Директория логов |
+| `TIME_ZONE` | Часовой пояс процессов |
 
-AUTH_POSTGRES_*,
+Не добавляйте реальные пароли, токены, приватные ключи и другие секреты в репозиторий.
 
-USERS_POSTGRES_*,
+## Запуск
 
-FINANCE_POSTGRES_* — доступы к соответствующим базам.
+### Требования
 
-JWT_SECRET и JWT_DURATION — секрет и срок жизни JWT.
+- Go версии, указанной в `go.mod` сервисов.
+- Docker и Docker Compose.
+- Git.
 
-REDIS_ADDR — адрес Redis.
+### Запуск через Docker Compose
 
-KAFKA_BROKERS — адрес брокера Kafka.
+1. Клонируйте репозиторий:
 
-S3_ENDPOINT_URL, S3_REGION, S3_BUCKET, S3_ACCESS_KEY, S3_SECRET_KEY — доступ к MinIO/S3. MINIO_ROOT_USER и MINIO_ROOT_PASSWORD — учётные данные root MinIO.
+   ```bash
+   git clone <repository-url>
+   cd finance-microservices
+   ```
 
-TLS_ENABLED, TLS_CERT_FILE, TLS_KEY_FILE, TLS_CA_FILE — опциональный TLS для gRPC-соединений между сервисами.
+2. Создайте файл окружения:
 
-LOGGER_LEVEL и LOGGER_FOLDER — настройки логирования.
+   ```bash
+   cp env.example .env
+   ```
 
-TIME_ZONE — таймзона процессов.
+3. Заполните обязательные значения в `.env`.
 
-## Запуск проекта
+4. Соберите и запустите инфраструктуру и сервисы:
 
-Скопировать env.example в .env и заполнить значения, затем docker compose up -d --build.
+   ```bash
+   docker compose up -d --build
+   ```
 
-Основные команды из Makefile: make up поднимает всю систему, make down останавливает, make migrate-up-all прогоняет миграции для auth/users/finance, make services-logs показывает логи доменных сервисов, make kafka-ui открывает Kafka UI, make proto-gen-all перегенерирует protobuf/gRPC код из .proto, make swagger-gen перегенерирует Swagger из аннотаций.
+5. Проверьте состояние контейнеров:
 
-После запуска: 
+   ```bash
+   docker compose ps
+   ```
 
-REST API и Swagger на http://localhost:8081/swagger/
+6. При необходимости посмотрите логи:
 
-Kafka UI на http://localhost:8080
+   ```bash
+   docker compose logs -f
+   ```
 
-MinIO Console на http://localhost:9001
+### Доступные интерфейсы локального окружения
 
-Jaeger на http://localhost:16686
+| Интерфейс | Адрес |
+|---|---|
+| REST API / Swagger | `http://localhost:8081/swagger/` |
+| Kafka UI | `http://localhost:8080` |
+| MinIO Console | `http://localhost:9001` |
+| Jaeger | `http://localhost:16686` |
+| Prometheus | `http://localhost:9090` |
 
-Prometheus на http://localhost:9090
+Адреса приведены для локального запуска с настройками портов по умолчанию.
+
+## Полезные команды
+
+Команды доступны через `Makefile`:
+
+| Команда | Назначение |
+|---|---|
+| `make up` | Запуск системы |
+| `make down` | Остановка системы |
+| `make migrate-up-all` | Применение миграций auth, users и finance |
+| `make services-logs` | Просмотр логов доменных сервисов |
+| `make kafka-ui` | Открытие Kafka UI |
+| `make proto-gen-all` | Генерация protobuf/gRPC-кода |
+| `make swagger-gen` | Генерация Swagger / OpenAPI |
+
+## Тестирование
+
+Для запуска тестов отдельного сервиса перейдите в его директорию и выполните:
+
+```bash
+go test ./...
+```
+
+Для проверки конкурентного доступа и поиска data race:
+
+```bash
+go test -race ./...
+```
+
+Для проверки сборки:
+
+```bash
+go build ./...
+```
+
+В проекте используются `testify` и моки для модульного тестирования. Наличие и покрытие конкретных тестов зависит от сервиса.
+
+## CI/CD и развёртывание
+
+В исходной конфигурации проекта использовался GitHub Actions: при push в `master` выполнялись проверки и тесты, после чего приложение обновлялось на сервере с помощью Docker Compose.
+
+Ранее проект развёртывался на Timeweb Cloud. Указанный в предыдущей версии README срок оплаты хостинга истёк 05.09.2026, поэтому прежние публичные адреса и доступность сервера не считаются актуальными. Для нового развёртывания необходимо настроить собственный сервер, секреты GitHub Actions и параметры окружения.
+
+---
+
+<p align="center">
+  Built with Go · gRPC · Kafka · PostgreSQL · Redis
+</p>
