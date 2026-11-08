@@ -342,6 +342,7 @@ PostgreSQL-базы изолированы и доступны сервисам 
 ├── internal/
 │   ├── core/
 │   │   ├── auth/
+│   │   ├── domain/
 │   │   ├── cache/
 │   │   ├── clients/
 │   │   ├── grpc/
@@ -350,9 +351,9 @@ PostgreSQL-базы изолированы и доступны сервисам 
 │   │   ├── ports/
 │   │   └── telemetry/
 │   └── features/
-│       └── <domain>/
-│           ├── service/
+│       └──
 │           ├── repository/
+│           ├── service/
 │           └── transport/
 ├── migrations/
 ├── pkg/
