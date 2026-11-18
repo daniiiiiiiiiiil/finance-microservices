@@ -4,7 +4,7 @@
 // 	protoc        (unknown)
 // source: shopping/v1/shopping.proto
 
-package shopping
+package v1
 
 import (
 	reflect "reflect"
@@ -1187,8 +1187,8 @@ const file_shopping_v1_shopping_proto_rawDesc = "" +
 	"\x10GetShoppingImage\x12!.shopping.GetShoppingImageRequest\x1a\".shopping.GetShoppingImageResponse\",\x82\xd3\xe4\x93\x02&\x12$/api/v1/shopping/{shopping_id}/image\x12q\n" +
 	"\x11CompletedShopping\x12\".shopping.CompletedShoppingRequest\x1a\x16.google.protobuf.Empty\" \x82\xd3\xe4\x93\x02\x1a:\x01*2\x15/api/v1/shopping/{id}\x12h\n" +
 	"\x0eDeleteShopping\x12\x1f.shopping.DeleteShoppingRequest\x1a\x16.google.protobuf.Empty\"\x1d\x82\xd3\xe4\x93\x02\x17*\x15/api/v1/shopping/{id}\x12u\n" +
-	"\x0eUpdateShopping\x12\x1f.shopping.UpdateShoppingRequest\x1a .shopping.UpdateShoppingResponse\" \x82\xd3\xe4\x93\x02\x1a:\x01*\x1a\x15/api/v1/shopping/{id}B\fZ\n" +
-	"./shoppingb\x06proto3"
+	"\x0eUpdateShopping\x12\x1f.shopping.UpdateShoppingRequest\x1a .shopping.UpdateShoppingResponse\" \x82\xd3\xe4\x93\x02\x1a:\x01*\x1a\x15/api/v1/shopping/{id}B\xb8\x01\n" +
+	"\fcom.shoppingB\rShoppingProtoP\x01ZYgithub.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/shopping/v1\xa2\x02\x03SXX\xaa\x02\bShopping\xca\x02\bShopping\xe2\x02\x14Shopping\\GPBMetadata\xea\x02\bShoppingb\x06proto3"
 
 var (
 	file_shopping_v1_shopping_proto_rawDescOnce sync.Once

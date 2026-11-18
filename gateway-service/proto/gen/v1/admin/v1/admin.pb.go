@@ -4,7 +4,7 @@
 // 	protoc        (unknown)
 // source: admin/v1/admin.proto
 
-package admin
+package adminv1
 
 import (
 	reflect "reflect"
@@ -414,7 +414,9 @@ const file_admin_v1_admin_proto_rawDesc = "" +
 	"DeleteUser\x12\x1b.admin.v1.DeleteUserRequest\x1a\x16.google.protobuf.Empty\" \x82\xd3\xe4\x93\x02\x1a*\x18/api/v1/admin/users/{id}\x12t\n" +
 	"\x0eUpdateUserRole\x12\x1b.admin.v1.UpdateRoleRequest\x1a\x1b.admin.v1.AdminUserResponse\"(\x82\xd3\xe4\x93\x02\":\x01*2\x1d/api/v1/admin/users/{id}/role\x12^\n" +
 	"\n" +
-	"GetMetrics\x12\x16.google.protobuf.Empty\x1a\x19.admin.v1.MetricsResponse\"\x1d\x82\xd3\xe4\x93\x02\x17\x12\x15/api/v1/admin/metricsB\tZ\a./adminb\x06proto3"
+	"GetMetrics\x12\x16.google.protobuf.Empty\x1a\x19.admin.v1.MetricsResponse\"\x1d\x82\xd3\xe4\x93\x02\x17\x12\x15/api/v1/admin/metricsB\xbb\x01\n" +
+	"\fcom.admin.v1B\n" +
+	"AdminProtoP\x01Z^github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/admin/v1;adminv1\xa2\x02\x03AXX\xaa\x02\bAdmin.V1\xca\x02\bAdmin\\V1\xe2\x02\x14Admin\\V1\\GPBMetadata\xea\x02\tAdmin::V1b\x06proto3"
 
 var (
 	file_admin_v1_admin_proto_rawDescOnce sync.Once

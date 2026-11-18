@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package users;
-option go_package ="./users";
+option go_package = "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/users/v1;users";
 
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";

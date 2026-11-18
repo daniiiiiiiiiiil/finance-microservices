@@ -4,7 +4,7 @@
 // 	protoc        (unknown)
 // source: auth/v1/auth.proto
 
-package auth
+package v1
 
 import (
 	reflect "reflect"
@@ -335,7 +335,8 @@ const file_auth_v1_auth_proto_rawDesc = "" +
 	"\vAuthService\x12N\n" +
 	"\x05Login\x12\x12.auth.LoginRequest\x1a\x12.auth.AuthResponse\"\x1d\x82\xd3\xe4\x93\x02\x17:\x01*\"\x12/api/v1/auth/login\x12W\n" +
 	"\bRegister\x12\x15.auth.RegisterRequest\x1a\x12.auth.AuthResponse\" \x82\xd3\xe4\x93\x02\x1a:\x01*\"\x15/api/v1/auth/register\x12X\n" +
-	"\x06Logout\x12\x16.google.protobuf.Empty\x1a\x16.google.protobuf.Empty\"\x1e\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/api/v1/auth/logoutB\bZ\x06./authb\x06proto3"
+	"\x06Logout\x12\x16.google.protobuf.Empty\x1a\x16.google.protobuf.Empty\"\x1e\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/api/v1/auth/logoutB\x9c\x01\n" +
+	"\bcom.authB\tAuthProtoP\x01ZUgithub.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/auth/v1\xa2\x02\x03AXX\xaa\x02\x04Auth\xca\x02\x04Auth\xe2\x02\x10Auth\\GPBMetadata\xea\x02\x04Authb\x06proto3"
 
 var (
 	file_auth_v1_auth_proto_rawDescOnce sync.Once

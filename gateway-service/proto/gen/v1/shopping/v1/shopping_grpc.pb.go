@@ -4,7 +4,7 @@
 // - protoc             (unknown)
 // source: shopping/v1/shopping.proto
 
-package shopping
+package v1
 
 import (
 	context "context"

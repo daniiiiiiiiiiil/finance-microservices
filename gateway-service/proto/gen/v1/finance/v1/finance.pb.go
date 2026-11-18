@@ -4,7 +4,7 @@
 // 	protoc        (unknown)
 // source: finance/v1/finance.proto
 
-package finance
+package v1
 
 import (
 	reflect "reflect"
@@ -2171,7 +2171,8 @@ const file_finance_v1_finance_proto_rawDesc = "" +
 	"\fCreateBudget\x12\x1c.finance.CreateBudgetRequest\x1a\x1d.finance.CreateBudgetResponse\"!\x82\xd3\xe4\x93\x02\x1b:\x01*\"\x16/api/v1/finance/budget\x12i\n" +
 	"\vListBudgets\x12\x1b.finance.ListBudgetsRequest\x1a\x1c.finance.ListBudgetsResponse\"\x1f\x82\xd3\xe4\x93\x02\x19\x12\x17/api/v1/finance/budgets\x12s\n" +
 	"\fUpdateBudget\x12\x1c.finance.UpdateBudgetRequest\x1a\x1d.finance.UpdateBudgetResponse\"&\x82\xd3\xe4\x93\x02 :\x01*\x1a\x1b/api/v1/finance/budget/{id}\x12i\n" +
-	"\fDeleteBudget\x12\x1c.finance.DeleteBudgetRequest\x1a\x16.google.protobuf.Empty\"#\x82\xd3\xe4\x93\x02\x1d*\x1b/api/v1/finance/budget/{id}B\vZ\t./financeb\x06proto3"
+	"\fDeleteBudget\x12\x1c.finance.DeleteBudgetRequest\x1a\x16.google.protobuf.Empty\"#\x82\xd3\xe4\x93\x02\x1d*\x1b/api/v1/finance/budget/{id}B\xb1\x01\n" +
+	"\vcom.financeB\fFinanceProtoP\x01ZXgithub.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/finance/v1\xa2\x02\x03FXX\xaa\x02\aFinance\xca\x02\aFinance\xe2\x02\x13Finance\\GPBMetadata\xea\x02\aFinanceb\x06proto3"
 
 var (
 	file_finance_v1_finance_proto_rawDescOnce sync.Once

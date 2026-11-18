@@ -4,7 +4,7 @@
 // - protoc             (unknown)
 // source: currency/v1/currency.proto
 
-package currency
+package v1
 
 import (
 	context "context"

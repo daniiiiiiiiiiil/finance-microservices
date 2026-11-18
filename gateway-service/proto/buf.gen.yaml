@@ -1,11 +1,18 @@
-version: v1
+version: v2
+managed:
+  enabled: true
+  override:
+    - file_option: go_package_prefix
+      value: github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1
+  disable:
+    - path: google/api
 plugins:
-  - name: go
-    out: proto
+  - local: protoc-gen-go
+    out: gateway-service/proto/gen/v1
     opt: paths=source_relative
-  - name: go-grpc
-    out: proto
+  - local: protoc-gen-go-grpc
+    out: gateway-service/proto/gen/v1
     opt: paths=source_relative
-  - name: grpc-gateway
-    out: proto
+  - local: protoc-gen-grpc-gateway
+    out: gateway-service/proto/gen/v1
     opt: paths=source_relative

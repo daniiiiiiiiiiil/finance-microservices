@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package shopping;
-option go_package = "./shopping";
+option go_package = "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/shopping/v1;shopping";
 
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";

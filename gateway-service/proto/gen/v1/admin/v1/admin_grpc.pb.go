@@ -4,7 +4,7 @@
 // - protoc             (unknown)
 // source: admin/v1/admin.proto
 
-package admin
+package adminv1
 
 import (
 	context "context"

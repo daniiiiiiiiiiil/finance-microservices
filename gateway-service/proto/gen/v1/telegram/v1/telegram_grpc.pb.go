@@ -4,7 +4,7 @@
 // - protoc             (unknown)
 // source: telegram/v1/telegram.proto
 
-package telegram
+package v1
 
 import (
 	context "context"

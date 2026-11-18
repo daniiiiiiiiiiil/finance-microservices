@@ -4,7 +4,7 @@
 // - protoc             (unknown)
 // source: ai/v1/ai.proto
 
-package ai
+package aiv1
 
 import (
 	context "context"

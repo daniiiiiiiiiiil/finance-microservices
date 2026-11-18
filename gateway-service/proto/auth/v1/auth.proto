@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package auth;
-option go_package = "./auth";
+option go_package = "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/auth/v1;auth";
 
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";

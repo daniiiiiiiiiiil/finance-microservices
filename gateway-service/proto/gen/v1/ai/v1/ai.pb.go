@@ -4,7 +4,7 @@
 // 	protoc        (unknown)
 // source: ai/v1/ai.proto
 
-package ai
+package aiv1
 
 import (
 	reflect "reflect"
@@ -1195,7 +1195,8 @@ const file_ai_v1_ai_proto_rawDesc = "" +
 	"\tListPlans\x12\x17.ai.v1.ListPlansRequest\x1a\x18.ai.v1.ListPlansResponse\"\x18\x82\xd3\xe4\x93\x02\x12\x12\x10/api/v1/ai/plans\x12\\\n" +
 	"\aGetPlan\x12\x15.ai.v1.GetPlanRequest\x1a\x1b.ai.v1.PlanShoppingResponse\"\x1d\x82\xd3\xe4\x93\x02\x17\x12\x15/api/v1/ai/plans/{id}\x12]\n" +
 	"\n" +
-	"DeletePlan\x12\x18.ai.v1.DeletePlanRequest\x1a\x16.google.protobuf.Empty\"\x1d\x82\xd3\xe4\x93\x02\x17*\x15/api/v1/ai/plans/{id}B\x06Z\x04./aib\x06proto3"
+	"DeletePlan\x12\x18.ai.v1.DeletePlanRequest\x1a\x16.google.protobuf.Empty\"\x1d\x82\xd3\xe4\x93\x02\x17*\x15/api/v1/ai/plans/{id}B\xa3\x01\n" +
+	"\tcom.ai.v1B\aAiProtoP\x01ZXgithub.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/ai/v1;aiv1\xa2\x02\x03AXX\xaa\x02\x05Ai.V1\xca\x02\x05Ai\\V1\xe2\x02\x11Ai\\V1\\GPBMetadata\xea\x02\x06Ai::V1b\x06proto3"
 
 var (
 	file_ai_v1_ai_proto_rawDescOnce sync.Once

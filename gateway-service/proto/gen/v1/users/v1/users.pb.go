@@ -4,7 +4,7 @@
 // 	protoc        (unknown)
 // source: users/v1/users.proto
 
-package users
+package v1
 
 import (
 	reflect "reflect"
@@ -897,7 +897,9 @@ const file_users_v1_users_proto_rawDesc = "" +
 	"\vAdminExists\x12\x16.google.protobuf.Empty\x1a\x1a.users.AdminExistsResponse\"\"\x82\xd3\xe4\x93\x02\x1c\x12\x1a/api/v1/users/admin-exists\x12o\n" +
 	"\fMarkDeleting\x12\x1a.users.MarkDeletingRequest\x1a\x16.google.protobuf.Empty\"+\x82\xd3\xe4\x93\x02%:\x01*\" /api/v1/users/{id}/mark-deleting\x12u\n" +
 	"\x0eFinalizeDelete\x12\x1c.users.FinalizeDeleteRequest\x1a\x16.google.protobuf.Empty\"-\x82\xd3\xe4\x93\x02':\x01*\"\"/api/v1/users/{id}/finalize-delete\x12g\n" +
-	"\vRestoreUser\x12\x19.users.RestoreUserRequest\x1a\x16.google.protobuf.Empty\"%\x82\xd3\xe4\x93\x02\x1f:\x01*\"\x1a/api/v1/users/{id}/restoreB\tZ\a./usersb\x06proto3"
+	"\vRestoreUser\x12\x19.users.RestoreUserRequest\x1a\x16.google.protobuf.Empty\"%\x82\xd3\xe4\x93\x02\x1f:\x01*\"\x1a/api/v1/users/{id}/restoreB\xa3\x01\n" +
+	"\tcom.usersB\n" +
+	"UsersProtoP\x01ZVgithub.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/users/v1\xa2\x02\x03UXX\xaa\x02\x05Users\xca\x02\x05Users\xe2\x02\x11Users\\GPBMetadata\xea\x02\x05Usersb\x06proto3"
 
 var (
 	file_users_v1_users_proto_rawDescOnce sync.Once

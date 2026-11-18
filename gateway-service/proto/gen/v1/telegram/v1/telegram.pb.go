@@ -4,7 +4,7 @@
 // 	protoc        (unknown)
 // source: telegram/v1/telegram.proto
 
-package telegram
+package v1
 
 import (
 	reflect "reflect"
@@ -499,8 +499,8 @@ const file_telegram_v1_telegram_proto_rawDesc = "" +
 	"\aGetLink\x12\x18.telegram.GetLinkRequest\x1a\x19.telegram.GetLinkResponse\"\x1d\x82\xd3\xe4\x93\x02\x17\x12\x15/api/v1/telegram/link\x12Z\n" +
 	"\x06Unlink\x12\x17.telegram.UnlinkRequest\x1a\x18.telegram.UnlinkResponse\"\x1d\x82\xd3\xe4\x93\x02\x17*\x15/api/v1/telegram/link\x12\x93\x01\n" +
 	"\x17GetNotificationSettings\x12(.telegram.GetNotificationSettingsRequest\x1a&.telegram.NotificationSettingsResponse\"&\x82\xd3\xe4\x93\x02 \x12\x1e/api/v1/telegram/notifications\x12\x9c\x01\n" +
-	"\x1aUpdateNotificationSettings\x12+.telegram.UpdateNotificationSettingsRequest\x1a&.telegram.NotificationSettingsResponse\")\x82\xd3\xe4\x93\x02#:\x01*2\x1e/api/v1/telegram/notificationsB\fZ\n" +
-	"./telegramb\x06proto3"
+	"\x1aUpdateNotificationSettings\x12+.telegram.UpdateNotificationSettingsRequest\x1a&.telegram.NotificationSettingsResponse\")\x82\xd3\xe4\x93\x02#:\x01*2\x1e/api/v1/telegram/notificationsB\xb8\x01\n" +
+	"\fcom.telegramB\rTelegramProtoP\x01ZYgithub.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/telegram/v1\xa2\x02\x03TXX\xaa\x02\bTelegram\xca\x02\bTelegram\xe2\x02\x14Telegram\\GPBMetadata\xea\x02\bTelegramb\x06proto3"
 
 var (
 	file_telegram_v1_telegram_proto_rawDescOnce sync.Once

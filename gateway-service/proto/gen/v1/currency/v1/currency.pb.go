@@ -4,7 +4,7 @@
 // 	protoc        (unknown)
 // source: currency/v1/currency.proto
 
-package currency
+package v1
 
 import (
 	reflect "reflect"
@@ -572,8 +572,8 @@ const file_currency_v1_currency_proto_rawDesc = "" +
 	"\bGetRates\x12\x19.currency.GetRatesRequest\x1a\x1a.currency.GetRatesResponse\"\x1f\x82\xd3\xe4\x93\x02\x19\x12\x17/api/v1/currency/{base}\x12c\n" +
 	"\aConvert\x12\x18.currency.ConvertRequest\x1a\x19.currency.ConvertResponse\"#\x82\xd3\xe4\x93\x02\x1d:\x01*\"\x18/api/v1/currency/convert\x12x\n" +
 	"\fConvertBatch\x12\x1d.currency.ConvertBatchRequest\x1a\x1e.currency.ConvertBatchResponse\")\x82\xd3\xe4\x93\x02#:\x01*\"\x1e/api/v1/currency/convert/batch\x12\x87\x01\n" +
-	"\x11GetTransactionUSD\x12\".currency.GetTransactionUSDRequest\x1a#.currency.GetTransactionUSDResponse\")\x82\xd3\xe4\x93\x02#\x12!/api/v1/currency/transaction/{id}B\fZ\n" +
-	"./currencyb\x06proto3"
+	"\x11GetTransactionUSD\x12\".currency.GetTransactionUSDRequest\x1a#.currency.GetTransactionUSDResponse\")\x82\xd3\xe4\x93\x02#\x12!/api/v1/currency/transaction/{id}B\xb8\x01\n" +
+	"\fcom.currencyB\rCurrencyProtoP\x01ZYgithub.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/currency/v1\xa2\x02\x03CXX\xaa\x02\bCurrency\xca\x02\bCurrency\xe2\x02\x14Currency\\GPBMetadata\xea\x02\bCurrencyb\x06proto3"
 
 var (
 	file_currency_v1_currency_proto_rawDescOnce sync.Once
