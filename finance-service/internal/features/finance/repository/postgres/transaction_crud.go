@@ -15,9 +15,9 @@ func (r *FinanceRepository) CreateTransactionTx(ctx context.Context, tx pool.Tx,
 	defer cancel()
 
 	query := `
-		INSERT INTO finance.transactions (type_transaction, amount, category, created_at, user_id)
-		VALUES ($1, $2, $3, $4, $5)
-		RETURNING id, version, type_transaction, amount, category, created_at, user_id
+		INSERT INTO finance.transactions (type_transaction, amount, category, description, created_at, user_id)
+		VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING id, version, type_transaction, amount, category, description, created_at, user_id
 	`
 
 	var model FinanceModel
@@ -25,6 +25,7 @@ func (r *FinanceRepository) CreateTransactionTx(ctx context.Context, tx pool.Tx,
 		transaction.TypeTransaction,
 		transaction.Amount,
 		transaction.Category,
+		transaction.Description,
 		transaction.CreatedAt,
 		transaction.UserID,
 	).Scan(
@@ -33,6 +34,7 @@ func (r *FinanceRepository) CreateTransactionTx(ctx context.Context, tx pool.Tx,
 		&model.TypeTransaction,
 		&model.Amount,
 		&model.Category,
+		&model.Description,
 		&model.CreatedAt,
 		&model.UserID,
 	)
@@ -48,7 +50,7 @@ func (r *FinanceRepository) GetTransaction(ctx context.Context, id int) (domain.
 	defer cancel()
 
 	query := `
-		SELECT id, version, type_transaction, amount, category, created_at, user_id
+		SELECT id, version, type_transaction, amount, category, description, created_at, user_id
 		FROM finance.transactions
 		WHERE id = $1
 	`
@@ -60,6 +62,7 @@ func (r *FinanceRepository) GetTransaction(ctx context.Context, id int) (domain.
 		&model.TypeTransaction,
 		&model.Amount,
 		&model.Category,
+		&model.Description,
 		&model.CreatedAt,
 		&model.UserID,
 	)
@@ -82,9 +85,10 @@ func (r *FinanceRepository) UpdateTransaction(ctx context.Context, transaction d
 			type_transaction = $1,
 			amount = $2,
 			category = $3,
+			description = $4,
 				version = version + 1
-		WHERE id = $4 AND version = $5
-		RETURNING id, version, type_transaction, amount, category, created_at, user_id
+		WHERE id = $5 AND version = $6
+		RETURNING id, version, type_transaction, amount, category, description, created_at, user_id
 	`
 
 	var model FinanceModel
@@ -92,6 +96,7 @@ func (r *FinanceRepository) UpdateTransaction(ctx context.Context, transaction d
 		transaction.TypeTransaction,
 		transaction.Amount,
 		transaction.Category,
+		transaction.Description,
 		transaction.ID,
 		transaction.Version,
 	).Scan(
@@ -100,6 +105,7 @@ func (r *FinanceRepository) UpdateTransaction(ctx context.Context, transaction d
 		&model.TypeTransaction,
 		&model.Amount,
 		&model.Category,
+		&model.Description,
 		&model.CreatedAt,
 		&model.UserID,
 	)

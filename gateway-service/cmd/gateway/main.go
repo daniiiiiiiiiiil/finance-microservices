@@ -2,9 +2,12 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
+	"path"
+	"strings"
 	"syscall"
 	"time"
 
@@ -27,6 +30,7 @@ import (
 	currencypb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/currency"
 	financepb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/finance"
 	shoppingpb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/shopping"
+	telegrampb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/telegram"
 	userpb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/users"
 )
 
@@ -90,6 +94,12 @@ func main() {
 	}
 	defer aiConn.Close()
 
+	telegramConn, err := grpcclient.NewGRPCClient(cfg.TelegramAddr, cfg)
+	if err != nil {
+		logger.Fatal("fail to dial telegram", zap.Error(err))
+	}
+	defer telegramConn.Close()
+
 	mux := runtime.NewServeMux(
 		runtime.WithMetadata(func(ctx context.Context, r *http.Request) metadata.MD {
 			md := metadata.MD{}
@@ -125,6 +135,10 @@ func main() {
 
 	if err := aipb.RegisterAIServiceHandler(ctx, mux, aiConn); err != nil {
 		logger.Fatal("fail to register ai service", zap.Error(err))
+	}
+
+	if err := telegrampb.RegisterTelegramServiceHandler(ctx, mux, telegramConn); err != nil {
+		logger.Fatal("fail to register telegram service", zap.Error(err))
 	}
 
 	otelMux := otelhttp.NewHandler(mux, "gateway-http")
@@ -167,8 +181,45 @@ func main() {
 			http.Error(w, "key is required", http.StatusBadRequest)
 			return
 		}
+		userID, ok := http2.GetUserID(r)
+		if !ok || !strings.HasPrefix(key, fmt.Sprintf("exports/user_%d/", userID)) {
+			http.Error(w, "access denied", http.StatusForbidden)
+			return
+		}
 		r.URL.Path = "/api/v1/finance/export/download/" + key
 		otelMux.ServeHTTP(w, r)
+	})
+
+	financeClient := financepb.NewFinanceServiceClient(financeConn)
+	httpMux.HandleFunc("/api/v1/finance/export/file", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		key := r.URL.Query().Get("key")
+		if key == "" {
+			http.Error(w, "key is required", http.StatusBadRequest)
+			return
+		}
+		userID, ok := http2.GetUserID(r)
+		if !ok || !strings.HasPrefix(key, fmt.Sprintf("exports/user_%d/", userID)) {
+			http.Error(w, "access denied", http.StatusForbidden)
+			return
+		}
+		requestCtx := metadata.AppendToOutgoingContext(r.Context(), "authorization", r.Header.Get("Authorization"))
+		response, err := financeClient.DownloadExport(requestCtx, &financepb.DownloadExportRequest{Key: key})
+		if err != nil {
+			logger.Error("download export failed", zap.Error(err))
+			http.Error(w, "failed to download export", http.StatusBadGateway)
+			return
+		}
+		filename := path.Base(key)
+		w.Header().Set("Content-Type", exportContentType(filename))
+		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
+		w.WriteHeader(http.StatusOK)
+		if _, err := w.Write(response.Data); err != nil {
+			logger.Error("write export response failed", zap.Error(err))
+		}
 	})
 
 	httpMux.Handle("/api/", otelMux)
@@ -221,4 +272,19 @@ func main() {
 	}
 
 	logger.Info("shutdown complete")
+}
+
+func exportContentType(filename string) string {
+	switch strings.ToLower(path.Ext(filename)) {
+	case ".csv":
+		return "text/csv; charset=utf-8"
+	case ".pdf":
+		return "application/pdf"
+	case ".json":
+		return "application/json; charset=utf-8"
+	case ".txt":
+		return "text/plain; charset=utf-8"
+	default:
+		return "application/octet-stream"
+	}
 }

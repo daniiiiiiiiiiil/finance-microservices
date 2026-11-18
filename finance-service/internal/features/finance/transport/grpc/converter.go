@@ -14,6 +14,7 @@ func convertFinanceToProto(finance domain.Finance) *gen.TransactionResponse {
 		TypeTransaction: finance.TypeTransaction,
 		Amount:          finance.Amount,
 		Category:        finance.Category,
+		Description:     finance.Description,
 		CreatedAt:       timestamppb.New(finance.CreatedAt),
 		UserId:          int32(finance.UserID),
 	}

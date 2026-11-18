@@ -84,6 +84,19 @@ proto-gen-currency:
 		-I./proto \
 		proto/currency/v1/currency.proto
 
+proto-gen-telegram:
+	@echo "Generating telegram proto..."
+	protoc \
+		--go_out=. \
+		--go_opt=module=github.com/daniiiiiiiiiiil/finance-microservices/gateway-service \
+		--go-grpc_out=. \
+		--go-grpc_opt=module=github.com/daniiiiiiiiiiil/finance-microservices/gateway-service \
+		--grpc-gateway_out=. \
+		--grpc-gateway_opt=module=github.com/daniiiiiiiiiiil/finance-microservices/gateway-service \
+		-I. \
+		-I./proto \
+		proto/telegram/v1/telegram.proto
+
 
 swagger-gen:
 	@echo "Generating Swagger from proto files..."
@@ -101,7 +114,8 @@ swagger-gen:
 		proto/admin/v1/admin.proto \
 		proto/currency/v1/currency.proto \
 		proto/shopping/v1/shopping.proto \
-		proto/ai/v1/ai.proto
+		proto/ai/v1/ai.proto \
+		proto/telegram/v1/telegram.proto
 	@echo "Swagger merged into docs/swagger.json"
 
 swagger-gen-auth:

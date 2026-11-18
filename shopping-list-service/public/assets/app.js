@@ -117,10 +117,94 @@
         if (flowChartInstance) { flowChartInstance.destroy(); flowChartInstance = null; }
         if (categoryChartInstance) { categoryChartInstance.destroy(); categoryChartInstance = null; }
         sessionStorage.removeItem('fingoals-token'); sessionStorage.removeItem('fingoals-user');
+        const gate = $('#telegramGate'); if (gate) gate.hidden = true;
         showAuth(); authMode('login'); renderAll();
     }
 
     $('#userMenu').addEventListener('click', () => { if (token && confirm('Выйти из аккаунта?')) logout(); });
+
+    const telegramGate = $('#telegramGate');
+    const telegramStatus = $('#telegramStatus');
+    const telegramCode = $('#telegramCode');
+    const telegramCodeValue = $('#telegramCodeValue');
+    const telegramError = $('#telegramError');
+    const telegramLink = $('#telegramLink');
+    const telegramUnlink = $('#telegramUnlink');
+
+    function telegramFail(message) {
+        telegramError.textContent = message || '';
+    }
+
+    function renderTelegramLink(data) {
+        telegramCode.hidden = true;
+        telegramUnlink.hidden = !data.linked;
+        telegramLink.hidden = Boolean(data.linked);
+        if (data.linked) {
+            const name = data.username ? '@' + data.username : 'ID ' + data.telegramUserId;
+            telegramStatus.textContent = 'Telegram привязан: ' + name + '. Уведомления и разделы бота доступны.';
+        } else {
+            telegramStatus.textContent = 'Telegram ещё не привязан. Создайте одноразовый код и отправьте его боту.';
+        }
+    }
+
+    async function loadTelegramStatus() {
+        telegramFail('');
+        telegramLink.disabled = true;
+        try {
+            const data = await api('/api/v1/telegram/link');
+            renderTelegramLink(data);
+        } catch (error) {
+            telegramFail(error.message);
+            telegramStatus.textContent = 'Не удалось проверить привязку Telegram.';
+        } finally {
+            telegramLink.disabled = false;
+        }
+    }
+
+    function openTelegram() {
+        if (!token) { showAuth(); return; }
+        $('#sidebar').classList.remove('open');
+        $('#backdrop').classList.remove('visible');
+        telegramGate.hidden = false;
+        telegramCode.hidden = true;
+        loadTelegramStatus();
+    }
+
+    $('#openTelegram').addEventListener('click', event => { event.preventDefault(); openTelegram(); });
+    $('#telegramClose').addEventListener('click', () => { telegramGate.hidden = true; });
+
+    telegramLink.addEventListener('click', async () => {
+        telegramFail('');
+        telegramLink.disabled = true;
+        try {
+            const data = await api('/api/v1/telegram/link-code', { method: 'POST', body: JSON.stringify({}) });
+            telegramCodeValue.textContent = data.code;
+            telegramCode.hidden = false;
+            telegramUnlink.hidden = true;
+            telegramLink.hidden = true;
+            telegramStatus.textContent = 'Код создан. Откройте бота и отправьте /start ' + data.code + '.';
+        } catch (error) {
+            telegramFail(error.message);
+        } finally {
+            telegramLink.disabled = false;
+        }
+    });
+
+    telegramUnlink.addEventListener('click', async () => {
+        if (!confirm('Отвязать Telegram от аккаунта?')) return;
+        telegramFail('');
+        telegramUnlink.disabled = true;
+        try {
+            await api('/api/v1/telegram/link', { method: 'DELETE' });
+            notify('Telegram отвязан');
+            await loadTelegramStatus();
+        } catch (error) {
+            telegramFail(error.message);
+        } finally {
+            telegramUnlink.disabled = false;
+        }
+    });
+
     $('#refreshBtn').addEventListener('click', () => loadData().then(async () => {
         if (page === 'analytics') await loadAnalytics();
         if (page === 'goals') await loadGoals();

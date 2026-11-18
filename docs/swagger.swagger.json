@@ -38,6 +38,9 @@
     },
     {
       "name": "AIService"
+    },
+    {
+      "name": "TelegramService"
     }
   ],
   "consumes": [
@@ -1363,6 +1366,132 @@
         ]
       }
     },
+    "/api/v1/telegram/link": {
+      "get": {
+        "operationId": "TelegramService_GetLink",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/telegramGetLinkResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "TelegramService"
+        ]
+      },
+      "delete": {
+        "operationId": "TelegramService_Unlink",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/telegramUnlinkResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "TelegramService"
+        ]
+      }
+    },
+    "/api/v1/telegram/link-code": {
+      "post": {
+        "operationId": "TelegramService_CreateLinkCode",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/telegramCreateLinkCodeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/telegramCreateLinkCodeRequest"
+            }
+          }
+        ],
+        "tags": [
+          "TelegramService"
+        ]
+      }
+    },
+    "/api/v1/telegram/notifications": {
+      "get": {
+        "operationId": "TelegramService_GetNotificationSettings",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/telegramNotificationSettingsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "TelegramService"
+        ]
+      },
+      "patch": {
+        "operationId": "TelegramService_UpdateNotificationSettings",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/telegramNotificationSettingsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/telegramUpdateNotificationSettingsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "TelegramService"
+        ]
+      }
+    },
     "/api/v1/user/by-email/{email}": {
       "get": {
         "operationId": "UserService_GetUserByEmail",
@@ -1778,6 +1907,9 @@
           "format": "double"
         },
         "category": {
+          "type": "string"
+        },
+        "description": {
           "type": "string"
         }
       }
@@ -2260,6 +2392,9 @@
         },
         "category": {
           "type": "string"
+        },
+        "description": {
+          "type": "string"
         }
       }
     },
@@ -2470,6 +2605,9 @@
         "userId": {
           "type": "integer",
           "format": "int32"
+        },
+        "description": {
+          "type": "string"
         }
       }
     },
@@ -2723,6 +2861,80 @@
         "completionDate": {
           "type": "string",
           "format": "date-time"
+        }
+      }
+    },
+    "telegramCreateLinkCodeRequest": {
+      "type": "object"
+    },
+    "telegramCreateLinkCodeResponse": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "telegramGetLinkResponse": {
+      "type": "object",
+      "properties": {
+        "linked": {
+          "type": "boolean"
+        },
+        "telegramUserId": {
+          "type": "string",
+          "format": "int64"
+        },
+        "chatId": {
+          "type": "string",
+          "format": "int64"
+        },
+        "username": {
+          "type": "string"
+        },
+        "linkedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "telegramNotificationSettingsResponse": {
+      "type": "object",
+      "properties": {
+        "budgetAlerts": {
+          "type": "boolean"
+        },
+        "planAlerts": {
+          "type": "boolean"
+        },
+        "financeAlerts": {
+          "type": "boolean"
+        }
+      }
+    },
+    "telegramUnlinkResponse": {
+      "type": "object",
+      "properties": {
+        "unlinked": {
+          "type": "boolean"
+        }
+      }
+    },
+    "telegramUpdateNotificationSettingsRequest": {
+      "type": "object",
+      "properties": {
+        "budgetAlerts": {
+          "type": "boolean"
+        },
+        "planAlerts": {
+          "type": "boolean"
+        },
+        "financeAlerts": {
+          "type": "boolean"
         }
       }
     },
@@ -2991,6 +3203,14 @@
         },
         "startAddress": {
           "type": "string"
+        },
+        "latitude": {
+          "type": "number",
+          "format": "double"
+        },
+        "longitude": {
+          "type": "number",
+          "format": "double"
         }
       }
     },

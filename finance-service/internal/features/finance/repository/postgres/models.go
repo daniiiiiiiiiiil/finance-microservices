@@ -12,6 +12,7 @@ type FinanceModel struct {
 	TypeTransaction string
 	Amount          float64
 	Category        string
+	Description     string
 	CreatedAt       time.Time
 	UserID          int
 }
@@ -36,6 +37,7 @@ func financeDomainFromModel(model FinanceModel) domain.Finance {
 		TypeTransaction: model.TypeTransaction,
 		Amount:          model.Amount,
 		Category:        model.Category,
+		Description:     model.Description,
 		CreatedAt:       model.CreatedAt,
 		UserID:          model.UserID,
 	}

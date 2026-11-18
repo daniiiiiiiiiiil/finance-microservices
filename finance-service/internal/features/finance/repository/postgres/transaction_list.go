@@ -20,7 +20,7 @@ func (r *FinanceRepository) GetTransactions(
 	defer cancel()
 
 	query := `
-		SELECT id, version, type_transaction, amount, category, created_at, user_id
+		SELECT id, version, type_transaction, amount, category, description, created_at, user_id
 		FROM finance.transactions
 		WHERE user_id = $1
 	`
@@ -78,6 +78,7 @@ func (r *FinanceRepository) GetTransactions(
 			&model.TypeTransaction,
 			&model.Amount,
 			&model.Category,
+			&model.Description,
 			&model.CreatedAt,
 			&model.UserID,
 		)

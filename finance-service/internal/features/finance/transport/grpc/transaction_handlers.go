@@ -38,6 +38,7 @@ func (s *FinanceServer) CreateTransaction(ctx context.Context, req *gen.CreateTr
 		TypeTransaction: req.TypeTransaction,
 		Amount:          req.Amount,
 		Category:        req.Category,
+		Description:     req.Description,
 		CreatedAt:       time.Now(),
 		UserID:          userID,
 	}
@@ -109,6 +110,7 @@ func (s *FinanceServer) UpdateTransaction(ctx context.Context, req *gen.UpdateTr
 		TypeTransaction: req.TypeTransaction,
 		Amount:          req.Amount,
 		Category:        req.Category,
+		Description:     req.Description,
 		CreatedAt:       time.Now(),
 		UserID:          userID,
 	}

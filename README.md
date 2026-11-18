@@ -32,6 +32,7 @@
 - Административное управление пользователями и агрегированной статистикой.
 - Распределённое удаление пользовательских данных с использованием Saga.
 - Асинхронное обновление read-моделей через Kafka.
+- Полноценный Telegram-интерфейс к платформе: финансы, списки покупок, AI-планировщик, валюты, уведомления и Web App с картой.
 
 ## Технологический стек
 
@@ -68,6 +69,7 @@
 5. `admin-service` — административные операции и системная статистика.
 6. `currency-service` — курсы валют и конвертация.
 7. `ai-service` — отдельный сервис AI-обработки запросов с интеграцией Groq API.
+8. `telegram-bot-service` — Telegram-интерфейс платформы, привязка аккаунта, уведомления и Telegram Web App.
 
 ### Основные архитектурные решения
 
@@ -91,6 +93,8 @@ flowchart TB
     Admin[admin-service]
     Currency[currency-service]
     AI[ai-service]
+    TelegramBot[telegram-bot-service]
+    TelegramAPI[Telegram Bot API]
 
     Kafka[(Apache Kafka)]
     Redis[(Redis)]
@@ -98,22 +102,27 @@ flowchart TB
     UsersDB[(Users PostgreSQL)]
     FinanceDB[(Finance PostgreSQL)]
     AIDB[(AI PostgreSQL)]
+    TelegramDB[(Telegram PostgreSQL)]
     ClickHouse[(ClickHouse)]
     MinIO[(MinIO / S3)]
     Frankfurter[Frankfurter API]
 
     Client -->|REST / JSON| Gateway
+    TelegramAPI -->|Webhook| TelegramBot
+    TelegramBot -->|REST + JWT| Gateway
     Gateway -->|gRPC| Auth
     Gateway -->|gRPC| Users
     Gateway -->|gRPC| Finance
     Gateway -->|gRPC| Admin
     Gateway -->|gRPC| Currency
     Gateway -->|gRPC| AI
+    Gateway -->|gRPC| TelegramBot
 
     Auth --> AuthDB
     Users --> UsersDB
     Finance --> FinanceDB
     AI --> AIDB
+    TelegramBot --> TelegramDB
     Finance --> MinIO
 
     Auth <--> Kafka
@@ -121,12 +130,15 @@ flowchart TB
     Finance --> Kafka
     Admin <--> Kafka
     Currency --> Kafka
+    AI --> Kafka
+    Kafka --> TelegramBot
 
     Auth --> Redis
     Users --> Redis
     Finance --> Redis
     Admin --> Redis
     Currency --> Redis
+    TelegramBot --> Redis
 
     Currency --> Frankfurter
     Admin -->|gRPC clients| Users
@@ -258,6 +270,33 @@ AI-функциональность вынесена в отдельный се�
 - Актуальные курсы загружаются из Frankfurter API: `https://api.frankfurter.app/latest`.
 - Kafka consumer обрабатывает `transaction.created` и `transaction.deleted`, чтобы обновлять или инвалидировать USD read-model.
 
+### telegram-bot-service
+
+Дополнительный интерфейс платформы в Telegram. Сервис не дублирует бизнес-логику и не обращается к базам данных других сервисов: пользовательские операции выполняются через `gateway-service` с короткоживущим JWT, выпущенным после привязки Telegram к существующему аккаунту.
+
+Основные возможности:
+
+- привязка через одноразовый код из настроек профиля и `/start КОД`;
+- раздел «Telegram-бот» в существующем веб-приложении для подключения и отвязки;
+- главное меню с inline-клавиатурой и пошаговыми диалогами;
+- финансы: баланс, операции, фильтры, бюджеты, аналитика, экспорт CSV/PDF/JSON/TXT;
+- списки покупок: создание, изменение, удаление, прогресс, завершение, изображения;
+- AI-планировщик: текст, адрес, геолокация Telegram, магазины, цены, доставка, маршрут, история;
+- валюты: курсы и конвертация;
+- уведомления из Kafka с настройками и повторными попытками;
+- Telegram Web App с интерактивной картой AI-плана и серверной проверкой `initData`.
+
+Хранилища и интеграции:
+
+- собственная PostgreSQL-база: привязки, одноразовые коды, настройки уведомлений;
+- Redis для состояний диалогов и ключей идемпотентности;
+- собственный gRPC-сервер для web-настроек привязки, зарегистрированный в Gateway;
+- HTTP-сервер для webhook, Web App и healthcheck;
+- Kafka consumer группы `telegram-bot-service` в топике `finance-events`;
+- Prometheus-метрики и OpenTelemetry-трейсы.
+
+Подробная документация: [`telegram-bot-service/README.md`](telegram-bot-service/README.md).
+
 ## Межсервисное взаимодействие
 
 ### Kafka
@@ -273,6 +312,8 @@ AI-функциональность вынесена в отдельный се�
 | `user.deleted` | users | admin | Обновление счётчиков пользователей |
 | `user.transactions.deleted` | finance | — | Сигнал о завершении шага саги удаления |
 | `admin.metrics` | admin | — | Публикация обновлённых агрегированных метрик |
+| `budget.exceeded` | finance | telegram-bot | Уведомление о превышении бюджета |
+| `ai.plan_created` | ai | telegram-bot | Уведомление о завершении AI-планирования |
 
 Для просмотра топиков, сообщений и consumer groups используется Kafka UI.
 
@@ -307,6 +348,7 @@ AI-функциональность вынесена в отдельный се�
 | `users-postgres` | База пользовательских профилей |
 | `finance-postgres` | База финансовых транзакций |
 | `ai-postgres` | База данных AI-сервиса |
+| `telegram-postgres` | База привязок и настроек Telegram-бота |
 | `clickhouse` | Аналитическое хранилище / аналитические запросы |
 | `finance-redis` | Общий кэш и read-модели |
 | `kafka` | Брокер событий в режиме KRaft |
@@ -317,6 +359,7 @@ AI-функциональность вынесена в отдельный се�
 | `auth-postgres-migrate` | Миграции auth PostgreSQL |
 | `users-postgres-migrate` | Миграции users PostgreSQL |
 | `finance-postgres-migrate` | Миграции finance PostgreSQL |
+| `telegram-postgres-migrate` | Миграции telegram PostgreSQL |
 
 PostgreSQL-базы изолированы и доступны сервисам внутри Docker-сети. Redis используется сервисами для кэширования и хранения read-моделей. Kafka работает в режиме KRaft без Zookeeper. MinIO предоставляет S3 API и отдельную веб-консоль.
 
@@ -387,6 +430,8 @@ PostgreSQL-базы изолированы и доступны сервисам 
 | `currency-service` | gRPC | `50055` |
 | `ai-service` | gRPC | `50056` |
 | `ai-service` | HTTP | `9099` |
+| `telegram-bot-service` | gRPC | `50062` |
+| `telegram-bot-service` | HTTP / Webhook / Web App | `8082` |
 
 ### Метрики
 
@@ -397,6 +442,7 @@ PostgreSQL-базы изолированы и доступны сервисам 
 | `admin-service` | `9094` |
 | `currency-service` | `9095` |
 | `users-service` | `9096` |
+| `telegram-bot-service` | `9100` |
 
 ### Инфраструктура
 
@@ -410,6 +456,7 @@ PostgreSQL-базы изолированы и доступны сервисам 
 | Prometheus | `9090` |
 | Jaeger UI | `16686` |
 | Jaeger OTLP gRPC | `4317` |
+| Telegram Bot API webhook | `8082` |
 
 Фактические опубликованные порты и адреса зависят от конфигурации `docker-compose.yaml`. Для `ai-service` HTTP-порт `9099` и gRPC-порт `50056` указаны по текущей конфигурации проекта.
 
@@ -427,6 +474,14 @@ PostgreSQL-базы изолированы и доступны сервисам 
 | `FINANCE_POSTGRES_*` | Подключение finance-service к PostgreSQL |
 | `JWT_SECRET` | Секрет подписи JWT |
 | `JWT_DURATION` | Срок действия JWT |
+| `TELEGRAM_BOT_TOKEN` | Токен Telegram-бота |
+| `TELEGRAM_WEBHOOK_URL` | Публичный URL webhook |
+| `TELEGRAM_WEBHOOK_SECRET` | Секрет проверки webhook |
+| `TELEGRAM_MODE` | `webhook` или `polling` |
+| `TELEGRAM_PUBLIC_URL` | Публичный URL сервиса и Web App |
+| `TELEGRAM_POSTGRES_*` | Подключение telegram-bot-service к PostgreSQL |
+| `GATEWAY_URL`, `GATEWAY_PUBLIC_URL` | Адреса Gateway для бота и Web App |
+| `TELEGRAM_SERVICE_ADDR` | gRPC-адрес Telegram-сервиса в Gateway |
 | `REDIS_ADDR` | Адрес Redis |
 | `KAFKA_BROKERS` | Адреса Kafka broker |
 | `S3_ENDPOINT_URL` | Endpoint MinIO / S3 |
@@ -518,6 +573,16 @@ PostgreSQL-базы изолированы и доступны сервисам 
 ```bash
 go test ./...
 ```
+
+Для Telegram-сервиса доступны unit- и интеграционные тесты:
+
+```bash
+cd telegram-bot-service
+go test ./...
+go vet ./...
+```
+
+Интеграционные тесты PostgreSQL, Redis и Kafka включаются переменными `TEST_POSTGRES_DSN`, `TEST_REDIS_ADDR` и `TEST_KAFKA_BROKERS` и иначе пропускаются.
 
 Для проверки конкурентного доступа и поиска data race:
 

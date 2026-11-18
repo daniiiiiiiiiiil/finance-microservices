@@ -29,6 +29,7 @@
             <a class="nav-link" href="#goals" data-page="goals"><span class="nav-icon">🎯</span>Мои цели</a>
             <a class="nav-link" href="#analytics" data-page="analytics"><span class="nav-icon">▥</span>Аналитика</a>
             <a class="nav-link" href="#currency" data-page="currency"><span class="nav-icon">⇄</span>Курсы валют</a>
+            <a class="nav-link" href="#telegram" id="openTelegram"><span class="nav-icon">✈️</span>Telegram-бот</a>
         </nav>
         <div class="sidebar-bottom"><span class="online-dot"></span><span id="connectionStatus">Ожидание подключения к API</span></div>
     </aside>
@@ -355,6 +356,23 @@
         <p class="auth-switch"><span id="authSwitchText">Впервые в FinGoals?</span> <button id="authSwitch" type="button">Создать аккаунт</button></p>
         <label class="auth-config">Адрес API <input id="apiBase" type="url" placeholder="http://localhost:8081" value="http://localhost:8081"></label>
     </form>
+</div>
+<div id="telegramGate" class="auth-gate" aria-modal="true" role="dialog" hidden>
+    <div class="auth-card telegram-card">
+        <button class="modal-x" id="telegramClose" type="button" aria-label="Закрыть">×</button>
+        <div class="auth-brand"><span class="auth-logo">✈</span><span>Telegram</span></div>
+        <div class="auth-eyebrow">СВЯЗЬ С АККАУНТОМ</div>
+        <h1>Telegram-бот</h1>
+        <p id="telegramStatus">Проверяем привязку…</p>
+        <div id="telegramCode" class="telegram-code" hidden>
+            <span>Код привязки</span>
+            <b id="telegramCodeValue">—</b>
+            <small>Отправьте боту команду <code>/start КОД</code>. Код действует ограниченное время и используется один раз.</small>
+        </div>
+        <p id="telegramError" class="auth-error" role="alert"></p>
+        <button id="telegramLink" class="btn btn-primary auth-submit" type="button">Подключить Telegram</button>
+        <button id="telegramUnlink" class="btn btn-outline" type="button" hidden>Отвязать Telegram</button>
+    </div>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 </body>

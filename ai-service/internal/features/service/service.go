@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/daniiiiiiiiiiil/finance-microservices/ai-service/internal/core/domain"
+	corekafka "github.com/daniiiiiiiiiiil/finance-microservices/ai-service/internal/core/kafka"
 	"github.com/daniiiiiiiiiiil/finance-microservices/ai-service/internal/core/ports"
 	"github.com/daniiiiiiiiiiil/finance-microservices/ai-service/pkg/logger"
 	"go.uber.org/zap"
@@ -78,9 +79,9 @@ func (s *Service) PlanShopping(ctx context.Context, req ports.PlanRequest) (*dom
 		return nil, fmt.Errorf("%w: no items", domain.ErrInvalidInput)
 	}
 
-	startCoords, err := s.geocoder.Geocode(ctx, req.StartAddress)
+	startCoords, err := s.resolveStartCoordinates(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("geocode start: %w", err)
+		return nil, err
 	}
 
 	stores := make(map[string]*domain.Store)
@@ -168,10 +169,36 @@ func (s *Service) PlanShopping(ctx context.Context, req ports.PlanRequest) (*dom
 		}
 		if err := s.repo.Save(ctx, saved); err != nil {
 			s.logger.Warn("failed to save plan", zap.Error(err))
+		} else if s.eventPublisher != nil {
+			event := corekafka.PlanCreatedEvent{
+				PlanID:    saved.ID,
+				UserID:    saved.UserID,
+				RequestID: saved.RequestID,
+				TotalCost: resp.Cost.Total,
+				Mode:      resp.Recommendation.Mode,
+				CreatedAt: resp.CreatedAt,
+			}
+			if err := s.eventPublisher.Publish(ctx, corekafka.EventTypePlanCreated, event); err != nil {
+				s.logger.Warn("failed to publish plan created event", zap.Error(err))
+			}
 		}
 	}
 
 	return resp, nil
+}
+
+func (s *Service) resolveStartCoordinates(ctx context.Context, req ports.PlanRequest) (domain.Coordinates, error) {
+	if req.Latitude != 0 || req.Longitude != 0 {
+		if req.Latitude < -90 || req.Latitude > 90 || req.Longitude < -180 || req.Longitude > 180 {
+			return domain.Coordinates{}, fmt.Errorf("%w: invalid coordinates", domain.ErrInvalidInput)
+		}
+		return domain.Coordinates{Latitude: req.Latitude, Longitude: req.Longitude}, nil
+	}
+	coords, err := s.geocoder.Geocode(ctx, req.StartAddress)
+	if err != nil {
+		return domain.Coordinates{}, fmt.Errorf("geocode start: %w", err)
+	}
+	return coords, nil
 }
 
 func (s *Service) calculateCost(

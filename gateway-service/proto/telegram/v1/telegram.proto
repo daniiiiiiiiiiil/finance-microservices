@@ -1,0 +1,83 @@
+syntax = "proto3";
+
+package telegram;
+
+option go_package = "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/telegram;telegram";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+service TelegramService {
+  rpc CreateLinkCode (CreateLinkCodeRequest) returns (CreateLinkCodeResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/telegram/link-code"
+      body: "*"
+    };
+  }
+
+  rpc GetLink (GetLinkRequest) returns (GetLinkResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/telegram/link"
+    };
+  }
+
+  rpc Unlink (UnlinkRequest) returns (UnlinkResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/telegram/link"
+    };
+  }
+
+  rpc GetNotificationSettings (GetNotificationSettingsRequest) returns (NotificationSettingsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/telegram/notifications"
+    };
+  }
+
+  rpc UpdateNotificationSettings (UpdateNotificationSettingsRequest) returns (NotificationSettingsResponse) {
+    option (google.api.http) = {
+      patch: "/api/v1/telegram/notifications"
+      body: "*"
+    };
+  }
+}
+
+message CreateLinkCodeRequest {
+}
+
+message CreateLinkCodeResponse {
+  string code = 1;
+  google.protobuf.Timestamp expires_at = 2;
+}
+
+message GetLinkRequest {
+}
+
+message GetLinkResponse {
+  bool linked = 1;
+  int64 telegram_user_id = 2;
+  int64 chat_id = 3;
+  string username = 4;
+  google.protobuf.Timestamp linked_at = 5;
+}
+
+message UnlinkRequest {
+}
+
+message UnlinkResponse {
+  bool unlinked = 1;
+}
+
+message GetNotificationSettingsRequest {
+}
+
+message NotificationSettingsResponse {
+  bool budget_alerts = 1;
+  bool plan_alerts = 2;
+  bool finance_alerts = 3;
+}
+
+message UpdateNotificationSettingsRequest {
+  optional bool budget_alerts = 1;
+  optional bool plan_alerts = 2;
+  optional bool finance_alerts = 3;
+}

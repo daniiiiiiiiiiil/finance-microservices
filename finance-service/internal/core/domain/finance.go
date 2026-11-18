@@ -46,6 +46,7 @@ type Finance struct {
 	TypeTransaction string    `json:"type_transaction"`
 	Amount          float64   `json:"amount"`
 	Category        string    `json:"category"`
+	Description     string    `json:"description"`
 	CreatedAt       time.Time `json:"created_at"`
 	UserID          int       `json:"user_id"`
 }
@@ -70,6 +71,9 @@ func (t Finance) Validate() error {
 	}
 	if t.Category == "" || len(t.Category) < 1 {
 		return fmt.Errorf("invalid category len: %d : %w", len(t.Category), errors.ErrInvalidArgument)
+	}
+	if len([]rune(t.Description)) > 500 {
+		return fmt.Errorf("description must be less than 500 characters: %w", errors.ErrInvalidArgument)
 	}
 	if t.UserID < 0 {
 		return fmt.Errorf("invalid user id %d : %w", t.UserID, errors.ErrInvalidArgument)

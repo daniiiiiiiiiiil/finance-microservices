@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package ai.v1;
 
-option go_package = "github.com/daniiiiiiiiiiil/finance-microservices/ai-service/proto/gen/ai/v1;ai";
+option go_package = "github.com/daniiiiiiiiiiil/finance-microservices/ai-service/proto/gen/v1;ai";
 
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
@@ -39,6 +39,8 @@ message PlanShoppingRequest {
   string request_id    = 1;
   string text          = 2;
   string start_address = 3;
+  double latitude      = 4;
+  double longitude     = 5;
 }
 
 message Item {

@@ -69,7 +69,7 @@ func (s *ShoppingService) UpdateShopping(ctx context.Context, shopping *domain.S
 		}
 		updated = updatedImg
 
-		if oldImageKey != updated.ImageKey && *oldImageKey != "" {
+		if oldImageKey != nil && *oldImageKey != "" && (updated.ImageKey == nil || *updated.ImageKey != *oldImageKey) {
 			if err := s.storage.Delete(ctx, *oldImageKey); err != nil {
 				s.logger.Error("delete old image from storage",
 					zap.Int("shopping_id", updated.ID),

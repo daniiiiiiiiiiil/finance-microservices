@@ -27,3 +27,7 @@ scrape_configs:
   - job_name: 'currency'
     static_configs:
       - targets: [ 'currency:9095' ]
+
+  - job_name: 'telegram-bot'
+    static_configs:
+      - targets: [ 'telegram-bot:9100' ]

@@ -1,0 +1,4 @@
+.env
+logs/
+telegram-bot
+coverage.out

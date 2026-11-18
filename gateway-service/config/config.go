@@ -8,13 +8,14 @@ import (
 )
 
 type Config struct {
-	TimeZone    *time.Location
-	JWTSecret   string
-	JWTDuration time.Duration
-	TLSEnabled  bool
-	TLSCertFile string
-	TLSKeyFile  string
-	TLSCAFile   string
+	TimeZone     *time.Location
+	JWTSecret    string
+	JWTDuration  time.Duration
+	TelegramAddr string
+	TLSEnabled   bool
+	TLSCertFile  string
+	TLSKeyFile   string
+	TLSCAFile    string
 }
 
 func NewConfig() (*Config, error) {
@@ -46,14 +47,20 @@ func NewConfig() (*Config, error) {
 	tlsKeyFile := os.Getenv("TLS_KEY_FILE")
 	tlsCAFile := os.Getenv("TLS_CA_FILE")
 
+	telegramAddr := os.Getenv("TELEGRAM_SERVICE_ADDR")
+	if telegramAddr == "" {
+		telegramAddr = "telegram-bot:50062"
+	}
+
 	return &Config{
-		TimeZone:    zone,
-		JWTSecret:   jwtSecret,
-		JWTDuration: duration,
-		TLSEnabled:  tlsEnabled,
-		TLSCertFile: tlsCertFile,
-		TLSKeyFile:  tlsKeyFile,
-		TLSCAFile:   tlsCAFile,
+		TimeZone:     zone,
+		JWTSecret:    jwtSecret,
+		JWTDuration:  duration,
+		TelegramAddr: telegramAddr,
+		TLSEnabled:   tlsEnabled,
+		TLSCertFile:  tlsCertFile,
+		TLSKeyFile:   tlsKeyFile,
+		TLSCAFile:    tlsCAFile,
 	}, nil
 }
 

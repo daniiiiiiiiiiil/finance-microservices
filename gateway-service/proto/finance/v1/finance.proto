@@ -159,6 +159,7 @@ message CreateTransactionRequest {
   string type_transaction = 1;
   double amount = 2;
   string category = 3;
+  string description = 4;
 }
 
 message UpdateTransactionRequest {
@@ -166,6 +167,7 @@ message UpdateTransactionRequest {
   string type_transaction = 2;
   double amount = 3;
   string category = 4;
+  string description = 5;
 }
 
 message DeleteTransactionRequest {
@@ -180,6 +182,7 @@ message TransactionResponse {
   string category = 5;
   google.protobuf.Timestamp created_at = 6;
   int32 user_id = 7;
+  string description = 8;
 }
 
 message GetTransactionsResponse {

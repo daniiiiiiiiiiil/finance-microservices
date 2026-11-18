@@ -2,7 +2,7 @@
 // source: ai/v1/ai.proto
 
 /*
-Package v1 is a reverse proxy.
+Package ai is a reverse proxy.
 
 It translates gRPC into RESTful JSON APIs.
 */

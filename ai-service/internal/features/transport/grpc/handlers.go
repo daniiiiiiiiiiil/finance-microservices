@@ -38,6 +38,8 @@ func (s *Server) PlanShopping(ctx context.Context, req *aipb.PlanShoppingRequest
 		UserID:       userID,
 		Text:         req.Text,
 		StartAddress: req.StartAddress,
+		Latitude:     req.Latitude,
+		Longitude:    req.Longitude,
 	})
 	if err != nil {
 		s.logger.Error("PlanShopping failed", zap.Error(err))
