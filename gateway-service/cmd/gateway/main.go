@@ -24,14 +24,14 @@ import (
 	"github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/pkg/logger"
 	http2 "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/pkg/middleware/http"
 
-	adminpb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/admin"
-	aipb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/ai"
-	authpb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/auth"
-	currencypb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/currency"
-	financepb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/finance"
-	shoppingpb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/shopping"
-	telegrampb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/telegram"
-	userpb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/users"
+	adminpb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/admin/v1"
+	aipb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/ai/v1"
+	authpb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/auth/v1"
+	currencypb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/currency/v1"
+	financepb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/finance/v1"
+	shoppingpb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/shopping/v1"
+	telegrampb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/telegram/v1"
+	userpb "github.com/daniiiiiiiiiiil/finance-microservices/gateway-service/proto/gen/v1/users/v1"
 )
 
 func main() {
